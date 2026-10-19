@@ -47,12 +47,15 @@ pub struct FontFace {
     family: String,
     weight: FontWeight,
     style: FontStyle,
-    /// HarfBuzz shaping tables, precomputed once per face (kerning,
-    /// ligatures, complex scripts). `None` only if the bytes fail to
-    /// re-parse as a harfrust font — the shaper then degrades to the
-    /// per-char advance path (`super::shape`). Shaping caches use atomics,
-    /// so this stays `Send + Sync` (faces live in a shared store).
-    shaper_data: Option<harfrust::ShaperData>,
+    /// The face as harfrust reads it for shaping (kerning, ligatures,
+    /// complex scripts). It shares `data` rather than copying it, and the
+    /// shaping tables are built inside it once, on the first shape, then
+    /// reused. `None` only if the bytes fail to re-parse as a harfrust
+    /// font — the shaper then degrades to the per-char advance path
+    /// (`super::shape`). Its lazily built tables and caches are
+    /// thread-safe (a once-cell plus atomics), so this stays `Send + Sync`
+    /// (faces live in a shared store).
+    shaper_font: Option<harfrust::Font>,
 }
 
 impl FontFace {
@@ -67,13 +70,11 @@ impl FontFace {
         let decoration = |d: Option<skrifa::metrics::Decoration>| {
             d.map(|d| (f64::from(d.offset), f64::from(d.thickness)))
         };
-        // Precompute the shaping tables from the same (validated) bytes.
-        // `.ok().map(...)` on one line: the success path runs it; a parse
-        // failure here (skrifa already accepted index 0) leaves `None` and
-        // the shaper degrades per-char.
-        let shaper_data = harfrust::FontRef::from_index(&data, 0)
-            .ok()
-            .map(|font| harfrust::ShaperData::new(&font));
+        // The shaping view over the same (validated) bytes, sharing the
+        // Arc instead of copying. A parse failure here (skrifa already
+        // accepted index 0) leaves `None` and the shaper degrades per-char.
+        let shared: Arc<dyn AsRef<[u8]> + Send + Sync> = data.clone();
+        let shaper_font = harfrust::Font::new(shared, 0);
         Ok(Self {
             family: id.clone(),
             id,
@@ -86,15 +87,15 @@ impl FontFace {
             strikeout_units: decoration(metrics.strikeout),
             weight: FontWeight::Normal,
             style: FontStyle::Normal,
-            shaper_data,
+            shaper_font,
         })
     }
 
-    /// The precomputed HarfBuzz shaping tables, or `None` if the face's
+    /// The face as harfrust reads it for shaping, or `None` if the face's
     /// bytes did not re-parse for shaping (the caller falls back to the
     /// per-char advance path).
-    pub(crate) fn shaper_data(&self) -> Option<&harfrust::ShaperData> {
-        self.shaper_data.as_ref()
+    pub(crate) fn shaper_font(&self) -> Option<&harfrust::Font> {
+        self.shaper_font.as_ref()
     }
 
     /// Units per em (the shaping scale divisor: harfrust returns positions

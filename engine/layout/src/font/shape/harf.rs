@@ -2,11 +2,14 @@
 //! chars covered by a single face) into glyphs with pt-scaled advances and
 //! positioning offsets. Shaping runs at units-per-em (harfrust has no size
 //! notion), scaled to pt here by `size / units_per_em`. Returns `None` when
-//! the face has no cached shaper data — the caller (`super::shape_run`)
-//! then degrades to the per-char advance path.
+//! the face has no shaping font, or when harfrust marks the shaped buffer
+//! as failed (it hit a length, operation or nesting limit) — the caller
+//! (`super::shape_run`) then degrades to the per-char advance path.
 
 use crate::font::FontFace;
-use harfrust::{Direction, ShapeOptions, Tag, UnicodeBuffer};
+use harfrust::{
+    Buffer, Direction, Feature, GlyphInfo, GlyphPosition, ShapeOptions, ShaperFont, Tag,
+};
 
 /// One shaped glyph, positions already in pt. `cluster` is the byte offset
 /// of the source char **within the segment text** (harfrust monotone LTR
@@ -28,39 +31,20 @@ pub(crate) fn shape_segment(
     size: f64,
     ligatures: bool,
 ) -> Option<Vec<ShapedGlyph>> {
-    // Both `.ok()?`/`?` guards sit on always-run lines: on the success path
-    // the font re-parses and the shaper data is present, so the segment is
-    // shaped; a failure degrades to the per-char path in the caller.
-    let font = harfrust::FontRef::from_index(&face.data, 0).ok()?;
-    let shaper = face.shaper_data()?.shaper(&font).build();
-    let mut buffer = UnicodeBuffer::new();
-    buffer.push_str(text);
-    buffer.set_direction(Direction::LeftToRight);
-    // Fills script/language from the text without overriding the direction
-    // set above (only unset properties are guessed).
-    buffer.guess_segment_properties();
     let features = ligature_features(ligatures);
-    let glyphs = shaper.shape(buffer, ShapeOptions::new().features(&features));
+    let buffer = shape_buffer(face, text, Direction::LeftToRight, &features)?;
     // harfrust positions are font units; scale to pt. y is font y-up, so
     // negate for the layout's y-down convention.
     let scale = size / face.units_per_em();
-    let infos = glyphs.glyph_infos();
-    let positions = glyphs.glyph_positions();
-    Some(
-        infos
-            .iter()
-            .zip(positions)
-            .map(|(info, pos)| ShapedGlyph {
-                glyph_id: info.glyph_id,
-                x_advance: f64::from(pos.x_advance) * scale,
-                x_offset: f64::from(pos.x_offset) * scale,
-                // Negate in f64 space (font y-up -> layout y-down): negating
-                // the i32 first would overflow on a hostile i32::MIN offset.
-                y_offset: -f64::from(pos.y_offset) * scale,
-                cluster: info.cluster as usize,
-            })
-            .collect(),
-    )
+    shaped_glyphs(&buffer, |info, pos| ShapedGlyph {
+        glyph_id: info.glyph_id,
+        x_advance: f64::from(pos.x_advance) * scale,
+        x_offset: f64::from(pos.x_offset) * scale,
+        // Negate in f64 space (font y-up -> layout y-down): negating
+        // the i32 first would overflow on a hostile i32::MIN offset.
+        y_offset: -f64::from(pos.y_offset) * scale,
+        cluster: info.cluster as usize,
+    })
 }
 
 /// One glyph shaped for a vertical (top-to-bottom) run, positions already
@@ -88,31 +72,56 @@ pub(crate) fn shape_segment_vertical(
     text: &str,
     size: f64,
 ) -> Option<Vec<VerticalShapedGlyph>> {
-    // Same always-run guard pattern as the horizontal path: a failure here
-    // degrades to the per-char arrangement in the caller.
-    let font = harfrust::FontRef::from_index(&face.data, 0).ok()?;
-    let shaper = face.shaper_data()?.shaper(&font).build();
-    let mut buffer = UnicodeBuffer::new();
-    buffer.push_str(text);
-    buffer.set_direction(Direction::TopToBottom);
-    buffer.guess_segment_properties();
-    let glyphs = shaper.shape(buffer, ShapeOptions::new());
+    let buffer = shape_buffer(face, text, Direction::TopToBottom, &[])?;
     let scale = size / face.units_per_em();
-    let infos = glyphs.glyph_infos();
-    let positions = glyphs.glyph_positions();
-    Some(
-        infos
-            .iter()
-            .zip(positions)
-            .map(|(info, pos)| VerticalShapedGlyph {
-                glyph_id: info.glyph_id,
-                down_advance: down_pt(pos.y_advance, scale),
-                x_offset: f64::from(pos.x_offset) * scale,
-                down_offset: down_pt(pos.y_offset, scale),
-                cluster: info.cluster as usize,
-            })
-            .collect(),
-    )
+    shaped_glyphs(&buffer, |info, pos| VerticalShapedGlyph {
+        glyph_id: info.glyph_id,
+        down_advance: down_pt(pos.y_advance, scale),
+        x_offset: f64::from(pos.x_offset) * scale,
+        down_offset: down_pt(pos.y_offset, scale),
+        cluster: info.cluster as usize,
+    })
+}
+
+/// Shapes `text` with `face` in `direction` into a fresh buffer. `None`
+/// when the face has no shaping font. Both guards sit on always-run lines:
+/// on the success path the font is present and shaping succeeds.
+pub(super) fn shape_buffer(
+    face: &FontFace,
+    text: &str,
+    direction: Direction,
+    features: &[Feature],
+) -> Option<Buffer> {
+    let shaper = ShaperFont::new(face.shaper_font()?);
+    let mut buffer = Buffer::new();
+    buffer.push_str(text);
+    buffer.set_direction(direction);
+    // Fills script/language from the text without overriding the direction
+    // set above (only unset properties are guessed).
+    buffer.guess_segment_properties();
+    // harfrust errs only on API misuse (a fresh buffer with its direction
+    // set and no plan passed cannot hit one).
+    harfrust::shape(&shaper, &mut buffer, ShapeOptions::new().features(features)).ok()?;
+    Some(buffer)
+}
+
+/// Maps a shaped buffer's glyphs through `glyph`, or `None` when harfrust
+/// marked the buffer as failed: it needed more room, operations or nesting
+/// than its limits allow, which a hostile font can provoke. harfrust
+/// reports that on the buffer rather than as an error, and what it left in
+/// the buffer is then not a complete shaping of the run, so the caller
+/// degrades to the per-char path instead of drawing it. Not every limit
+/// marks the buffer: some table walks (AAT `morx`/`kern`/`kerx`, a
+/// contextual lookup that finds the operation budget spent) just stop
+/// early, and that output is drawn as shaped.
+pub(super) fn shaped_glyphs<T>(
+    buffer: &Buffer,
+    glyph: impl Fn(&GlyphInfo, &GlyphPosition) -> T,
+) -> Option<Vec<T>> {
+    let glyphs = buffer.glyph_infos().iter().zip(buffer.glyph_positions());
+    buffer
+        .allocation_successful()
+        .then(|| glyphs.map(|(info, pos)| glyph(info, pos)).collect())
 }
 
 /// A font y-up value flipped to the layout's y-down pt space. Vertical
@@ -127,13 +136,13 @@ pub(super) fn down_pt(v: i32, scale: f64) -> f64 {
 /// The shaping features slice for the ligature state: empty when
 /// ligatures are enabled (harfrust applies `liga`/`clig` by default), or
 /// `liga`/`clig` forced off when they are suppressed (non-zero spacing).
-fn ligature_features(enabled: bool) -> Vec<harfrust::Feature> {
+fn ligature_features(enabled: bool) -> Vec<Feature> {
     if enabled {
         Vec::new()
     } else {
         vec![
-            harfrust::Feature::new(Tag::new(b"liga"), 0, ..),
-            harfrust::Feature::new(Tag::new(b"clig"), 0, ..),
+            Feature::new(Tag::new(b"liga"), 0, ..),
+            Feature::new(Tag::new(b"clig"), 0, ..),
         ]
     }
 }

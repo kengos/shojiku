@@ -125,18 +125,20 @@ imagesize = "0.15"
 kurbo = "0.13"
 roxmltree = "0.21"
 svgtypes = "0.16"
-# Glyph outlines + font metrics. The single-copy goal lost to its two
-# neighbours: krilla pins its own older skrifa (0.42 -> read-fonts 0.39) and
-# harfrust requires read-fonts ^0.41, so read-fonts resolves three times
-# (deny.toml only WARNS on duplicates, and the wasm size budget is the real
-# guard). Re-unify when harfrust moves to read-fonts 0.42+; until then this
-# tracks upstream, which is where the font-parsing hardening lands.
+# Glyph outlines + font metrics. Shares read-fonts 0.45 with harfrust; the
+# one other copy is krilla's, which pins its own older skrifa (0.42 ->
+# read-fonts 0.39), so read-fonts resolves twice (deny.toml only WARNS on
+# duplicates, and the wasm size budget is the real guard). This tracks
+# upstream, which is where the font-parsing hardening lands.
 skrifa = "0.48"
 # HarfBuzz text shaping ported to Rust (HarfBuzz org): kerning, ligatures,
 # and complex-script shaping behind the layout font seam. MIT, no unsafe,
-# and font parsing rides read-fonts (^0.41, its own copy since skrifa 0.45) —
-# no ttf-parser, so deny.toml stays clean.
-harfrust = "0.13"
+# and font parsing rides the same read-fonts as skrifa — no ttf-parser, so
+# deny.toml stays clean. Default features only: the optional `icu` feature
+# exact-pins icu_properties to an older ICU4X minor than icu_segmenter's,
+# which would duplicate the ICU collections crate, and the built-in Unicode
+# tables it replaces are what shaping has always used.
+harfrust = "0.14"
 # Thai word segmentation for line breaking (ICU4X, Unicode-org): Thai writes
 # without inter-word spaces, so a greedy wrapper has no break opportunity to
 # find and falls through to breaking per character. Pure Rust, Unicode-3.0 —
