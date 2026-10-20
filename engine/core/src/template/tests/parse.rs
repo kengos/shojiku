@@ -247,14 +247,14 @@ sections:
     assert!(parse_template(bad).is_err());
 }
 
-/// One test per door, so a cap added to `parse_checked` and forgotten at a
-/// door that bypasses it cannot pass unnoticed.
+/// One test per door, so a cap that one door stopped reaching cannot pass
+/// unnoticed.
 #[test]
 fn an_oversize_template_is_refused_before_either_parse() {
     // The fixture is BOTH oversize and syntactically broken. If the size
     // check ran after the YAML parse we would get `Parse`; getting
     // `TooLarge` is what proves the bound sits ahead of the reads — and
-    // `parse_checked` reads the source TWICE, so a bound applied later
+    // the template parse reads the source TWICE, so a bound applied later
     // would already have paid the cost it exists to avoid.
     let oversize = format!("sections: [unterminated\n{}", "#".repeat(MAX_INPUT_BYTES));
     let err = parse_template(&oversize).expect_err("must refuse");

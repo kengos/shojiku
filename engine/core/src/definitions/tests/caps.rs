@@ -96,32 +96,60 @@ fn the_first_too_deep_branch_is_the_first_in_key_order() {
 }
 
 #[test]
-fn a_tag_or_a_non_string_key_does_not_hide_a_level() {
+fn a_tag_or_a_non_string_key_is_refused_before_the_walk() {
+    // Neither can hide a level from the walk: the YAML door refuses both
+    // while the tree is read.
     let deep = chained(MAX_SCHEMA_DEPTH, "items").replace("type: object\nproperties:\n  a: ", "");
-    let tagged = format!("type: object\nproperties:\n  a: !t {{ type: array, items: {deep} }}\n");
-    assert!(depth_refusal(&tagged).starts_with("properties.a.items"));
-    let numbered = format!("type: object\nproperties:\n  1: {{ type: array, items: {deep} }}\n");
-    assert!(depth_refusal(&numbered).starts_with("properties.?.items"));
-    // A scalar where a schema belongs nests nothing, and the walk moves on.
+    for (yaml, refusal) in [
+        (
+            format!("type: object\nproperties:\n  a: !t {{ type: array, items: {deep} }}\n"),
+            "local YAML tags",
+        ),
+        (
+            format!("type: object\nproperties:\n  1: {{ type: array, items: {deep} }}\n"),
+            "is not a string",
+        ),
+    ] {
+        let err = parse_definitions(&yaml).expect_err("refused");
+        assert!(
+            matches!(&err, CoreError::Located { message, .. } if message.as_str().contains(refusal)),
+            "{err:?}"
+        );
+    }
+}
+
+#[test]
+fn a_scalar_where_a_schema_belongs_nests_nothing() {
+    let deep = chained(MAX_SCHEMA_DEPTH, "items").replace("type: object\nproperties:\n  a: ", "");
     let scalar =
         format!("type: object\nproperties:\n  a: 5\n  b: {{ type: array, items: {deep} }}\n");
     assert!(depth_refusal(&scalar).starts_with("properties.b.items"));
 }
 
 #[test]
-fn the_deepest_schema_the_parser_accepts_is_refused_before_the_typed_parse() {
-    // 62 levels is as deep as serde_yaml's own limit lets this shape go; the
-    // refusal comes before the typed parse would recurse through all of them.
-    let yaml = chained(62, "properties");
-    let result = std::thread::Builder::new()
-        .stack_size(1 << 20)
-        .spawn(move || parse_definitions(&yaml).map(|_| ()))
-        .expect("spawn")
-        .join()
-        .expect("no panic");
+fn the_deepest_schema_the_door_reads_is_refused_before_the_typed_parse() {
+    // 59 levels is as deep as the YAML door's bound lets this shape go (two
+    // collections a level, plus the root's and the innermost's: 2 × 59 + 1 =
+    // 119); the refusal comes before the typed parse would recurse through
+    // all of them.
+    let on_a_small_stack = |depth: usize| {
+        let yaml = chained(depth, "properties");
+        std::thread::Builder::new()
+            .stack_size(1 << 20)
+            .spawn(move || parse_definitions(&yaml).map(|_| ()))
+            .expect("spawn")
+            .join()
+            .expect("no panic")
+    };
+    let deepest = on_a_small_stack(59);
     assert!(
-        matches!(result, Err(CoreError::Located { .. })),
-        "{result:?}"
+        matches!(&deepest, Err(CoreError::Located { message, .. }) if message.as_str().starts_with("schema nests deeper")),
+        "{deepest:?}"
+    );
+    let past_the_door = on_a_small_stack(60);
+    assert!(
+        matches!(&past_the_door, Err(CoreError::Located { message, .. }) if message.as_str().contains("the document nests deeper")),
+        "{past_the_door:?}"
     );
 }
 

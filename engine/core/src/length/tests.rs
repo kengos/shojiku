@@ -139,7 +139,7 @@ fn error_messages_truncate_hostile_strings() {
 
 #[test]
 fn non_finite_bare_number_is_rejected() {
-    // `parse_template` already blocks `.inf` via yaml_guard; this
+    // `parse_template` already blocks `.inf` at the YAML door; this
     // guards direct deserialization too.
     assert!(parse(".inf").is_err());
 }

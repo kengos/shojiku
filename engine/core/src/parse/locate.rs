@@ -5,12 +5,12 @@
 //! enum boundary (`sections.body`) and the offending key only in prose. That
 //! is enough for a human and useless to a tool that wants to point at, or
 //! repair, the item. This pass runs only after the typed parse has already
-//! failed: it walks the raw YAML to every `items:` sequence (the one
+//! failed: it walks the pass-1 tree to every `items:` sequence (the one
 //! spelling all four item holders share — a band, both body kinds, and
 //! `ContainerItem`, which also backs a repeat `cell`, a repeat_flow `item`
 //! and a table column `cell`), finds the first element that does not parse
-//! as an [`Item`], and follows that chain down to the deepest item that
-//! fails on its own.
+//! as an [`Item`] (read through [`crate::yaml::from_value`]), and follows
+//! that chain down to the deepest item that fails on its own.
 //!
 //! The refinement is applied only when that item's own error is part of the
 //! original message, so a document whose FIRST failure lies elsewhere keeps
@@ -25,8 +25,7 @@
 
 use super::trail::Trail;
 use crate::template::Item;
-use serde::Deserialize;
-use serde_yaml::Value;
+use crate::yaml::{from_value, Value};
 
 /// Where an in-item failure really is: the item's path, and the item's own
 /// top-level key the failure rejects as unknown, when it is one.
@@ -44,7 +43,7 @@ struct Culprit<'a> {
 }
 
 /// Finds the item behind a template parse failure whose full serde message is
-/// `message`, in the already-parsed `raw` document. `None` when no item fails
+/// `message`, in the pass-1 tree `raw`. `None` when no item fails
 /// on its own or when the one that does is not what `message` reports — the
 /// original error then stands as serde gave it.
 pub(crate) fn item_fault(raw: &Value, message: &str) -> Option<ItemFault> {
@@ -59,9 +58,8 @@ pub(crate) fn item_fault(raw: &Value, message: &str) -> Option<ItemFault> {
 fn walk<'a>(node: &'a Value, trail: &mut Trail<'a>) -> Option<Culprit<'a>> {
     match node {
         Value::Mapping(map) => map.iter().find_map(|(key, value)| {
-            let key = key.as_str()?;
             trail.push_key(key);
-            let found = match (key, value) {
+            let found = match (key.as_str(), value) {
                 ("items", Value::Sequence(items)) => failing_item(items, trail),
                 _ => walk(value, trail),
             };
@@ -82,11 +80,11 @@ fn walk<'a>(node: &'a Value, trail: &mut Trail<'a>) -> Option<Culprit<'a>> {
 /// the deepest failing item inside it.
 fn failing_item<'a>(items: &'a [Value], trail: &mut Trail<'a>) -> Option<Culprit<'a>> {
     items.iter().enumerate().find_map(|(i, node)| {
-        let err = Item::deserialize(node).err()?;
+        let err = from_value::<Item>(node).err()?;
         trail.push_index(i);
         let found = walk(node, trail).unwrap_or_else(|| Culprit {
             path: trail.spell(),
-            message: err.to_string(),
+            message: err.full,
             node,
         });
         trail.pop();
@@ -105,15 +103,14 @@ fn unknown_key(node: &Value, message: &str) -> Option<String> {
     let Value::Mapping(map) = node else {
         return None;
     };
-    map.keys()
-        .filter_map(Value::as_str)
+    map.iter()
+        .map(|(key, _)| key.as_str())
         .filter(|key| message.contains(&complaint(key)))
         .find(|key| {
-            let mut without = map.clone();
-            without.remove(*key);
-            Item::deserialize(&Value::Mapping(without))
+            let without = map.iter().filter(|(name, _)| name != key).cloned();
+            from_value::<Item>(&Value::Mapping(without.collect()))
                 .err()
-                .is_none_or(|err| !err.to_string().contains(&complaint(key)))
+                .is_none_or(|err| !err.full.contains(&complaint(key)))
         })
         .map(str::to_owned)
 }

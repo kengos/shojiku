@@ -18,9 +18,43 @@ platform binaries.
   While it reads a document it refuses an oversize input, nesting past 120
   levels, a mapping key that is not a string or appears twice, a NaN or
   infinite number, an integer from 65 to 128 bits wide and a local YAML
-  tag (`!name`), and it hands back the engine's own `Value` tree. The
-  engine's parse entry points do not go through it yet, so how a template,
-  definitions or params document is read is unchanged.
+  tag (`!name`), and it hands back the engine's own `Value` tree.
+
+### Changed
+
+- **Every YAML the engine reads goes through that door**: templates,
+  definitions, params, locale packs and their overlays, and font-pack
+  manifests. Some documents read before are now refused:
+  - a mapping key that is not a string in params, definitions or a locale
+    pack (`2024: 100` read as the key `"2024"`); quote it, `"2024": 100`.
+    Templates already refused one, and a font-pack manifest or a locale
+    overlay already failed on one with a different message.
+  - a local YAML tag (`!note x`) anywhere, which no wire format uses.
+    Each door used to treat one its own way, from ignoring the tag to a
+    template error about enums.
+  - a NaN or infinite number anywhere in a pack, including under a key the
+    pack does not read.
+  - in a locale pack, a duplicate key inside a table such as `dateFormats`
+    (the last one used to win) and an integer past 64 bits under a key the
+    pack does not read.
+  - nesting deeper than 120 levels, where the limit used to be 128. A
+    template chain of 58 to 61 containers, which reached the container
+    limit and reported `container_depth_exceeded`, now reaches this one
+    first and reports `parse_error`.
+  - a retired v1 definitions file (`groups:`) that also holds one of the
+    above, or a NaN, reports that refusal rather than the v1 migration
+    hint.
+- **Where a refused document is reported.** A non-string key, a duplicate
+  key, an integer past 64 bits, a local tag and nesting too deep are each a
+  `parse_error` with the path and the line/column of the node (a NaN keeps
+  its own `non_finite_number`). A duplicate key, an integer past 64 bits and
+  nesting too deep used to be a `parse_error` whose position, if any, was
+  only inside the message text, and a template's non-string key had no
+  line/column. The path of a refusal at the document
+  root is `.` rather than empty, and a non-string key's message reads
+  "every key must be one". In a pack or a manifest, the message of one of
+  these refusals ends with its path and line/column. The Designer's
+  "remove this key" quick-fix reads none of these and is unchanged.
 
 ### Changed
 
@@ -53,6 +87,15 @@ platform binaries.
   sides works too.
   The catalog schema no longer offers the array. The Designer shows an
   array margin as the 25pt default, and the first margin edit replaces it.
+
+### Security
+
+- **A mapping key that is not a string is refused in params, definitions
+  and locale packs too**, with no deprecation release.
+  Templates have refused one since 0.3, because the typed read buffers some
+  mappings and can read a numeric key as a field number; which mappings it
+  buffers is a detail of serde rather than of the wire, so the one YAML
+  reader now refuses the key in every document.
 
 ## [0.3.0] - 2026-10-14
 

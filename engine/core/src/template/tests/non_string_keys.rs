@@ -1,6 +1,11 @@
-//! The template key check: a non-string key is refused before the typed parse
-//! can misread it as a field number, wherever it sits, and the refusal never
-//! quotes a composite key back.
+//! A non-string key in a template is refused by the YAML door before the
+//! typed parse can misread it as a field number, wherever it sits, and the
+//! refusal never quotes a composite key back.
+//!
+//! `serde` buffers an internally-tagged `Item` or `Body`, and the buffered
+//! struct then reads a plain integer key as a field NUMBER, so
+//! `{ type: container, 5: [ … ] }` would deserialize as `items: [ … ]` (`5` is
+//! the sixth field) — past the nesting bound, which counts only `items:` keys.
 
 use crate::error::CoreError;
 use crate::template::{parse_template, Template, MAX_CONTAINER_DEPTH};
@@ -21,17 +26,18 @@ fn chain_via_5(depth: usize) -> String {
     item
 }
 
-/// The refusal's `(path, message)`, asserting it is the key check's.
+/// The refusal's `(path, message)`, asserting it is the key check's and that
+/// it carries the door's location.
 fn refusal(yaml: &str) -> (String, String) {
     match parse_template(yaml).expect_err("must refuse") {
         CoreError::Located {
             what: "template",
             path,
             key: None,
-            line: 0,
-            column: 0,
+            line,
+            column,
             message,
-        } if message.as_str().contains("is not a string") => {
+        } if message.as_str().contains("is not a string") && line > 0 && column > 0 => {
             (path.as_str().to_owned(), message.as_str().to_owned())
         }
         other => panic!("not the key refusal: {other:?}"),
@@ -63,8 +69,10 @@ fn a_field_number_is_refused_where_it_would_have_been_read_as_items() {
 fn a_chain_spelled_through_a_field_number_is_refused_not_read() {
     // Past the cap, this chain parsed: the nesting bound counts `items:`.
     refusal(&body(&chain_via_5(MAX_CONTAINER_DEPTH + 1)));
-    // As deep as serde_yaml lets the shape go, it overflowed a test-sized
-    // stack and aborted the process. An abort takes the whole test binary
+    // 61 deep, it overflowed a test-sized stack and aborted the process
+    // before the key check existed. It is past the door's depth bound now,
+    // but the door meets the outermost `5:` first, in document order, so the
+    // refusal is still the key's. An abort takes the whole test binary
     // down, so a regression here is loud rather than a failed assertion.
     let deepest = body(&chain_via_5(61));
     let result = std::thread::Builder::new()
@@ -87,7 +95,6 @@ fn every_kind_of_non_string_key_is_refused_and_named() {
         ("1.5", "`1.5`"),
         ("true", "`true`"),
         ("null", "`null`"),
-        ("!n 7", "`7`"),
         ("? [a, b]\n  ", "a sequence"),
         ("? { a: b }\n  ", "a mapping"),
     ] {
@@ -102,13 +109,13 @@ fn every_kind_of_non_string_key_is_refused_and_named() {
 }
 
 #[test]
-fn a_key_on_the_root_is_refused_with_the_empty_path() {
+fn a_key_on_the_root_is_refused_with_the_root_path() {
     let (path, _) = refusal(&format!("5: x\n{}", body(TEXT)));
-    assert_eq!(path, "");
+    assert_eq!(path, ".");
 }
 
 #[test]
-fn a_quoted_or_tagged_name_is_a_string() {
+fn a_quoted_name_is_a_string() {
     // The check is about what the key IS, not what it spells: `"5"` names a
     // style like any other.
     let template = parse_template(&format!(
@@ -116,10 +123,6 @@ fn a_quoted_or_tagged_name_is_a_string() {
         body(TEXT)
     ));
     assert!(template.expect("parses").styles.contains_key("5"));
-    // A tag changes nothing about a key; whether the typed parse takes a
-    // tagged one is its own business, so this asks the check alone.
-    let raw: serde_yaml::Value = serde_yaml::from_str("a: { !t named: 1 }").expect("yaml");
-    super::template(&raw).expect("a tagged string is a string");
 }
 
 #[test]
@@ -138,7 +141,7 @@ fn the_refusal_is_a_located_parse_error() {
     assert_eq!(diag.path.as_deref(), Some("sections.body.items[0]"));
     assert!(
         err.to_string().starts_with(
-            "failed to parse template at `sections.body.items[0]`: mapping key `5` is not a string"
+            "failed to parse template at `sections.body.items[0]`: mapping key `5` is not a string; every key"
         ),
         "{err}"
     );

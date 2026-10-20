@@ -3,15 +3,15 @@
 //! base types (serde can't express those conditionals).
 //!
 //! The nesting cap is the one check made BEFORE the typed parse, on the
-//! pass-1 `Value` ([`check_depth`]): a `Schema` nests through `properties`
-//! and `items`, and a deep enough chain inside serde_yaml's own limit could
+//! pass-1 tree ([`check_depth`]): a `Schema` nests through `properties`
+//! and `items`, and a deep enough chain inside the YAML door's own bound could
 //! exhaust a thread's stack while being read into the model — an abort, not
 //! an error. The rest run after it, over the parsed [`Definitions`].
 
 use super::schema::{Schema, SchemaType, MAX_ENUM_VALUES, MAX_SCHEMA_DEPTH, MAX_SCHEMA_NODES};
 use super::Definitions;
 use crate::error::CoreError;
-use serde_yaml::Value;
+use crate::yaml::Value;
 use shojiku_diagnostics::Echo;
 
 /// Walk state: the running node budget.
@@ -40,8 +40,7 @@ pub(super) fn check_shape(defs: &Definitions) -> Result<(), CoreError> {
 /// tree. It walks exactly what the typed parse would descend — a node's
 /// `items`, then its `properties` in key order, as the parsed `BTreeMap`
 /// iterates them — so the first path it reports is the one the post-parse
-/// walk reported when the cap lived there (for string keys; see
-/// [`for_each_property`] for the rest). Being a pass of its own ahead of
+/// walk reported when the cap lived there. Being a pass of its own ahead of
 /// the typed parse, it also wins over every other schema error: a file both
 /// too deep and over the node or enum cap (or mistyped) reports the depth.
 pub(super) fn check_depth(raw: &Value) -> Result<(), CoreError> {
@@ -55,53 +54,23 @@ fn depth_node(node: &Value, path: &str, depth: usize) -> Result<(), CoreError> {
             &format!("schema nests deeper than {MAX_SCHEMA_DEPTH} levels"),
         ));
     }
-    if let Some(items) = field(node, "items") {
+    if let Some(items) = node.get("items") {
         depth_node(items, &format!("{path}.items"), depth + 1)?;
     }
     for_each_property(node, &format!("{path}.properties"), depth + 1)
 }
 
-/// Every schema under `node`'s `properties`, string keys in sorted order and
-/// any other key after them, as `?`. The typed parse does NOT refuse such a
-/// key: it reads a plain scalar by its source text, so `1:` is the property
-/// `"1"`, sorted among the names rather than after them. The nesting it holds
-/// is walked all the same; only the first path reported for a file both too
-/// deep and keyed that way can differ from the post-parse order.
+/// Every schema under `node`'s `properties`, in key order.
 fn for_each_property(node: &Value, path: &str, depth: usize) -> Result<(), CoreError> {
-    let Some(Value::Mapping(props)) = field(node, "properties").map(untag) else {
+    let Some(Value::Mapping(props)) = node.get("properties") else {
         return Ok(());
     };
-    let mut named: Vec<(&str, &Value)> = Vec::new();
-    let mut other: Vec<&Value> = Vec::new();
-    for (key, child) in props {
-        match key.as_str() {
-            Some(name) => named.push((name, child)),
-            None => other.push(child),
-        }
-    }
-    named.sort_by(|a, b| a.0.cmp(b.0));
+    let mut named: Vec<&(String, Value)> = props.iter().collect();
+    named.sort_by(|a, b| a.0.cmp(&b.0));
     for (name, child) in named {
         depth_node(child, &format!("{path}.{name}"), depth)?;
     }
-    for child in other {
-        depth_node(child, &format!("{path}.?"), depth)?;
-    }
     Ok(())
-}
-
-fn field<'a>(node: &'a Value, key: &str) -> Option<&'a Value> {
-    match untag(node) {
-        Value::Mapping(map) => map.get(key),
-        _ => None,
-    }
-}
-
-/// A tag (`!name`) changes nothing about what a node nests.
-fn untag(mut node: &Value) -> &Value {
-    while let Value::Tagged(tagged) = node {
-        node = &tagged.value;
-    }
-    node
 }
 
 fn check_node(walk: &mut Walk, path: &str, schema: &Schema) -> Result<(), CoreError> {

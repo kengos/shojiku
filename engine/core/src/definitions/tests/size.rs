@@ -20,9 +20,9 @@ fn a_definitions_document_at_the_cap_is_still_parsed() {
 
 #[test]
 fn an_oversize_definitions_document_is_not_re_parsed_by_the_v1_hint() {
-    // The door's error arm calls `v1_form_hint`, which parses the whole
-    // input again with no bound of its own — so a cap checked only inside
-    // `parse_checked` would change which error comes back and nothing else.
+    // The door's error arm calls `v1_form_hint`, which once parsed the whole
+    // input again with no bound of its own; it now reads the tree the YAML
+    // door returned, and an oversize input never becomes one.
     //
     // This fixture is VALID YAML whose top-level key is the one the hint
     // looks for. That is what makes the test fire: if the hint runs, it

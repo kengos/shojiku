@@ -72,7 +72,14 @@ the manifest wire's key list) lives in `docs/engine/`
   `from_yaml_str` AND the builtin OVERLAY arm, which does not go through it
   and is the arm every host takes for a builtin id (`ja-JP` is the default,
   reachable from a browser via `set_locale`). A pack is host-supplied data,
-  so it is parsed under the same posture as a template.
+  so it is parsed under the same posture as a template: past the size
+  check, every pack door reads through the core YAML door
+  (`shojiku_core::yaml`; `From<YamlError>` renders its
+  `located_message()` into `LangPackError::Parse`).
+  `tests/pack_positions/` (near-e2e) is the golden record of what the three
+  pack doors (`from_yaml_str`, the builtin overlay over `ja-JP`,
+  `PackManifest::from_yaml`) report on broken or edge-case documents, in one
+  `expected.txt`.
 - `lang/read.rs` — **`read_pack_file`**: the ONE way a pack file is read
   from disk (`LangPack::load`, the manifest in `packs.rs`, the CLI's
   `font add`, and the MCP server's `*Path` source arguments): refuses a path that is not a regular file after symlinks
@@ -89,8 +96,9 @@ the manifest wire's key list) lives in `docs/engine/`
   authoring-time fetch, pinned CLDR version) embedded via
   `include_str!`; `BUILTIN_LOCALE_IDS` = ja-JP/en-US.
   **`LangPack::builtin(id, overlay)`**: case-insensitive +
-  unique-language-prefix id match; per-key YAML deep merge (maps
-  recurse, scalars/sequences REPLACE). A `packs/locale/<id>.yml` is an
+  unique-language-prefix id match; per-key deep merge over the door's
+  `yaml::Value` (maps recurse through a key index, new keys append;
+  scalars/sequences REPLACE), then `yaml::from_value`. A `packs/locale/<id>.yml` is an
   overlay for a builtin, a whole pack otherwise. Also
   `currency_fraction_digits` over the compiled
   `builtin/currency-fractions.yml` (the full CLDR table, engine-wide).
@@ -99,8 +107,10 @@ the manifest wire's key list) lives in `docs/engine/`
 - `lang/fonts.rs` — pack-manifest + locale-fonts wire.
   **`PackManifest`** (`packs/fonts/<pack>/manifest.yml`; camelCase,
   `deny_unknown`) — the manifest wire has ONE parse door, `from_yaml`, which
-  refuses an oversize input through the shared `ensure_pack_size` (as a
-  `serde_yaml::Error` carrying `TooLarge`'s message); filesystem pack
+  refuses an oversize input through the shared `ensure_pack_size` and
+  reads the rest through `shojiku_core::yaml` (each refusal as a
+  `serde_yaml::Error` carrying the message, the door's with its
+  `located_message()`); filesystem pack
   resolution (`packs.rs`), the injected bytes-first path (`packs/bytes.rs`),
   the wasm session's re-parse (`add_font_pack` takes the string from JS) and
   the CLI's `font add` all call it and wrap its message in their own error —

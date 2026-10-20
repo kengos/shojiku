@@ -8,6 +8,7 @@ mod imposition_flags;
 mod items;
 mod located_errors;
 mod model;
+mod non_string_keys;
 mod page_sizes;
 mod parse;
 mod repeat;

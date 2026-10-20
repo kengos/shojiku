@@ -5,7 +5,7 @@ use crate::{CoreError, MAX_INPUT_BYTES};
 
 #[test]
 fn oversize_params_are_refused_before_the_parse() {
-    // `parse_params` does NOT go through `parse_checked`, so it is the
+    // `parse_params` does not take the two-pass typed parse, so it is the
     // door most likely to be missed by a cap added at the choke point.
     // Broken syntax + oversize: `TooLarge` proves the order.
     let oversize = format!("{{unterminated\n{}", "#".repeat(MAX_INPUT_BYTES));

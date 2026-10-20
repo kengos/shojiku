@@ -1,0 +1,5 @@
+id: xx
+number:
+  groupSeparator: ","
+  decimalSeparator: "."
+  groupSize: 18446744073709551616

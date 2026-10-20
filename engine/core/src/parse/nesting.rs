@@ -1,10 +1,10 @@
-//! The template nesting bound, checked on the pass-1 `Value` before the
-//! typed parse reads the document.
+//! The template nesting bound, checked on the pass-1 tree before the typed
+//! parse reads the document.
 //!
-//! serde_yaml's own limit bounds the `Value` tree, but not the typed parse:
+//! The YAML door's depth bound limits the tree, but not the typed parse:
 //! `serde` buffers every internally-tagged `Item` and re-reads it, so each
 //! item nested inside another costs far more stack than a `Value` level, and
-//! a valid document inside the parser's limit could exhaust a thread's stack
+//! a valid document inside the door's bound could exhaust a thread's stack
 //! — which aborts the process rather than failing the parse. This walk runs
 //! first and refuses such a document with the same `container_depth_exceeded`
 //! that validation reports, so the typed parse, and the [`super::locate`] pass
@@ -20,18 +20,17 @@
 //! would leave `locate` unbounded, since it re-reads every `items:` sequence it
 //! finds, including one under an item whose type takes none.
 //!
-//! Only string keys are read. A non-string one could still be read as
-//! `items` — the buffered struct takes a plain integer as a field NUMBER — so
-//! the template parse refuses it before this walk runs ([`super::keys`]).
+//! Every key is a string: the door refuses any other, which the buffered
+//! struct could read as `items` (it takes a plain integer as a field NUMBER).
 //!
-//! The walk itself recurses once per `Value` level and so shares the parser's
+//! The walk itself recurses once per tree level and so shares the door's
 //! bound, like every other walk over the pass-1 tree; the holder's path is
 //! spelled only when it refuses ([`super::trail`]).
 
 use super::trail::Trail;
 use crate::error::CoreError;
 use crate::template::MAX_CONTAINER_DEPTH;
-use serde_yaml::Value;
+use crate::yaml::Value;
 use shojiku_diagnostics::Echo;
 
 /// The only keys on a valid route from the root to an `items:` sequence. A
@@ -56,12 +55,11 @@ fn walk<'a>(
     holder: usize,
     level: usize,
 ) -> Result<(), CoreError> {
-    match untag(node) {
+    match node {
         Value::Mapping(map) => {
             for (key, value) in map {
-                let Some(key) = key.as_str() else { continue };
                 trail.push_key(key);
-                match (key, untag(value)) {
+                match (key.as_str(), value) {
                     ("items", Value::Sequence(items)) => {
                         // Body items are level 1, so a holder at depth `d`
                         // opens level `d + 1`: past the cap is `d > MAX`.
@@ -89,14 +87,6 @@ fn elements<'a>(seq: &'a [Value], trail: &mut Trail<'a>, level: usize) -> Result
         trail.pop();
     }
     Ok(())
-}
-
-/// A tag (`!name`) changes nothing about what a node nests.
-fn untag(mut node: &Value) -> &Value {
-    while let Value::Tagged(tagged) = node {
-        node = &tagged.value;
-    }
-    node
 }
 
 fn refusal(holder: &str) -> CoreError {

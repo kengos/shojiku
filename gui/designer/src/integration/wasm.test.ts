@@ -395,8 +395,11 @@ describe('wasm transport against the real engine (receipt-us)', () => {
     // Refused while the engine reads the document, before validation runs,
     // yet under validation's own code, argument and path — which is what
     // lets the panel point at the container that went one level too deep.
+    // 57 containers is the deepest chain the engine's YAML reader takes (it
+    // refuses nesting past 120 levels as a plain parse error), and it is
+    // still well past the 32-container cap this test is about.
     let item = '{ type: text, text: deep }';
-    for (let i = 0; i < 61; i++) {
+    for (let i = 0; i < 57; i++) {
       item = `{ type: container, items: [ ${item} ] }`;
     }
     const deep = `sections:\n  body:\n    type: flow\n    items: [ ${item} ]\n`;

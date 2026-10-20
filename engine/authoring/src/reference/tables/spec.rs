@@ -157,7 +157,10 @@ pub type Spec = BTreeMap<String, Table>;
 ///
 /// Returns the YAML error when the file does not match the shape above.
 /// Unknown keys are refused rather than ignored: a typo'd column or row key
-/// would otherwise render a silently different table.
+/// would otherwise render a silently different table. It is read through the
+/// YAML door ([`shojiku_core::yaml`]), whose refusal carries its message and
+/// where it happened, and no `location()`.
 pub fn parse(src: &str) -> Result<Spec, serde_yaml::Error> {
-    serde_yaml::from_str(src)
+    shojiku_core::yaml::from_str(src)
+        .map_err(|err| <serde_yaml::Error as serde::de::Error>::custom(err.located_message()))
 }

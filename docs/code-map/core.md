@@ -130,32 +130,28 @@ injected at parse). The template model splits along CSS lines.
   form round-trips); `FieldType::as_str` (the diagnostics spelling,
   round-trips `from_name`); depth/node/enum caps.
   `definitions/shape.rs` — `check_depth`, the `MAX_SCHEMA_DEPTH` walk over
-  the pass-1 `Value` that `parse_checked` runs BEFORE the typed parse (the
+  the pass-1 tree that `parse::typed` runs BEFORE the typed parse (the
   typed `Schema` recursion is what it protects; same Located path + message,
   same pre-order: `items`, then `properties` in key order), plus the
   post-parse walk enforcing the node/enum caps + structural-key checks as
   Located errors (incl. labeled entries need a scalar `value`).
 - `parse.rs` — two-pass typed parse shared by template/definitions:
-  `ensure_bounded_size` first, then pass 1 `Value` + `ensure_finite`, then
-  the caller's `Bound` over that `Value`, then pass 2 `serde_path_to_error` →
-  `CoreError::Located` (path + line/column). **serde_yaml's own
-  ~128-frame recursion limit bounds the pass-1 `Value` tree into a clean
-  parse error, which keeps the walks over that `Value` stack-safe, pinned
-  by a model test. It does NOT bound the TYPED parse — the tagged-enum
+  `read` (the `yaml` door below → `CoreError::from_yaml`), then the
+  caller's `Bound` over the door's tree, then pass 2, the door's typed read
+  of the source → `CoreError::Located` (path + line/column). **The door's
+  depth bound (`MAX_DEPTH` = 120) keeps the walks over the pass-1 tree
+  stack-safe. It does NOT bound the TYPED parse — the tagged-enum
   buffering is a second recursion, far deeper per level — which is what the
-  `Bound` is for: `parse/keys.rs` then `parse/nesting.rs` for a template,
-  `definitions/shape.rs` `check_depth` for definitions. A new recursive wire type needs its own
-  bound there, not a post-parse cap.**
-  `parse/keys.rs` — the template's first bound: every mapping key (tags
-  peeled) must be a STRING, else a `Located` parse error at the holding
-  mapping's path (composite keys named by kind, never quoted). Why: the
-  tagged-enum buffering reads a plain integer key as a field NUMBER
-  (`5:` on a container = `items:`), which also slipped past nesting's
-  `items:` count — pinned by a 61-deep `5:` chain on a 2 MiB thread.
-  `parse/trail.rs` — `Trail`: the path all three template walks (keys,
-  nesting, locate) carry as BORROWED segments, spelled only when one
-  reports (the `yaml` door spells its refusal paths through it
-  too). Formatting the path at every node copied the whole prefix per
+  `Bound` is for: `parse/nesting.rs` for a template, `definitions/shape.rs`
+  `check_depth` for definitions. A new recursive wire type needs its own
+  bound there, not a post-parse cap.** A non-string key — which the
+  tagged-enum buffering would read as a field NUMBER (`5:` on a container =
+  `items:`, slipping past nesting's `items:` count) — is the door's refusal,
+  pinned in `template/tests/non_string_keys.rs` by a 61-deep `5:` chain on a
+  2 MiB thread.
+  `parse/trail.rs` — `Trail`: the path the template walks (nesting,
+  locate) carry as BORROWED segments, spelled only when one reports (the
+  `yaml` door spells its refusal paths through it too). Formatting the path at every node copied the whole prefix per
   child — a long explicit key over a long sequence was quadratic inside
   the input cap; pinned by a 1 MiB key × 200k elements under a deadline.
   `parse/nesting.rs` — the template bound: counts nesting of `items:`
@@ -169,15 +165,17 @@ injected at parse). The template model splits along CSS lines.
   (validation's is not clipped); any other path is echoed.
   Internally-tagged enums truncate the error path to the enum boundary;
   for a TEMPLATE, `parse/locate.rs` then re-locates the failure off the
-  pass-1 `Value`: it walks every `items:` sequence (the one spelling all four
-  item holders share), follows the first element that fails `Item::deserialize`
-  down to the deepest failing item, and — only when that item's own error is
-  part of serde's message — reports the item's path, `key` (one of its own
+  pass-1 tree: it walks every `items:` sequence (the one spelling all four
+  item holders share), follows the first element that fails
+  `yaml::from_value::<Item>` down to the deepest failing item, and — only
+  when that item's own error is part of serde's UNCLIPPED message
+  (`YamlError.full`; the `message` Echo is clipped at 200) — reports the item's path, `key` (one of its own
   top-level keys the message quotes, CONFIRMED by the item without it no longer
   making that complaint — the message alone cannot tell an inner struct's
   `box.style` from the item's own `style`) and no line/column
   (`CoreError::Located.key`).
-- `params.rs` — params parse + `resolve_path` dotted lookup + `is_blank`
+- `params.rs` — params parse (the door's tree → `serde_json`) +
+  `resolve_path` dotted lookup + `is_blank`
   (the shared absent/null/`""` predicate placeholders key off).
 - `catalog.rs` — the schema tree flattens to dotted-key lookup tables
   (`scalars` + `arrays`, the latter of `ArrayGroup { fields, row_arrays,
@@ -307,36 +305,22 @@ injected at parse). The template model splits along CSS lines.
   format-name checks + pattern-on-non-dated. `validate/box_keys.rs` —
   context-inert authoring keys (flex/grid keys on leaves, grid keys
   without `type: grid`, table pagination keys off-flow).
-- `yaml_guard.rs` — the two checks every parse door runs first, in order:
-  **`ensure_bounded_size`** (`MAX_INPUT_BYTES` = 16 MiB, refused before
-  either parse — a host has still READ the file; what is skipped is building
-  a document out of it —
-  it sits ahead of both passes because `parse_checked` reads the source
-  twice; `parse_definitions` calls it a SECOND time of its own, because its
-  error arm reaches for `v1_form_hint`, which re-parses the whole input
-  unbounded) then `ensure_finite`. The size bound is a memory/time bound,
-  and the two neighbouring limits it is easy to conflate with it are worth
-  keeping straight. **Depth holds**: serde_yaml refuses past 128, which is
-  what makes `has_non_finite`'s unbounded recursion safe by construction,
-  and a test here pins it because nothing in this crate enforces it.
-  **Alias amplification does NOT hold, and this cap does not close it**:
-  the repetition budget is `events.len() * 100`, so it SCALES with the
-  input — measured, a 197-byte bomb tops out at 2,351 nodes while the same
-  document padded to 400 KB reaches 2,545,689 (~6 nodes per source byte),
-  so a document inside the 16 MiB cap can still expand to order 10^8.
-  Closing that needs a bound on alias RESOLUTIONS, which lives inside the
-  parser; the Designer holds the browser side with its own
-  `MAX_ALIAS_COUNT`. It is a documented exposure, not a closed one — do not
-  re-file it as done. `error.rs` — `CoreError` incl.
+- `error.rs` — `CoreError` incl.
   `Located` (echoed path/message clipped; fields map into typed
   diagnostic args) and `TooLarge` (numbers only, never any of the input;
   maps onto the existing `parse_error` code rather than minting one — a
-  refused input never became a document).
-- `yaml.rs` (+ `yaml/`) — **`shojiku_core::yaml`, the one YAML door, with
-  no caller yet**: the parse entry points above still read through
-  `parse.rs` + `yaml_guard.rs`, and routing them (and the formatter,
-  authoring and mcp readers) through it is the next step of the serde_yaml
-  move. `parse(input) -> Document` reads into the engine's own `Value`
+  refused input never became a document). `from_yaml` is the ONE mapping of
+  a door refusal onto the existing variants: `Syntax` → `Parse`,
+  `NonFinite` → `NonFinite`, `TooLarge` → `TooLarge`, everything else
+  (key, duplicate, depth, range, tag, typed read) → `Located` with the
+  door's path and line/column; `in_item` is the re-located one.
+- `yaml.rs` (+ `yaml/`) — **`shojiku_core::yaml`, the one YAML door**:
+  core's template/definitions/params doors, the formatter's pack doors, the
+  authoring reference readers and the mcp gallery/front-matter readers all
+  read through it (serde_yaml still appears outside it in tests, in
+  `PackManifest::to_yaml`, and in the public signatures that return
+  `serde_yaml::Error`). `MAX_INPUT_BYTES` (16 MiB, twice the Designer's
+  8 MiB template ceiling) lives here. `parse(input) -> Document` reads into the engine's own `Value`
   (`yaml/value.rs`: Null/Bool/Int/UInt/Float/String/Sequence/Mapping as
   `Vec<(String, Value)>` in document order, `get`, `Serialize`) and makes
   every refusal DURING that one read, in `yaml/build.rs` (the `serde`
@@ -347,15 +331,26 @@ injected at parse). The template model splits along CSS lines.
   and past `f64` as a string; both pass), local tag (`!name`; standard `!!str` tags are serde_yaml's
   to resolve and pass, and `!!int abc` is serde_yaml's own refusal, kind
   `Syntax`). A refusal's path is gathered as the error unwinds and
-  spelled through `parse/trail.rs` (root = `.`, unlike the template key
-  walk's empty string). `Document::typed` / `from_str` re-read the SOURCE
+  spelled through `parse/trail.rs` (root = `.`). An empty document reads as
+  `Null`. `Document::typed` / `from_str` re-read the SOURCE
   with `serde_path_to_error` (parser scalar rules, line/column);
   `from_value` reads a subtree through `yaml/read.rs`'s `Deserializer` for
-  `&Value` (strict: a scalar is the type it was read as; path, no
-  location). `YamlError { kind: YamlErrorKind, path, line, column, message }`
-  (`yaml/error.rs`, `#[non_exhaustive]`, Echo fields). Alias resolutions are
-  NOT bounded by it. `tests/parse_positions/` (near-e2e) is the golden
-  record of what today's template/definitions/params doors report on
+  `&Value` (strict: a scalar is the type it was read as, except that a
+  `null` where a list or mapping is wanted reads as an empty one, as
+  serde_yaml's `from_value` did — an overlay clears a table that way; path,
+  no location). `YamlError { kind: YamlErrorKind, path, line, column, message }`
+  (`yaml/error.rs`, `#[non_exhaustive]`, Echo fields, plus the crate-private
+  unclipped `full`); `located_message()` renders a refusal as one string
+  with its path and line/column after the message (a typed read's and a
+  syntax error's message already carry theirs) — what every door with a
+  one-string error uses. **Alias resolutions are NOT bounded by it**: the
+  parser's repetition budget is `events.len() * 100`, so it SCALES with the
+  input — measured, a 197-byte bomb tops out at 2,351 nodes while the same
+  document padded to 400 KB reaches 2,545,689 (~6 nodes per source byte),
+  so a document inside the 16 MiB cap can still expand to order 10^8. It is
+  a documented exposure, not a closed one — do not re-file it as done.
+  `tests/parse_positions/` (near-e2e) is the golden
+  record of what the template/definitions/params doors report on
   broken documents — variant, path, key, line, column, message, or `ok`
   (params: with the JSON read, pinning scalar edges like `yes`, `017`,
   `<<`, `!!str`) — in one `expected.txt`, so the parser swap is read as

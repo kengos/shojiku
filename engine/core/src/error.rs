@@ -1,6 +1,7 @@
 //! The crate error type for parsing untrusted input artifacts.
 
 use crate::parse::locate::ItemFault;
+use crate::yaml::{YamlError, YamlErrorKind, MAX_INPUT_BYTES};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode, Echo};
 use thiserror::Error;
 
@@ -31,9 +32,10 @@ pub enum CoreError {
     },
     /// A structural parse failure located to a field path. `path`
     /// (`sections.body.items[3].columns[0]`) plus the 1-based `line`/
-    /// `column` pinpoint the offending key — `serde_yaml::from_value`
-    /// drops both, which is why one mistyped top-level key used to
-    /// surface only as a flood of downstream binding errors. `message`
+    /// `column` pinpoint the offending key — a read of the pass-1 tree
+    /// (`yaml::from_value`) would drop the location, and reading without
+    /// the path is why one mistyped top-level key used to surface only as
+    /// a flood of downstream binding errors. `message`
     /// is the English default rendering; the structured fields are kept
     /// separate so diagnostics can later map them into typed args
     /// without re-parsing the string.
@@ -78,43 +80,44 @@ impl From<serde_json::Error> for CoreError {
 }
 
 impl CoreError {
-    /// Builds a [`CoreError::Located`] from a `serde_path_to_error`
-    /// failure, extracting the field path and the underlying YAML
-    /// line/column. Attacker-controlled text (an unbounded unknown key
-    /// name, a deeply nested path) is bounded by the [`Echo`] field type,
-    /// so a hostile document cannot blow up the error message or repaint
-    /// the terminal reading it. `fault` is the item the failure was
-    /// re-located to, when there is one: its path replaces the truncated one
-    /// and the location, which points at the enclosing enum, is dropped.
-    pub(crate) fn located(
-        what: &'static str,
-        err: serde_path_to_error::Error<serde_yaml::Error>,
-        fault: Option<ItemFault>,
-    ) -> Self {
-        let path = err.path().to_string();
-        let inner = err.into_inner();
-        let (line, column) = inner
-            .location()
-            .map(|loc| (loc.line(), loc.column()))
-            .unwrap_or((0, 0));
-        let message = Echo::from(inner.to_string());
-        match fault {
-            Some(fault) => CoreError::Located {
+    /// The error a parse door returns for a refusal of the YAML door
+    /// ([`crate::yaml`]), reading a `what` of `bytes` bytes. A refusal the
+    /// door locates (a key, a duplicate, the depth, a number, a tag, or a
+    /// typed read's field) is [`CoreError::Located`] with the door's path and
+    /// line/column; the root is spelled `.`. Attacker-controlled text (an
+    /// unbounded key name, a deep path) is already bounded by the [`Echo`]
+    /// fields the door hands over.
+    pub(crate) fn from_yaml(what: &'static str, bytes: usize, err: YamlError) -> Self {
+        match err.kind {
+            YamlErrorKind::TooLarge => CoreError::TooLarge {
                 what,
-                path: Echo::from(fault.path),
-                key: fault.key.map(Echo::from),
-                line: 0,
-                column: 0,
-                message,
+                bytes,
+                limit: MAX_INPUT_BYTES,
             },
-            None => CoreError::Located {
+            YamlErrorKind::Syntax => CoreError::Parse(err.message),
+            YamlErrorKind::NonFinite => CoreError::NonFinite(what),
+            _ => CoreError::Located {
                 what,
-                path: Echo::from(path),
+                path: err.path.unwrap_or(Echo::from(".")),
                 key: None,
-                line,
-                column,
-                message,
+                line: err.line,
+                column: err.column,
+                message: err.message,
             },
+        }
+    }
+
+    /// A typed-read failure re-located to the template item that raised it
+    /// ([`ItemFault`]): the item's path replaces the truncated one, and the
+    /// door's location, which points at the enclosing enum, is dropped.
+    pub(crate) fn in_item(what: &'static str, err: YamlError, fault: ItemFault) -> Self {
+        CoreError::Located {
+            what,
+            path: Echo::from(fault.path),
+            key: fault.key.map(Echo::from),
+            line: 0,
+            column: 0,
+            message: err.message,
         }
     }
 

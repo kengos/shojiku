@@ -111,12 +111,18 @@ fn a_holder_with_no_items_list_is_left_to_validation() {
 }
 
 #[test]
-fn a_tag_does_not_hide_a_level() {
+fn a_tag_cannot_hide_a_level() {
+    // The YAML door refuses a local tag before this walk runs, so a tagged
+    // chain never reaches it uncounted.
     let item = format!(
         "!box {{ type: container, items: !list [ {} ] }}",
         chain(MAX_CONTAINER_DEPTH, TEXT)
     );
-    refusal(&body(&item));
+    let err = parse_template(&body(&item)).expect_err("refused by the door");
+    assert!(
+        matches!(&err, CoreError::Located { message, .. } if message.as_str().contains("local YAML tags")),
+        "{err:?}"
+    );
 }
 
 #[test]
@@ -166,17 +172,18 @@ fn a_path_through_an_unknown_key_is_echoed_not_kept_whole() {
 }
 
 #[test]
-fn a_non_string_key_is_left_to_the_key_check() {
-    // The parse refuses one before this walk runs (`super::keys`); on its
-    // own, the walk does not count what sits under it.
+fn a_non_string_key_is_refused_before_this_walk_runs() {
+    // The walk counts only `items:` keys; a chain under a field-number key
+    // never reaches it, because the YAML door refuses the key first.
     let yaml = body(&format!(
         "{{ type: container, 5: [ {} ] }}",
         chain(MAX_CONTAINER_DEPTH + 1, TEXT)
     ));
-    let raw: serde_yaml::Value = serde_yaml::from_str(&yaml).expect("yaml");
-    super::template(&raw).expect("passed over");
-    let err = parse_template(&yaml).expect_err("refused by the key check");
-    assert!(matches!(err, CoreError::Located { .. }), "{err:?}");
+    let err = parse_template(&yaml).expect_err("refused by the door");
+    assert!(
+        matches!(&err, CoreError::Located { message, .. } if message.as_str().contains("is not a string")),
+        "{err:?}"
+    );
 }
 
 /// Parses `yaml` on a thread the size of a test thread: enough for the
@@ -193,9 +200,11 @@ fn on_a_test_sized_stack(yaml: String) -> Result<Template, CoreError> {
 }
 
 #[test]
-fn the_deepest_chain_the_parser_accepts_is_refused_not_read() {
-    // 61 containers is as deep as serde_yaml's own limit lets this shape go.
-    let deepest = 61;
+fn the_deepest_chain_the_door_reads_is_refused_not_read() {
+    // 57 containers is as deep as the YAML door's bound lets this shape go:
+    // four collections above the first item, two per container, one for the
+    // innermost text, 2 × 57 + 5 = 119.
+    let deepest = 57;
     for yaml in [
         body(&chain(deepest, TEXT)),
         format!("bogus: 1\n{}", body(&chain(deepest, TEXT))),
@@ -208,10 +217,13 @@ fn the_deepest_chain_the_parser_accepts_is_refused_not_read() {
         let err = on_a_test_sized_stack(yaml).expect_err("refused");
         assert!(matches!(err, CoreError::ContainerDepth { .. }), "{err:?}");
     }
-    let past_the_parser =
+    let past_the_door =
         on_a_test_sized_stack(body(&chain(deepest + 1, TEXT))).expect_err("refused");
     assert!(
-        matches!(past_the_parser, CoreError::Parse(_)),
-        "{past_the_parser:?}"
+        matches!(&past_the_door, CoreError::Located { message, .. } if message.as_str().contains("nests deeper than")),
+        "{past_the_door:?}"
     );
+    // Past the door's bound the refusal is the door's, so the code is a
+    // parse error rather than validation's `container_depth_exceeded`.
+    assert_eq!(past_the_door.to_diagnostic().code, "parse_error");
 }

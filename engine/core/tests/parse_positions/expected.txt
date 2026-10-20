@@ -6,6 +6,30 @@ line: 4
 column: 11
 message: properties.name.type: unknown variant `strin`, expected one of `string`, `number`, `integer`, `boolean`, `object`, `array` at line 4 column 11
 
+## definitions-duplicate-key.yml
+located definitions
+path: properties.name
+key: -
+line: 4
+column: 5
+message: the key `type` appears twice in one mapping
+
+## definitions-local-tag.yml
+located definitions
+path: properties.name
+key: -
+line: 3
+column: 9
+message: local YAML tags (`!name`) are not supported
+
+## definitions-non-string-property-key.yml
+located definitions
+path: properties
+key: -
+line: 3
+column: 3
+message: mapping key `1` is not a string; every key must be one (quote it if it is a name)
+
 ## definitions-root-not-object.yml
 located definitions
 path: type
@@ -26,6 +50,14 @@ line: 5
 column: 5
 message: properties.name: unknown field `lable`, expected one of `type`, `format`, `title`, `description`, `example`, `enum`, `minLength`, `maxLength`, `minimum`, `maximum`, `minItems`, `maxItems`, `required`,…
 
+## definitions-v1-groups-with-non-string-key.yml
+located definitions
+path: groups[0]
+key: -
+line: 3
+column: 5
+message: mapping key `1` is not a string; every key must be one (quote it if it is a name)
+
 ## definitions-v1-groups.yml
 located definitions
 path: groups
@@ -34,12 +66,43 @@ line: 0
 column: 0
 message: the `groups` list is the retired v1 form; definitions now use the OpenAPI-schema shape (`type: object` + `properties`) — see docs/engine/definitions.md
 
+## params-duplicate-key.yml
+located params
+path: order
+key: -
+line: 2
+column: 3
+message: the key `code` appears twice in one mapping
+
+## params-empty.yml
+ok null
+
 ## params-integer-past-64-bits.yml
-parse
-message: order.total: invalid type: integer `18446744073709551616` as u128, expected any YAML value at line 2 column 10
+located params
+path: order.total
+key: -
+line: 2
+column: 10
+message: the integer `18446744073709551616` is outside the 64-bit range
+
+## params-nesting-125-levels.yml
+located params
+path: deep[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][0][…
+key: -
+line: 1
+column: 126
+message: the document nests deeper than 120 levels
 
 ## params-non-finite.yml
 non-finite params
+
+## params-non-string-key.yml
+located params
+path: totals
+key: -
+line: 2
+column: 3
+message: mapping key `2024` is not a string; every key must be one (quote it if it is a name)
 
 ## params-scalar-edges.yml
 ok {"base":{"x":1},"merged":{"<<":{"x":1},"y":2},"octal":"017","octal_prefixed":15,"past_128_bits":1e+40,"past_f64":"10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","standard_tag":"5","underscored":"1_000","yes":"yes"}
@@ -61,19 +124,19 @@ non-finite template
 
 ## template-non-string-key-at-root.yml
 located template
-path: (empty)
+path: .
 key: -
-line: 0
-column: 0
-message: mapping key `5` is not a string; every template key must be one (quote it if it is a name)
+line: 1
+column: 1
+message: mapping key `5` is not a string; every key must be one (quote it if it is a name)
 
 ## template-non-string-key.yml
 located template
 path: sections.body.items[0]
 key: -
-line: 0
-column: 0
-message: mapping key `5` is not a string; every template key must be one (quote it if it is a name)
+line: 6
+column: 9
+message: mapping key `5` is not a string; every key must be one (quote it if it is a name)
 
 ## template-not-a-mapping.yml
 located template
@@ -84,8 +147,12 @@ column: 1
 message: invalid type: sequence, expected struct Template
 
 ## template-syntax-duplicate-key.yml
-parse
-message: sections.body: duplicate entry with key "type" at line 3 column 5
+located template
+path: sections.body
+key: -
+line: 3
+column: 5
+message: the key `type` appears twice in one mapping
 
 ## template-syntax-tab-indent.yml
 parse
@@ -109,11 +176,11 @@ message: sections: unknown field `key`, expected one of `id`, `label`, `type`, `
 
 ## template-tagged-value.yml
 located template
-path: sections.body.items[0]
+path: sections.body.items[0].text
 key: -
-line: 0
-column: 0
-message: sections.body.items[0].text: untagged and internally tagged enums do not support enum input at line 6 column 15
+line: 6
+column: 15
+message: local YAML tags (`!name`) are not supported
 
 ## template-unknown-body-type.yml
 located template

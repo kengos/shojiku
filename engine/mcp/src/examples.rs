@@ -140,7 +140,7 @@ pub(crate) fn find(id: &str) -> Option<&'static CatalogEntry> {
 /// their prose is poorer. The catalog itself comes from `embed::ENTRIES`,
 /// so nothing disappears from the wire either way.
 fn parse_gallery(source: &str) -> Vec<GalleryEntry> {
-    serde_yaml::from_str::<Gallery>(source)
+    shojiku_core::yaml::from_str::<Gallery>(source)
         .map(|g| g.entries)
         .unwrap_or_default()
 }

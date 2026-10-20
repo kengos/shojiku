@@ -159,7 +159,7 @@ impl TryFrom<PageSizeRepr> for PageSize {
                 )),
             },
             PageSizeRepr::Custom { w, h } => {
-                // Belt and braces alongside yaml_guard: page dimensions
+                // Belt and braces alongside the YAML door: page dimensions
                 // feed every layout basis, so bound them at the model.
                 // `Length` parse already guarantees finite values.
                 let valid = |l: Length| {
