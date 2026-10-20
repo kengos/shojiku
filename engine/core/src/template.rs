@@ -22,6 +22,7 @@ mod document;
 mod formats;
 mod imposition;
 mod items;
+mod kind;
 mod link;
 mod marks;
 mod repeat_flow;
@@ -37,6 +38,7 @@ pub use formats::{
     FormatDefaults, FormatRef, InlineFormat, NamedFormat, NamedFormatKind, TemplateDefaults,
     MAX_FORMATS,
 };
+pub use kind::ItemKind;
 
 pub use binding::{Binding, BindingScope, Bindings, MAX_BINDINGS};
 pub use char_grid::{CharGridItem, CharGridSpec, KinsokuMode, Markup, MAX_CHAR_GRID_CELLS};

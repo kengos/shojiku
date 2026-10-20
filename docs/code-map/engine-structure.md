@@ -51,6 +51,7 @@ variant shows.
 | arms | file | missing |
 | --- | --- | --- |
 | 15/15 | `core/src/template.rs` |  |
+| 15/15 | `core/src/template/kind.rs` |  |
 | 15/15 | `core/src/validate/bindings.rs` |  |
 | 15/15 | `core/src/validate/box_keys.rs` |  |
 | 15/15 | `core/src/validate/styles.rs` |  |
@@ -79,6 +80,7 @@ variant shows.
 - 2 `core/src/validate/bindings/decl/walks.rs`
 - 2 `core/src/validate/box_keys.rs`
 - 2 `layout/src/engine/flow.rs`
+- 1 `core/src/template/kind.rs`
 - 1 `core/src/validate/bindings.rs`
 - 1 `core/src/validate/bindings/cell.rs`
 - 1 `core/src/validate/presence.rs`
@@ -182,7 +184,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 85 files / 11045 lines; tests 103 files / 14793 lines
+### `core` (L1) — 92 files / 11704 lines; tests 106 files / 15140 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -191,6 +193,11 @@ first sentence of its `//!` header.
 - `src/definitions/shape.rs` 165 — Structural checks over a definitions schema: the root must be an object, nesting/node/enum caps hold, and structural keys sit on the right base types (serde can't express those conditionals).
 - `src/edges.rs` 262 — Box-edge insets: per-side `margin` / `padding` values on item boxes.
 - `src/error.rs` 190 — The crate error type for parsing untrusted input artifacts.
+- `src/facts.rs` 51 — The engine's per-key facts about the style wire, as data.
+- `src/facts/inherit.rs` 34 — Which style keys inherit: the CSS split, as the layout cascade applies it.
+- `src/facts/initial.rs` 96 — The value each style key takes when nothing authors it — the CSS "initial" value every cascade starts from at the document root.
+- `src/facts/paint.rs` 138 — Which surfaces paint with which style keys.
+- `src/facts/ranges.rs` 101 — The bounds a numeric style key is held to where it is used, and what an out-of-range value falls back to.
 - `src/geometry.rs` 225 — Positioning core — page geometry and box model.
 - `src/geometry/box_model.rs` 214 — Box geometry: the rectangles items occupy.
 - `src/geometry/flex.rs` 142 — Flex layout keys on item boxes (box-model Phase 2): the layout-mode key and the content-alignment enums.
@@ -200,7 +207,7 @@ first sentence of its `//!` header.
 - `src/geometry/point_spec.rs` 185 — A `line` endpoint: authored coordinates, or an anchor to another item.
 - `src/interpolate.rs` 178 — `{key}` / `{key:format}` interpolation inside static text.
 - `src/length.rs` 229 — Template length values: absolute points/physical units, a percentage of the parent, or a font-relative `em`/`rem`.
-- `src/lib.rs` 67 — Shojiku data model.
+- `src/lib.rs` 69 — Shojiku data model.
 - `src/params.rs` 48 — `params` — runtime data supplied by the calling application.
 - `src/parse.rs` 78 — Two-pass typed parse shared by the template and definitions entry points.
 - `src/parse/locate.rs` 124 — Re-locates a template parse failure that the tagged-enum buffering cut short.
@@ -218,14 +225,15 @@ first sentence of its `//!` header.
 - `src/schema/length.rs` 121 — Schemas for the length- and track-shaped wire types.
 - `src/schema/point.rs` 42 — The schema for a `line` endpoint.
 - `src/schema/value.rs` 43 — Schemas for the two wire types that parse through `serde_json::Value`.
-- `src/style.rs` 254 — Painting core — the appearance property bag.
+- `src/style.rs` 259 — Painting core — the appearance property bag.
 - `src/style/border.rs` 261 — Per-side border wire: the scalar-or-map forms of `borderWidth` / `borderColor` and the new `borderStyle` (solid | double).
 - `src/style/decoration.rs` 83 — `textDecoration`'s wire spelling: `none`, `underline`, `line_through`, or both lines as one whitespace-separated string (`underline line_through`, either order — CSS `text-decoration-line`).
 - `src/style/enums.rs` 207 — The keyword enums of the style system: line breaking, font variants, overflow policies, alignment, text decoration, and the JP micro-typography knobs (spacing trim, hanging punctuation).
 - `src/style/inert.rs` 85 — Context-inert style keys: which authored properties have no effect on a rich-text span or on a shape item, reported by wire name.
+- `src/style/key.rs` 133 — [`StyleKey`] — one property of a [`Style`], as a value.
 - `src/style/shapes.rs` 51 — Non-cascading paint style for the `line` item — a stroke primitive with no box, so the unified box-decoration [`super::Style`] does not apply (`rect` and the form marks converged onto `Style`; `line` keeps `width`/`color` deliberately).
 - `src/style/writing.rs` 179 — Writing-mode vocabulary: line direction (`writing-mode`), the character orientation within a vertical line (`text-orientation`), and tate-chu-yoko digit combining (`text-combine-upright`).
-- `src/template.rs` 283 ▲ — `templates` — page/section/item layout with data bindings.
+- `src/template.rs` 285 ▲ — `templates` — page/section/item layout with data bindings.
 - `src/template/binding.rs` 83 — The data-binding wire: which params key an item reads, which format variant it displays, and which DATA SCOPE the key is resolved in.
 - `src/template/char_grid.rs` 133 — `type: char_grid` — fixed character cells: genkoyoshi / kanji workbooks / application-form box grids.
 - `src/template/document.rs` 63 — Document metadata wire (`document:`): what the PDF says the document IS, rather than what it draws.
@@ -233,6 +241,7 @@ first sentence of its `//!` header.
 - `src/template/imposition.rs` 207 — Container and imposition (n-up) items: nested boxes, the `repeat` grid spec, and their hostile-input caps.
 - `src/template/items.rs` 174 — Leaf items: text (static/interpolated/bound), rect, line, image, and page-number.
 - `src/template/items/generated.rs` 156 — The engine-supplied leaves: items whose content the ENGINE fills in rather than the author drawing it — a QR encoded at layout time, a list expanded from an array, the page number the paginator counts, and the explicit break that drives it.
+- `src/template/kind.rs` 97 — [`ItemKind`] — an item's `type:` as a value, without the item.
 - `src/template/link.rs` 25 — Hyperlink wire (`link:`): a URL attached to a text/image item or span.
 - `src/template/marks.rs` 169 — Form marks: box-inscribed `ellipse` (circled-text / decoration) and `checkbox` (an always-drawn frame with a params-driven check).
 - `src/template/repeat_flow.rs` 40 — Flow repeat (`type: repeat_flow`): one auto-height card per array element, stacked in normal flow and paginating card-by-card.
@@ -366,7 +375,7 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 132 files / 19590 lines; tests 269 files / 37881 lines
+### `layout` (L3) — 132 files / 19590 lines; tests 270 files / 37968 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -519,7 +528,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 38 files / 4632 lines; tests 43 files / 5656 lines
+### `authoring` (L5) — 42 files / 5147 lines; tests 44 files / 5985 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -540,10 +549,14 @@ first sentence of its `//!` header.
 - `src/locale.rs` 57 — Locale-id resolution and pack loading from an overlay STRING (not a path).
 - `src/prepare.rs` 114 — The layout pipeline shared by `inspect` / `preview` / `render`: gate validation errors, load (or accept injected) assets, lay out, dedupe diagnostics.
 - `src/preview.rs` 81 — Preview rasterization: every page to PNG bytes (the export/download form) or raw RGBA pixels (the canvas form, skipping the PNG encode).
-- `src/reference.rs` 81 — `reference` — the key catalog: the machine-readable facts of the authorable wire, held ONCE so every surface that describes a key renders the same source.
-- `src/reference/annotate.rs` 99 — Merging the annotation layer into the derived catalog.
+- `src/reference.rs` 87 — `reference` — the key catalog: the machine-readable facts of the authorable wire, held ONCE so every surface that describes a key renders the same source.
+- `src/reference/address.rs` 77 — Node addresses: the dotted names (`Style.fontSize`, `Item.text.data`, `PointSpec.item`) the annotation layer and the engine's fact tables use to name a node of the catalog, resolved onto the subschema they name.
+- `src/reference/annotate.rs` 45 — Merging the annotation layer into the derived catalog.
 - `src/reference/annotations.rs` 296 ▲ — The annotation layer's RULE: every catalog node carries prose, and every annotation names a real node.
 - `src/reference/annotations/closed.rs` 90 — Which shapes have a CLOSED value set, and what those values are.
+- `src/reference/facts.rs` 165 — The engine's fact tables, written into the catalog as JSON Schema keywords so a reader of the artifact — the Designer's generic property panel, an agent — learns them from the same document as the shapes.
+- `src/reference/facts/capabilities.rs` 230 — Which catalog nodes an older engine may not carry, and the capability key that says this one does — so a panel built from the catalog can leave out a field the engine it talks to would refuse.
+- `src/reference/facts/refs.rs` 91 — Which catalog values name something defined elsewhere: another item's `id`, a named style, a named format, or a key of the params data.
 - `src/reference/generate.rs` 110 — Catalog generation — the half that needs the schema derive.
 - `src/reference/pages.rs` 240 — The rule that keeps a page's HAND-WRITTEN diagnostics section honest against the engine's own registries.
 - `src/reference/pages/prose.rs` 93 — The third rule: a code-SHAPED name in the prose OUTSIDE any `## Diagnostics` section.
