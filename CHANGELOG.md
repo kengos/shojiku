@@ -88,6 +88,16 @@ platform binaries.
   The catalog schema no longer offers the array. The Designer shows an
   array margin as the 25pt default, and the first margin edit replaces it.
 
+### Fixed
+
+- **The key catalog's length pattern admitted strings the engine refuses.**
+  The `pattern` on a length string (`"10mm"`, `"5%"`) and on a grid track's
+  `fr` weight checked only the END of the string, so `"abc10mm"` passed it.
+  Both are now anchored at the start as well and state the number the parser
+  reads, so a tool validating against `catalog.schema.json` refuses a string
+  the engine refuses for its shape. A value too large to represent
+  (`"1e400mm"`) still matches the pattern and is refused by the engine.
+
 ### Security
 
 - **A mapping key that is not a string is refused in params, definitions

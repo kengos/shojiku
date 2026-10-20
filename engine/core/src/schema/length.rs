@@ -14,12 +14,42 @@ use crate::{FlexBasis, GridTrack, Length, TrackSpec};
 use schemars::{json_schema, JsonSchema, Schema, SchemaGenerator};
 use std::borrow::Cow;
 
-/// The seven unit suffixes `parse_length_text` recognises, as a regex
-/// alternation. Only the SUFFIX is asserted: the numeric prefix goes through
-/// `str::parse::<f64>`, whose grammar (exponents, signs) is wider than any
-/// pattern worth writing here, and the finiteness check that follows is a
-/// value bound rather than a shape.
-const UNIT_SUFFIX: &str = r"(%|pt|rem|em|mm|cm|in)\s*$";
+// Every class in these patterns is spelled out — `[0-9]` rather than `\d`,
+// an explicit whitespace class rather than `\s`, and `-` escaped inside a
+// class — so a pattern means the same thing in every regex dialect a catalog
+// reader might run: `\d` matches non-ASCII digits in Python and .NET, `\s`
+// matches U+FEFF in JavaScript, and an unescaped `-` in a class is a syntax
+// error under JavaScript's `v` flag. A test holds the spelling.
+
+/// The unsigned decimal number `str::parse::<f64>` reads, written so no
+/// input has two ways to match: digits with an optional fraction, or a bare
+/// fraction, then an optional exponent. The parser also takes `inf` and
+/// `nan`, which its finiteness check then refuses, so the pattern leaves
+/// them out; an exponent large enough to overflow is a value bound, not a
+/// shape, and still matches.
+const UNSIGNED: &str = r"([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][+\-]?[0-9]+)?";
+
+/// The whitespace the patterns allow where the parser trims: ASCII only,
+/// spelled out. `str::trim` drops every Unicode `White_Space` character, but
+/// a JavaScript `\s` also matches U+FEFF, which `trim` keeps — so `\s`
+/// would admit `"\u{FEFF}10mm"`, a string the engine refuses. The explicit
+/// class is narrower than the parser instead (a no-break space is trimmed
+/// but not offered), the direction that never teaches a rejected input.
+const WS: &str = r"[\t\n\v\f\r ]*";
+
+/// A whole length string. The parser trims the input and then the number,
+/// so whitespace is allowed at both ends and before the unit. Anchored at
+/// both ends: a pattern is a search, so without `^` it accepts any string
+/// that merely ENDS in a unit (`"abc10mm"`).
+fn length_pattern() -> String {
+    format!(r"^{WS}[+\-]?{UNSIGNED}{WS}(%|pt|rem|em|mm|cm|in){WS}$")
+}
+
+/// An `fr` weight. The parser refuses a negative weight, so the only sign
+/// offered is `+`.
+fn fr_pattern() -> String {
+    format!(r"^{WS}\+?{UNSIGNED}{WS}fr{WS}$")
+}
 
 /// `10` (pt) or `"10mm"` / `"5%"` / `"2em"`. A bare string with no unit —
 /// `"10"` — is refused, which is why the pattern is here rather than a plain
@@ -33,7 +63,7 @@ impl JsonSchema for Length {
         json_schema!({
             "oneOf": [
                 { "type": "number" },
-                { "type": "string", "pattern": UNIT_SUFFIX },
+                { "type": "string", "pattern": length_pattern() },
             ],
         })
     }
@@ -63,8 +93,8 @@ impl JsonSchema for GridTrack {
             "oneOf": [
                 { "type": "number" },
                 { "const": "auto" },
-                { "type": "string", "pattern": r"fr\s*$" },
-                { "type": "string", "pattern": UNIT_SUFFIX },
+                { "type": "string", "pattern": fr_pattern() },
+                { "type": "string", "pattern": length_pattern() },
             ],
         })
     }

@@ -224,7 +224,15 @@ injected at parse). The template model splits along CSS lines.
   delegate says "any number or string" where `flexBasis` takes `content`
   or `0`), which is the direction that misleads an agent — so each is
   pinned two-sidedly in `schema/tests/`: every declared form parses
-  through the real `Deserialize`, and one excluded form does not.
+  through the real `Deserialize`, and one excluded form does not. That
+  pair never evaluates a string arm's `pattern`, so the length and track
+  patterns get a third check (`strings_agree`): the pattern itself, run with
+  `regex-lite` (a dev-dependency), must give the parser's answer on a list
+  of strings both ways (`schema_narrower` lists where the catalog is
+  deliberately narrower) — the patterns are anchored at both ends and use
+  only classes every regex dialect reads alike (`[0-9]`, an explicit
+  whitespace class, an escaped `-`), which `patterns_use_only_portable_classes`
+  holds.
 - `schema/length.rs` — `Length` (number | unit-suffixed string),
   `FlexBasis` (`content` | `0`), `GridTrack` (number | `auto` | `<n>fr` |
   length), `TrackSpec` (integer count | track sequence).

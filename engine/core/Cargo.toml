@@ -22,5 +22,8 @@ thiserror = { workspace = true }
 shojiku-diagnostics = { workspace = true }
 schemars = { workspace = true, optional = true }
 
+[dev-dependencies]
+regex-lite = { workspace = true }
+
 [lints]
 workspace = true
