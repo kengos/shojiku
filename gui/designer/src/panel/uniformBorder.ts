@@ -9,17 +9,17 @@
 //   * `engine/layout/src/engine/char_grid.rs` states it literally — the width is
 //     `bw.uniform().unwrap_or_else(|| bw.sides()[0])` (:196) and `authored()`
 //     (:230) walks `styleNames`, then the item's own style, and NOTHING below.
-//   * `engine/layout/src/engine/marks.rs`'s `shape_paint` (:190-230) quotes
+//   * `engine/layout/src/engine/marks.rs`'s `shape_paint` (:173-219) quotes
 //     neither: it takes `computed.border_widths[0]` off
 //     `resolve_style(names, inline)` and keeps a separate `authored` presence
 //     flag over the `MAX_STYLE_NAMES` window.
 //
 // They agree, for two independent reasons worth writing down rather than
 // re-deriving: `ComputedStyle::overlaid` replaces `border_width` WHOLESALE
-// (`style.rs:213`, `self.border_widths = v.sides()`), so a later layer never
+// (`style.rs:212`, `self.border_widths = v.sides()`), so a later layer never
 // merges into an earlier one side-wise; and `ComputedStyle::base` resets
 // `backgroundColor`/`borderWidth`/`borderColor` as NON-inherited
-// (`style.rs:145-165`), so there is nothing below the named styles to fall to.
+// (`style.rs:144-164`), so there is nothing below the named styles to fall to.
 //
 // Both facts are load-bearing for what a control may author:
 //

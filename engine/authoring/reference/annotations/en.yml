@@ -987,7 +987,8 @@ TextMark.padding: >-
   so the oval stays positive.
 TextMark.style: >-
   The oval's decoration subset — border width and colour, background colour and
-  opacity — with a 1 pt outline default when no layer authors a width.
+  opacity — with a 1 pt outline default when no layer authors a width. Text
+  keys and a border pattern warn `shape_style_ignored`.
 TextMark.styleNames: >-
   Named `styles:` entries layered under the mark's inline style, in listed
   order.
@@ -1637,7 +1638,8 @@ Item.ellipse.box: >-
   ellipse has no intrinsic size to fall back on.
 Item.ellipse.style: >-
   This mark's inline style, the decoration subset, with a 1 pt outline default
-  when no layer authors a width. Inert text keys warn `shape_style_ignored`.
+  when no layer authors a width. Inert text keys and a border pattern (the one
+  outline stroke is always solid) warn `shape_style_ignored`.
 Item.ellipse.styleNames: >-
   Named `styles:` entries layered under this mark's inline style, in listed
   order.
@@ -1671,8 +1673,8 @@ Item.checkbox.box: >-
   `mark_missing_size` and is skipped.
 Item.checkbox.style: >-
   This checkbox's inline style, the decoration subset, with a 1 pt outline
-  default when no layer authors a width. Inert text keys warn
-  `shape_style_ignored`.
+  default when no layer authors a width. Inert text keys and a border pattern
+  (the one outline stroke is always solid) warn `shape_style_ignored`.
 Item.checkbox.styleNames: >-
   Named `styles:` entries layered under this checkbox's inline style, in listed
   order.

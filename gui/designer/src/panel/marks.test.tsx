@@ -190,8 +190,8 @@ describe('the paint cluster', () => {
   it('gives a mark the uniform outline, NOT the per-side border editor', () => {
     // The border editor authors three things a shape does not take: a per-side
     // map (`shape_border_sides_ignored`), a corner radius
-    // (`border_radius_ignored`), and a `borderStyle`, which is silently inert.
-    // Only the first two are assertable — nothing reports the third.
+    // (`border_radius_ignored`), and a `borderStyle`, which a mark never draws
+    // (validation reports it as `shape_style_ignored`, pinned in engine/core).
     panel({ type: 'ellipse', box: { w: 60, h: 40 } });
     openStyle();
     expect(screen.getByText('Outline')).toBeTruthy();

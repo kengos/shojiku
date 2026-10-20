@@ -24,14 +24,54 @@ pub struct ScalarRange {
 impl ScalarRange {
     /// Whether `value` is finite and inside the interval.
     pub fn admits(&self, value: f64) -> bool {
+        self.clears_min(value) && value <= self.max
+    }
+
+    /// Whether `value` is finite and not below the interval. The guards that
+    /// report a too-large value under its own code ask this first.
+    pub fn clears_min(&self, value: f64) -> bool {
         let above_min = if self.min_exclusive {
             value > self.min
         } else {
             value >= self.min
         };
-        value.is_finite() && above_min && value <= self.max
+        value.is_finite() && above_min
     }
 }
+
+/// `fontSize`, on the resolved pt.
+pub const FONT_SIZE: ScalarRange = ScalarRange {
+    min: 0.0,
+    min_exclusive: true,
+    max: MAX_TYPE,
+    fallback: DEFAULT_FONT_SIZE_PT,
+};
+
+/// The `lineHeight` multiplier.
+pub const LINE_HEIGHT: ScalarRange = ScalarRange {
+    min: 0.0,
+    min_exclusive: true,
+    max: MAX_TYPE,
+    fallback: DEFAULT_LINE_HEIGHT,
+};
+
+/// `letterSpacing`, on the resolved pt: negative tightens, as in CSS, and
+/// the value is added to every advance, so an absurd magnitude multiplies by
+/// the content length.
+pub const LETTER_SPACING: ScalarRange = ScalarRange {
+    min: -MAX_TYPE,
+    min_exclusive: false,
+    max: MAX_TYPE,
+    fallback: 0.0,
+};
+
+/// `borderWidth`: `0` is its initial value, "no border".
+pub const BORDER_WIDTH: ScalarRange = ScalarRange {
+    min: 0.0,
+    min_exclusive: false,
+    max: MAX_STROKE,
+    fallback: 0.0,
+};
 
 /// Font size and line height cap at 1000 each, so their PRODUCT — the
 /// tallest line box admitted — is the layout's own 1e6 pt resolution cap.
@@ -66,12 +106,12 @@ pub const OPACITY: ScalarRange = ScalarRange {
 /// resolves it. `None` for keyword, colour and string keys, and for
 /// `borderRadius`, which is checked after resolution against the box.
 pub fn range(key: StyleKey) -> Option<ScalarRange> {
-    let (min, min_exclusive, max, fallback) = match key {
-        StyleKey::FontSize => (0.0, true, MAX_TYPE, DEFAULT_FONT_SIZE_PT),
-        StyleKey::LineHeight => (0.0, true, MAX_TYPE, DEFAULT_LINE_HEIGHT),
-        StyleKey::LetterSpacing => (-MAX_TYPE, false, MAX_TYPE, 0.0),
-        StyleKey::BorderWidth => (0.0, false, MAX_STROKE, 0.0),
-        StyleKey::Opacity => return Some(OPACITY),
+    match key {
+        StyleKey::FontSize => Some(FONT_SIZE),
+        StyleKey::LineHeight => Some(LINE_HEIGHT),
+        StyleKey::LetterSpacing => Some(LETTER_SPACING),
+        StyleKey::BorderWidth => Some(BORDER_WIDTH),
+        StyleKey::Opacity => Some(OPACITY),
         StyleKey::FontFamily
         | StyleKey::Color
         | StyleKey::TextAlign
@@ -90,12 +130,6 @@ pub fn range(key: StyleKey) -> Option<ScalarRange> {
         | StyleKey::TextDecoration
         | StyleKey::WritingMode
         | StyleKey::TextOrientation
-        | StyleKey::TextCombineUpright => return None,
-    };
-    Some(ScalarRange {
-        min,
-        min_exclusive,
-        max,
-        fallback,
-    })
+        | StyleKey::TextCombineUpright => None,
+    }
 }

@@ -1,25 +1,10 @@
-//! The fact tables against what the wire accepts and against the two
-//! context-inert lists validation already holds.
+//! The fact tables against what the wire accepts, and the rows the
+//! context-inert lists are derived from.
 
 use super::*;
 use crate::style::Style;
 use crate::ItemKind;
 use std::collections::BTreeSet;
-
-/// A style authoring every key once.
-fn every_key() -> Style {
-    serde_yaml::from_str(
-        "{ fontSize: 12, fontFamily: Serif, lineHeight: 1.5, color: '#112233', \
-         textAlign: center, verticalAlign: middle, lineBreak: strict, \
-         textSpacingTrim: trim_start, hangingPunctuation: allow_end, \
-         backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#000000', \
-         borderStyle: dashed, borderRadius: 2, textOverflow: ellipsis, \
-         fontWeight: bold, fontStyle: italic, letterSpacing: 1, overflow: hidden, \
-         textDecoration: underline, opacity: 0.5, writingMode: vertical_rl, \
-         textOrientation: upright, textCombineUpright: all }",
-    )
-    .expect("every key parses")
-}
 
 fn names(keys: impl IntoIterator<Item = StyleKey>) -> BTreeSet<&'static str> {
     keys.into_iter().map(StyleKey::as_str).collect()
@@ -93,30 +78,6 @@ fn inheritance_is_the_css_text_half() {
     }
 }
 
-/// The span list validation already holds is the complement of the span
-/// row here.
-#[test]
-fn the_span_row_matches_the_span_inert_list() {
-    let ignored: BTreeSet<&str> = every_key().ignored_span_keys().into_iter().collect();
-    let unpainted = names(keys().filter(|k| !painted_by(*k).contains(&Surface::Span)));
-    assert_eq!(ignored, unpainted);
-}
-
-/// The shape list validation holds is what NONE of the four shape surfaces
-/// paints with: it is checked once for the four together.
-#[test]
-fn the_shape_rows_together_match_the_shape_inert_list() {
-    let shapes = [
-        Surface::Item(ItemKind::Rect),
-        Surface::Item(ItemKind::Ellipse),
-        Surface::Item(ItemKind::Checkbox),
-        Surface::Mark,
-    ];
-    let ignored: BTreeSet<&str> = every_key().ignored_shape_keys().into_iter().collect();
-    let unpainted = names(keys().filter(|k| !shapes.iter().any(|s| painted_by(*k).contains(s))));
-    assert_eq!(ignored, unpainted);
-}
-
 #[test]
 fn no_row_names_a_surface_twice_or_a_kind_with_no_style() {
     let styleless = [
@@ -156,8 +117,8 @@ fn takes_adds_what_inherits_into_held_content() {
     assert!(holds_content(table) && !holds_content(Surface::Span));
 }
 
-/// Each form mark's row on its own: the union test above cannot see one of
-/// them, since `rect` paints a superset. A mark strokes its outline as one
+/// Each form mark's row on its own: `rect` paints a superset, so a union of
+/// the shapes would hide a wrong mark row. A mark strokes its outline as one
 /// path, so it takes neither a border pattern nor a radius.
 #[test]
 fn each_form_mark_paints_its_fill_border_and_alpha_only() {
@@ -204,4 +165,14 @@ fn surface_initials_name_the_surfaces_that_start_elsewhere() {
     );
     let derived = surface_initial(Surface::Item(ItemKind::CharGrid), StyleKey::FontSize);
     assert_eq!(derived.map(Initial::to_json), Some(serde_json::Value::Null));
+}
+
+#[test]
+fn the_table_cell_alignment_constant_is_the_keyword_the_table_states() {
+    let keyword = serde_json::to_value(TABLE_CELL_VERTICAL_ALIGN).expect("serializes");
+    assert_eq!(
+        surface_initial(Surface::Item(ItemKind::Table), StyleKey::VerticalAlign)
+            .map(Initial::to_json),
+        Some(keyword)
+    );
 }

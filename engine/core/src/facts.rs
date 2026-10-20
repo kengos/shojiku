@@ -30,9 +30,12 @@ mod tests;
 pub use inherit::inherits;
 pub use initial::{
     initial, line_initial, surface_initial, Initial, GRID_STROKE_PT, MARK_STROKE_PT,
+    TABLE_CELL_VERTICAL_ALIGN,
 };
 pub use paint::{holds_content, painted_by, takes, Surface};
-pub use ranges::{range, ScalarRange, LINE_WIDTH, OPACITY};
+pub use ranges::{
+    range, ScalarRange, BORDER_WIDTH, FONT_SIZE, LETTER_SPACING, LINE_HEIGHT, LINE_WIDTH, OPACITY,
+};
 
 /// Every surface the tables cover, for walks over them: each item kind
 /// (including the four that take no `style:`), a span, a text mark and the
