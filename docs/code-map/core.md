@@ -23,11 +23,22 @@ injected at parse). The template model splits along CSS lines.
   `ALL`, `as_str`) + `Item::kind()`: the kind without the payload, which the
   fact tables key on and a walk that only needs to know the kind can match.
 - `template/sections.rs` — `Sections::item_lists`: each present
-  section's top-level items with its path prefix (header, body, footer).
+  section's top-level items with its path prefix (header, body, footer),
+  and `Body::items` (a flow or absolute body's top-level items).
   The one place a walk learns where items live — validate's walks and
   `engine/image`'s preparation walks start here (all but
   `validate/box_keys.rs`, which needs the body's flow/absolute kind), so
   none covers the body and forgets the bands layout also draws.
+- `template/children.rs` — `Item::child_lists`: the boxes of items an
+  item nests, as `ChildList { holder, container, array_key }` — the
+  `ContainerItem` itself (its own `styleNames` as well as its `items`),
+  which of the four holds it (`ChildHolder`: a `container`, a `repeat`
+  cell, a `repeat_flow` card, a table column's `cell:`), and the array a
+  data-scoped box is placed for (`None` = the parent's scope).
+  `ChildList::box_path` / `items_path` give the box's and its list's
+  template paths. The match spells every leaf kind out, so a new nesting
+  kind must declare its boxes here. The descent step for a whole-tree
+  walk; no walk reads it yet.
 - `template/items.rs` — the drawn leaves: `TextItem` (incl. `mark`,
   `bindings` — ONE map per item serving its `text`/`link.url` AND its
   spans), `RectItem` (unified `Style`, no default stroke), `LineItem`,

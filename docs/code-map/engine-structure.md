@@ -51,6 +51,7 @@ variant shows.
 | arms | file | missing |
 | --- | --- | --- |
 | 15/15 | `core/src/template.rs` |  |
+| 15/15 | `core/src/template/children.rs` |  |
 | 15/15 | `core/src/template/kind.rs` |  |
 | 15/15 | `core/src/validate/bindings.rs` |  |
 | 15/15 | `core/src/validate/box_keys.rs` |  |
@@ -80,6 +81,7 @@ variant shows.
 - 2 `core/src/validate/bindings/decl/walks.rs`
 - 2 `core/src/validate/box_keys.rs`
 - 2 `layout/src/engine/flow.rs`
+- 1 `core/src/template/children.rs`
 - 1 `core/src/template/kind.rs`
 - 1 `core/src/validate/bindings.rs`
 - 1 `core/src/validate/bindings/cell.rs`
@@ -184,7 +186,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 92 files / 11716 lines; tests 106 files / 15171 lines
+### `core` (L1) — 93 files / 11841 lines; tests 108 files / 15346 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -233,9 +235,10 @@ first sentence of its `//!` header.
 - `src/style/key.rs` 133 — [`StyleKey`] — one property of a [`Style`], as a value.
 - `src/style/shapes.rs` 51 — Non-cascading paint style for the `line` item — a stroke primitive with no box, so the unified box-decoration [`super::Style`] does not apply (`rect` and the form marks converged onto `Style`; `line` keeps `width`/`color` deliberately).
 - `src/style/writing.rs` 179 — Writing-mode vocabulary: line direction (`writing-mode`), the character orientation within a vertical line (`text-orientation`), and tate-chu-yoko digit combining (`text-combine-upright`).
-- `src/template.rs` 285 ▲ — `templates` — page/section/item layout with data bindings.
+- `src/template.rs` 287 ▲ — `templates` — page/section/item layout with data bindings.
 - `src/template/binding.rs` 83 — The data-binding wire: which params key an item reads, which format variant it displays, and which DATA SCOPE the key is resolved in.
 - `src/template/char_grid.rs` 133 — `type: char_grid` — fixed character cells: genkoyoshi / kanji workbooks / application-form box grids.
+- `src/template/children.rs` 113 — [`Item::child_lists`] — the boxes of items an item nests, named by what holds them.
 - `src/template/document.rs` 63 — Document metadata wire (`document:`): what the PDF says the document IS, rather than what it draws.
 - `src/template/formats.rs` 126 — Template presentation defaults: the `defaults:` block (root style + per-type format defaults) and the top-level `formats:` named registry — the CSS-`:root` analog that lets a document say "dates look like THIS everywhere" while placements stay `data: { key }`.
 - `src/template/imposition.rs` 207 — Container and imposition (n-up) items: nested boxes, the `repeat` grid spec, and their hostile-input caps.
@@ -246,7 +249,7 @@ first sentence of its `//!` header.
 - `src/template/marks.rs` 169 — Form marks: box-inscribed `ellipse` (circled-text / decoration) and `checkbox` (an always-drawn frame with a params-driven check).
 - `src/template/repeat_flow.rs` 40 — Flow repeat (`type: repeat_flow`): one auto-height card per array element, stacked in normal flow and paginating card-by-card.
 - `src/template/ruby.rs` 37 — Ruby (furigana) annotations on a text item: reading pairs matched against the item's resolved content at layout time.
-- `src/template/sections.rs` 34 — Where a template's items live: the header band, the body and the footer band, each with the template path its diagnostics are addressed under.
+- `src/template/sections.rs` 44 — Where a template's items live: the header band, the body and the footer band, each with the template path its diagnostics are addressed under.
 - `src/template/spans.rs` 47 — Inline rich-text spans: styled fragments inside one text item.
 - `src/template/table.rs` 175 — Data-driven tables: columns, row spec, header spec, and empty-data behavior.
 - `src/template/table/column.rs` 84 — Table columns: what one column binds and renders per row — a bound value (text / QR / image) or a freely composed `cell:` sub-template.
