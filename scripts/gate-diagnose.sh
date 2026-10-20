@@ -87,7 +87,17 @@ fi
 # Every gate is --locked / --frozen-lockfile and refuses until the lockfile is
 # re-resolved. The tools' own messages name neither the make target nor the
 # scope.
-if has 'the lock file .* needs to be updated|ERR_PNPM_OUTDATED_LOCKFILE|frozen-lockfile|--locked'; then
+#
+# Matched on the tools' ERROR text only. `--locked` / `--frozen-lockfile` are
+# the flags, and every gate log carries them in its echoed recipe line
+# (`cargo clippy … --locked`, `pnpm install --frozen-lockfile`), so matching
+# them offered this remedy for any failure at all — a plain clippy lint included.
+# The pinned toolchain's cargo says "cannot update the lock file … because
+# --locked was passed"; the older "the lock file … needs to be updated" wording
+# is kept as it was. pnpm is matched by any ERR_PNPM_…LOCKFILE… error CODE
+# (OUTDATED_LOCKFILE is the frozen-install refusal), a token no recipe line
+# carries; re-resolving is the cure for most of them.
+if has '^error: cannot update the lock file|the lock file .* needs to be updated|ERR_PNPM_[A-Z_]*LOCKFILE'; then
 	say "REMEDY — a manifest moved and its lockfile was not re-resolved." \
 		"make engine:lock | gui:lock | site:lock | sdk:js:lock   (pick the scope that failed)" \
 		"engine additionally needs: git add engine/Cargo.lock"
@@ -126,9 +136,15 @@ if has '^VERSION (DRIFT|UNDERCOUNT) '; then
 		"moved or was deleted, so the rule no longer guards anything."
 fi
 
-if has 'line-budget\([a-z]+\): FAIL|exceeds .* lines'; then
-	say "REMEDY — a file crossed its line budget (engine .rs = 300 hard, gui .ts/.tsx = 150 executable)." \
-		"Split it, or add an in-file 'line-budget-exempt: <reason>' waiver if the file" \
+# One `line-budget: <file> is …` line per violation (`line-budget(gui): …` on
+# the gui side). Matched on that `<file> is` shape rather than on the prefix
+# alone, so neither the OK line nor a broken scan (`… only N files found`,
+# which is not a file over budget; the culprits section still quotes it)
+# offers this remedy.
+if has '^line-budget(\([a-z]+\))?: [^ ]+ is '; then
+	say "REMEDY — a file crossed its line budget (engine .rs = 300 hard, gui .ts/.tsx = 150 executable)," \
+		"or an engine .rs is missing its first-line //! role header (add one)." \
+		"Over budget: split it, or add an in-file 'line-budget-exempt: <reason>' waiver if the file" \
 		"genuinely cannot be split. Comments and blank lines cost nothing on the gui side."
 fi
 
@@ -146,9 +162,21 @@ if has 'Cannot connect to the Docker daemon|Is the docker daemon running'; then
 		"make investigate:docker   checks the daemon, the registry and a real pull."
 fi
 
-if has 'gate-lock|another gate is running|Resource temporarily unavailable'; then
+# Anchored on the refusal scripts/gate-lock.sh prints, never on the script's
+# NAME: every dockerized step echoes its recipe as `scripts/gate-lock.sh
+# scripts/target-slot.sh docker run …`, so matching `gate-lock` headed every
+# failing gate's diagnosis with a lock conflict that was not there.
+if has '^another gate is already running in this working tree:'; then
 	say "REMEDY — another gate holds this tree's lock. Two gates in one tree clobber each other." \
 		"make investigate:gates   says what is running. Separate worktrees may run in parallel."
+fi
+
+# rustfmt names the hunk but not the target that rewrites it. Formatting can
+# move a file's line count, which the generated engine map records, so the map
+# is regenerated after it or engine:lint stays red on the map check.
+if has '^Diff in /'; then
+	say "REMEDY — cargo fmt --check found unformatted Rust." \
+		"make engine:format   then make engine:map   (formatting moves the line counts the map records)."
 fi
 
 if has 'biome|lint/(a11y|suspicious|correctness|style)/'; then
