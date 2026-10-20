@@ -18,6 +18,7 @@ use std::collections::BTreeMap;
 
 mod binding;
 mod char_grid;
+mod children;
 mod document;
 mod formats;
 mod imposition;
@@ -34,6 +35,7 @@ mod table;
 mod tests;
 mod visibility;
 
+pub use children::{ChildHolder, ChildList};
 pub use formats::{
     FormatDefaults, FormatRef, InlineFormat, NamedFormat, NamedFormatKind, TemplateDefaults,
     MAX_FORMATS,
