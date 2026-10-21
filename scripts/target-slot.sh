@@ -14,7 +14,10 @@
 #                                                 with it mounted over the target
 #   scripts/target-slot.sh release <lockdir>      give the lease back (gate-lock.sh)
 #   scripts/target-slot.sh status                 who holds which slot
-#   scripts/target-slot.sh clean [k]              drop free slot volumes
+#   scripts/target-slot.sh busy                   exit 0 while any slot is held
+#   scripts/target-slot.sh clean [k]              drop free slot volumes, one
+#                                                 `removed`/`kept` line each on
+#                                                 stdout (scripts/docker-clean.sh)
 #
 # THE LEASE. A slot is leased lazily, at a gate's first engine container, and
 # held until the OUTERMOST gate-lock.sh exits — so `make quiet T=verify` keeps
@@ -206,6 +209,19 @@ case "${1:-}" in
     fi
     rm -f "$lockdir/slot"
     ;;
+  busy)
+    # Exit 0, naming the holder, when any slot is leased by a live gate. The
+    # lease spans the whole outermost gate, not one container, so it is how
+    # scripts/docker-clean.sh tells a running engine gate from an idle daemon.
+    for owner in "$pool_dir"/*/lease/owner; do
+      [ -f "$owner" ] || continue
+      if alive "$(field "$owner" pid)"; then
+        echo "pid $(field "$owner" pid) holds slot $(basename "$(dirname "$(dirname "$owner")")")"
+        exit 0
+      fi
+    done
+    exit 1
+    ;;
   status)
     if [ "$slots" -le 0 ]; then echo "target pool: off (SHOJIKU_TARGET_SLOTS=0) — engine/target is on the bind mount"; exit 0; fi
     echo "target pool: $slots slots, state in $pool_dir"
@@ -238,7 +254,7 @@ case "${1:-}" in
     for vol in $vols; do
       k=${vol#"$prefix"}
       if ! takeable "$k"; then
-        say "slot $k is in use — kept (see: scripts/target-slot.sh status)"
+        echo "kept     volume $vol — slot in use (make investigate:gates)"
         continue
       fi
       if docker volume inspect "$vol" >/dev/null 2>&1; then
@@ -247,16 +263,16 @@ case "${1:-}" in
         stopped=$(docker ps -aq --filter "volume=$vol" --filter status=created --filter status=exited)
         if [ -n "$stopped" ]; then docker rm $stopped >/dev/null || true; fi
         if ! docker volume rm "$vol" >/dev/null; then
-          say "could not remove $vol — kept (docker ps -a --filter volume=$vol)"
+          echo "kept     volume $vol — could not remove (docker ps -a --filter volume=$vol)"
           continue
         fi
-        say "removed $vol"
+        echo "removed  volume $vol"
       fi
       rm -rf "${pool_dir:?}/$k"
     done
     ;;
   *)
-    echo "usage: target-slot.sh docker run <args...> | release <lockdir> | status | clean [k]" >&2
+    echo "usage: target-slot.sh docker run <args...> | release <lockdir> | status | busy | clean [k]" >&2
     exit 2
     ;;
 esac

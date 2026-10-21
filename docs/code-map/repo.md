@@ -468,7 +468,8 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   (nine — `ls mk/` is the check). Each holds both halves of
   its GATES — the public `<scope>:<job>` wrapper and the private
   `_<scope>-<job>` target carrying the recipe; a NON-gate target (the two
-  model-calling ones in `skills.mk`) carries its recipe directly, because the
+  model-calling ones in `skills.mk`, the `docker:clean:*` housekeeping in
+  `docker.mk`) carries its recipe directly, because the
   private half exists for the quiet PASS/FAIL treatment a gate needs and a
   non-gate does not. `make make:check`
   refuses a target filed under the wrong one. The root `Makefile` keeps
@@ -544,7 +545,15 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   because cargo's mtime freshness would otherwise serve one tree's build to
   another — and `last-tree` is written back only after that scrub succeeds,
   so an interrupted one is owed again. Off (`TARGET_SLOTS=0`) under `CI`, where engine/target stays on
-  the bind mount. `status` / `clean` back `investigate:gates` / `clean:target`.
+  the bind mount. `status` / `clean` back `investigate:gates` / `docker:clean:volumes`.
+  `docker-clean.sh` — the `docker:clean:*` housekeeping: stopped containers
+  of a `shojiku-*` image or volume, the free target slots (through
+  `target-slot.sh clean`, which owns the lease) and the cache volumes, this
+  WORK_TAG's built images; the caches and images are kept while
+  `target-slot.sh busy` reports a leased slot. Every resource prints a `removed` / `kept` line with
+  the reason; the fuzz corpus, other WORK_TAGs' images, base images and the
+  build cache are only listed. The image/volume names come in from make, so
+  none is re-derived in the script.
   `check-make-namespace.sh` — `make make:check`, the invariant over the
   target surface itself (CI job `versions`, no Docker): a target defined in
   `mk/<x>.mk` belongs to scope `<x>`, a public target is colon-named or
