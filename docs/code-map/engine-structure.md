@@ -60,34 +60,28 @@ variant shows.
 | 15/15 | `layout/src/engine/container.rs` |  |
 | 15/15 | `layout/src/engine/flow.rs` |  |
 | 10/15 | `layout/src/engine/flex/kind.rs` | Line, PageNumber, Repeat, RepeatFlow, PageBreak |
-| 7/15 | `core/src/validate/presence.rs` |  |
-| 6/15 | `core/src/validate/bindings/cell.rs` |  |
 | 6/15 | `core/src/validate/bindings/decl/surfaces.rs` |  |
-| 5/15 | `core/src/validate/bindings/decl/walks.rs` |  |
-| 5/15 | `core/src/validate/collect.rs` |  |
-| 5/15 | `image/src/prepare.rs` |  |
-| 5/15 | `image/src/prepare/cells/walk.rs` |  |
+| 5/15 | `core/src/validate/bindings/cell.rs` |  |
+| 4/15 | `core/src/validate/collect.rs` |  |
 | 4/15 | `core/src/validate/shapes.rs` |  |
+| 3/15 | `core/src/validate/presence.rs` |  |
+| 2/15 | `image/src/prepare/cells/walk.rs` |  |
+| 1/15 | `core/src/validate/bindings/decl/walks.rs` |  |
 | 1/15 | `core/src/validate/ruby.rs` |  |
 | 1/15 | `core/src/validate/spans.rs` |  |
+| 1/15 | `image/src/prepare.rs` |  |
 | 1/15 | `layout/src/engine/visibility.rs` |  |
 
 **Recursion through `Item::Container`** (its `ContainerItem` holds
 `Vec<Item>`) — every file that matches it, with occurrence count:
 
-- 5 `core/src/validate/collect.rs`
-- 3 `image/src/prepare/cells/walk.rs`
 - 2 `core/src/template.rs`
-- 2 `core/src/validate/bindings/decl/walks.rs`
-- 2 `core/src/validate/box_keys.rs`
 - 2 `layout/src/engine/flow.rs`
 - 1 `core/src/template/children.rs`
 - 1 `core/src/template/kind.rs`
 - 1 `core/src/validate/bindings.rs`
-- 1 `core/src/validate/bindings/cell.rs`
-- 1 `core/src/validate/presence.rs`
+- 1 `core/src/validate/box_keys.rs`
 - 1 `core/src/validate/styles.rs`
-- 1 `image/src/prepare.rs`
 - 1 `layout/src/engine/band.rs`
 - 1 `layout/src/engine/container.rs`
 - 1 `layout/src/engine/flex/kind.rs`
@@ -186,7 +180,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 93 files / 11841 lines; tests 108 files / 15346 lines
+### `core` (L1) — 93 files / 11759 lines; tests 108 files / 15369 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -256,24 +250,24 @@ first sentence of its `//!` header.
 - `src/template/table/row.rs` 90 — Body-row sizing and styling: the base/zebra layers and the per-row conditional layers a row's own data selects.
 - `src/template/visibility.rs` 75 — Params-conditional visibility: the `visible:` key every item carries.
 - `src/validate.rs` 238 — Binding validation: do the template's data keys exist, are formats valid, does the params tree actually contain the data?
-- `src/validate/bindings.rs` 247 — Per-item scalar binding checks: `data:` keys, interpolation segments, and their format variants.
-- `src/validate/bindings/cell.rs` 193 — Array-scoped binding checks for `repeat` cell / `repeat_flow` card / table `cell:` column contents: every `data:` key and `{{key}}` segment must be a declared field of the bound array group (table-column style) — unless the binding authors `scope: document`, which is checked against the top-level scalars instead.
+- `src/validate/bindings.rs` 255 — Per-item scalar binding checks: `data:` keys, interpolation segments, and their format variants.
+- `src/validate/bindings/cell.rs` 195 — Array-scoped binding checks for `repeat` cell / `repeat_flow` card / table `cell:` column contents: every `data:` key and `{{key}}` segment must be a declared field of the bound array group (table-column style) — unless the binding authors `scope: document`, which is checked against the top-level scalars instead.
 - `src/validate/bindings/decl.rs` 239 — Named binding declarations (`bindings:`): does each declaration point at a real key, can its name be referenced, is it actually used, and does it quietly shadow an ambient key of the same name?
 - `src/validate/bindings/decl/surfaces.rs` 65 — Which strings an item interpolates and which declaration map serves them — the item-shape half of the declaration checks, kept pure so adding a carrier is one arm in one place.
-- `src/validate/bindings/decl/walks.rs` 80 — The two walks over a section's items that drive the declaration checks — kept beside them rather than inside, so the checks and the traversal that feeds them stay separately readable.
+- `src/validate/bindings/decl/walks.rs` 63 — The two walks over a section's items that drive the declaration checks — kept beside them rather than inside, so the checks and the traversal that feeds them stay separately readable.
 - `src/validate/bindings/entry.rs` 115 — A `list`'s per-ENTRY scope: its `text:` template and its own `bindings:` declarations resolve against ONE ELEMENT of the array it binds, not against the ambient scope.
-- `src/validate/box_keys.rs` 86 — Context-inert authoring-key checks: keys that lay out nothing where they are written.
-- `src/validate/collect.rs` 253 — Template walks that gather items for cross-checks (tables, images, repeats) and enforce the container depth cap.
+- `src/validate/box_keys.rs` 89 — Context-inert authoring-key checks: keys that lay out nothing where they are written.
+- `src/validate/collect.rs` 178 — Template walks that gather items for cross-checks (tables, images, repeats) and enforce the container depth cap.
 - `src/validate/deprecated.rs` 55 — Wire forms that still parse and render but are marked for removal, each reported as `deprecated_syntax` so an author sees it a release before the form stops parsing.
 - `src/validate/document.rs` 66 — `document:` metadata checks: the interpolation keys each metadata string references, the charset scan that catches a `{品名}` mistake, and the two list caps.
 - `src/validate/equals.rs` 108 — What a declarative `{ key, equals?
 - `src/validate/formats.rs` 56 — Presentation-defaults checks: the `formats:` registry (reserved names, size cap) and `defaults.formats` (inline patterns only make sense on date/datetime).
-- `src/validate/presence.rs` 242 — Presence-binding validation, for both surfaces that carry one: a form mark's `data:` and any item's `visible:`.
+- `src/validate/presence.rs` 224 — Presence-binding validation, for both surfaces that carry one: a form mark's `data:` and any item's `visible:`.
 - `src/validate/ruby.rs` 54 — Structural checks for text-item `ruby` readings: empty entries, the MAX_RUBY_ENTRIES cap, and the per-entry length cap.
 - `src/validate/schema.rs` 237 — Definitions-schema checks: params-vs-schema validation (required keys, value types, ranges, enum membership, unknown keys) and the format/base-type coherence warning.
 - `src/validate/shapes.rs` 45 — Shape-style checks: inert style keys on the inline style of `rect`/ `ellipse`/`checkbox`/text `mark` items (`shape_style_ignored`) — each shape paints with only part of the box-decoration subset of [`Style`] (`crate::facts::painted_by`).
 - `src/validate/spans.rs` 65 — Structural checks for rich-text `spans`: content exclusivity, the MAX_SPANS cap, and span-inapplicable style keys.
-- `src/validate/styles.rs` 141 — `styleNames` cross-checks against the named-style registry, with the MAX_STYLES / MAX_STYLE_NAMES sanity caps.
+- `src/validate/styles.rs` 156 — `styleNames` cross-checks against the named-style registry, with the MAX_STYLES / MAX_STYLE_NAMES sanity caps.
 - `src/validate/tables.rs` 232 — Table checks: the bound array group, per-column content shape (`data` vs `cell` exclusivity), row-relative column keys, the row `conditionalStyles` predicates (and the `scope` they ignore), and the array-scoped bindings inside a `cell:` column's sub-template.
 - `src/yaml.rs` 118 — The one door YAML (and JSON, a subset of it) enters the engine through.
 - `src/yaml/build.rs` 222 — Reads a document into a [`Value`], refusing what the door refuses at the node that breaks the rule rather than in a walk afterwards.
@@ -319,17 +313,17 @@ first sentence of its `//!` header.
 - `src/lang/specs.rs` 101 — Pack value specs: number separators, per-code currency display, and semantic-unit display (plural categories + layout strings).
 - `src/lib.rs` 21 — Locale-aware value formatting.
 
-### `image` (L2) — 21 files / 2942 lines; tests 20 files / 2601 lines
+### `image` (L2) — 21 files / 2918 lines; tests 20 files / 2601 lines
 
 - `src/decode.rs` 158 — Raster pixel decoding to straight-alpha RGBA8.
 - `src/error.rs` 55 — Error type for asset classification, resolution, and decoding.
 - `src/geom.rs` 18 — Backend-neutral vector-path primitive shared by SVG assets, font glyph outlines, and both renderers (the drawing currency of the layout tree).
 - `src/lib.rs` 34 — `shojiku-image` — image assets for the render pipeline.
 - `src/policy.rs` 78 — Host-side policy for which image sources are acceptable.
-- `src/prepare.rs` 248 — Template + params walk: load every referenced image into an [`AssetStore`], enforcing the [`AssetPolicy`].
+- `src/prepare.rs` 237 — Template + params walk: load every referenced image into an [`AssetStore`], enforcing the [`AssetPolicy`].
 - `src/prepare/bundled.rs` 107 — Bundled-asset byte loading from either a filesystem directory (the CLI / MCP hosts) or host-injected bytes (the WASM host).
 - `src/prepare/cells.rs` 207 — Scoped per-element cell asset preparation: `type: image` table columns and `image` items inside a per-element cell — a `repeat`/`repeat_flow` cell or a table column's `cell:` — each load one asset per bound array element (`dyn:<array>[<i>].<key>`), all sharing one load-fanout cap.
-- `src/prepare/cells/walk.rs` 118 — Finding the per-element cells: which tables carry `type: image` columns, and which `data:`-bound `image` items sit inside a cell — a `repeat`/`repeat_flow` cell or a table column's `cell:`.
+- `src/prepare/cells/walk.rs` 105 — Finding the per-element cells: which tables carry `type: image` columns, and which `data:`-bound `image` items sit inside a cell — a `repeat`/`repeat_flow` cell or a table column's `cell:`.
 - `src/prepare/load.rs` 245 — Asset loading: static (template `src:`) and dynamic (params-bound) sources, path confinement, and byte->asset classification.
 - `src/raster.rs` 66 — Raster format sniffing and header-only dimension checks.
 - `src/raster/test_support.rs` 64 — Test-only fixture builders shared by the raster tests.

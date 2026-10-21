@@ -2,7 +2,7 @@
 //! checks — kept beside them rather than inside, so the checks and the
 //! traversal that feeds them stay separately readable.
 
-use crate::template::Item;
+use crate::template::{ChildHolder, Item};
 use shojiku_diagnostics::Diagnostics;
 
 use super::super::BindingCtx;
@@ -38,24 +38,8 @@ fn walk_structure(items: &[Item], prefix: &str, diags: &mut Diagnostics) {
     for (i, item) in items.iter().enumerate() {
         let path = format!("{prefix}[{i}]");
         check_item_structure(item, &path, diags);
-        match item {
-            Item::Container(container) => {
-                walk_structure(&container.items, &format!("{path}.items"), diags);
-            }
-            Item::Repeat(repeat) => {
-                walk_structure(&repeat.cell.items, &format!("{path}.cell.items"), diags);
-            }
-            Item::RepeatFlow(rf) => {
-                walk_structure(&rf.item.items, &format!("{path}.item.items"), diags);
-            }
-            Item::Table(table) => {
-                for (ci, column) in table.columns.iter().enumerate() {
-                    let Some(cell) = &column.cell else { continue };
-                    let cell_path = format!("{path}.columns[{ci}].cell.items");
-                    walk_structure(&cell.items, &cell_path, diags);
-                }
-            }
-            _ => {}
+        for list in item.child_lists() {
+            walk_structure(&list.container.items, &list.items_path(&path), diags);
         }
     }
 }
@@ -64,17 +48,16 @@ fn walk_keys(items: &[Item], ctx: &DeclCtx<'_>, prefix: &str, diags: &mut Diagno
     for (i, item) in items.iter().enumerate() {
         let path = format!("{prefix}[{i}]");
         check_item_keys(item, ctx, &path, diags);
-        match item {
-            Item::Container(container) => {
-                walk_keys(&container.items, ctx, &format!("{path}.items"), diags);
+        // A list's own keys read array ELEMENTS, so they are checked
+        // against the element scope rather than this one.
+        if let Item::List(list) = item {
+            super::super::entry::check_list_source(list, ctx, &path, diags);
+            super::super::entry::check_list_entries(list, ctx, &path, diags);
+        }
+        for list in item.child_lists() {
+            if list.holder == ChildHolder::Container {
+                walk_keys(&list.container.items, ctx, &list.items_path(&path), diags);
             }
-            // A list's own keys read array ELEMENTS, so they are checked
-            // against the element scope rather than this one.
-            Item::List(list) => {
-                super::super::entry::check_list_source(list, ctx, &path, diags);
-                super::super::entry::check_list_entries(list, ctx, &path, diags);
-            }
-            _ => {}
         }
     }
 }

@@ -3,7 +3,7 @@
 //! `Sections::item_lists`, so all of them cover the header and footer
 //! bands as well as the body.
 
-use crate::template::{Item, Template, MAX_CONTAINER_DEPTH};
+use crate::template::{ChildHolder, Item, Template, MAX_CONTAINER_DEPTH};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
 /// A data-driven repeat construct found in any section — the n-up `repeat`
@@ -30,49 +30,28 @@ pub(super) fn collect_repeats(template: &Template) -> Vec<RepeatRef<'_>> {
     fn push_from<'a>(items: &'a [Item], prefix: &str, repeats: &mut Vec<RepeatRef<'a>>) {
         for (i, item) in items.iter().enumerate() {
             let path = format!("{prefix}[{i}]");
-            // A nested repeat (inside a cell/card) is unsupported at
-            // layout, but still gets its own binding check.
+            // A nested repeat (inside a cell, a card or a `cell:` column)
+            // is unsupported at layout, but still gets its own binding
+            // check.
             match item {
-                Item::Repeat(repeat) => {
-                    let cell_path = format!("{path}.cell.items");
-                    repeats.push(RepeatRef {
-                        path,
-                        kind: "repeat",
-                        key: &repeat.data.key,
-                        cell_items: &repeat.cell.items,
-                        cell_path: cell_path.clone(),
-                    });
-                    push_from(&repeat.cell.items, &cell_path, repeats);
-                }
-                Item::RepeatFlow(rf) => {
-                    let cell_path = format!("{path}.item.items");
-                    repeats.push(RepeatRef {
-                        path,
-                        kind: "repeat_flow",
-                        key: &rf.data.key,
-                        cell_items: &rf.item.items,
-                        cell_path: cell_path.clone(),
-                    });
-                    push_from(&rf.item.items, &cell_path, repeats);
-                }
-                Item::Container(container) => {
-                    push_from(&container.items, &format!("{path}.items"), repeats);
-                }
-                Item::Table(table) => {
-                    // A `repeat` inside a table column's `cell:` is
-                    // unsupported at layout, but still gets its own
-                    // binding check.
-                    for (ci, column) in table.columns.iter().enumerate() {
-                        if let Some(cell) = &column.cell {
-                            push_from(
-                                &cell.items,
-                                &format!("{path}.columns[{ci}].cell.items"),
-                                repeats,
-                            );
-                        }
-                    }
-                }
+                Item::Repeat(repeat) => repeats.push(RepeatRef {
+                    path: path.clone(),
+                    kind: "repeat",
+                    key: &repeat.data.key,
+                    cell_items: &repeat.cell.items,
+                    cell_path: format!("{path}.cell.items"),
+                }),
+                Item::RepeatFlow(rf) => repeats.push(RepeatRef {
+                    path: path.clone(),
+                    kind: "repeat_flow",
+                    key: &rf.data.key,
+                    cell_items: &rf.item.items,
+                    cell_path: format!("{path}.item.items"),
+                }),
                 _ => {}
+            }
+            for list in item.child_lists() {
+                push_from(&list.container.items, &list.items_path(&path), repeats);
             }
         }
     }
@@ -96,40 +75,18 @@ pub(super) fn check_container_depth(
     diags: &mut Diagnostics,
 ) {
     for (i, item) in items.iter().enumerate() {
-        // A `repeat` cell / `repeat_flow` card is a container-equivalent
-        // box occupying this depth level, so its children nest one deeper.
-        let nested = match item {
-            Item::Container(container) => Some((&container.items, format!("{prefix}[{i}].items"))),
-            Item::Repeat(repeat) => Some((&repeat.cell.items, format!("{prefix}[{i}].cell.items"))),
-            Item::RepeatFlow(rf) => Some((&rf.item.items, format!("{prefix}[{i}].item.items"))),
-            // Every `cell:` column is its own container-equivalent box,
-            // so each nests one level deeper independently.
-            Item::Table(table) => {
-                for (ci, column) in table.columns.iter().enumerate() {
-                    let Some(cell) = &column.cell else { continue };
-                    let path = format!("{prefix}[{i}].columns[{ci}]");
-                    if depth > MAX_CONTAINER_DEPTH {
-                        diags.push(
-                            Diagnostic::new(Code::ContainerDepthExceeded)
-                                .arg("max", MAX_CONTAINER_DEPTH)
-                                .with_path(path),
-                        );
-                        return;
-                    }
-                    check_container_depth(
-                        &cell.items,
-                        depth + 1,
-                        &format!("{path}.cell.items"),
-                        diags,
-                    );
-                }
-                None
-            }
-            _ => None,
-        };
-        if let Some((children, child_prefix)) = nested {
-            let path = format!("{prefix}[{i}]");
+        let item_path = format!("{prefix}[{i}]");
+        // A `repeat` cell, a `repeat_flow` card and every `cell:` column
+        // is a container-equivalent box occupying this depth level, so its
+        // children nest one deeper — each column independently.
+        for list in item.child_lists() {
             if depth > MAX_CONTAINER_DEPTH {
+                // An over-deep column is reported at the column, one level
+                // above its `cell:` box; every other box at its item.
+                let path = match list.holder {
+                    ChildHolder::ColumnCell { column } => format!("{item_path}.columns[{column}]"),
+                    _ => item_path,
+                };
                 diags.push(
                     Diagnostic::new(Code::ContainerDepthExceeded)
                         .arg("max", MAX_CONTAINER_DEPTH)
@@ -137,7 +94,12 @@ pub(super) fn check_container_depth(
                 );
                 return;
             }
-            check_container_depth(children, depth + 1, &child_prefix, diags);
+            check_container_depth(
+                &list.container.items,
+                depth + 1,
+                &list.items_path(&item_path),
+                diags,
+            );
         }
     }
 }
@@ -149,24 +111,8 @@ pub(super) fn walk_sections(template: &Template, f: &mut impl FnMut(&Item, &str)
         for (i, item) in items.iter().enumerate() {
             let path = format!("{prefix}[{i}]");
             f(item, &path);
-            match item {
-                Item::Container(container) => {
-                    walk(&container.items, &format!("{path}.items"), f);
-                }
-                Item::Repeat(repeat) => {
-                    walk(&repeat.cell.items, &format!("{path}.cell.items"), f);
-                }
-                Item::RepeatFlow(rf) => {
-                    walk(&rf.item.items, &format!("{path}.item.items"), f);
-                }
-                Item::Table(table) => {
-                    for (ci, column) in table.columns.iter().enumerate() {
-                        if let Some(cell) = &column.cell {
-                            walk(&cell.items, &format!("{path}.columns[{ci}].cell.items"), f);
-                        }
-                    }
-                }
-                _ => {}
+            for list in item.child_lists() {
+                walk(&list.container.items, &list.items_path(&path), f);
             }
         }
     }
@@ -182,39 +128,16 @@ pub(super) fn collect_images(template: &Template) -> Vec<(String, &crate::templa
         images: &mut Vec<(String, &'a crate::template::ImageItem)>,
     ) {
         for (i, item) in items.iter().enumerate() {
-            match item {
-                Item::Image(image) => images.push((format!("{prefix}[{i}]"), image)),
-                Item::Container(container) => {
-                    push_from(&container.items, &format!("{prefix}[{i}].items"), images);
-                }
-                // A `repeat`/`repeat_flow` cell image is drawn element-scoped
-                // (a static `src:` shared, a `data:` per element), so its
-                // src/data exclusivity is checked like any other image.
-                Item::Repeat(repeat) => {
-                    push_from(
-                        &repeat.cell.items,
-                        &format!("{prefix}[{i}].cell.items"),
-                        images,
-                    );
-                }
-                Item::RepeatFlow(rf) => {
-                    push_from(&rf.item.items, &format!("{prefix}[{i}].item.items"), images);
-                }
-                // A table column's `cell:` image is drawn element-scoped
-                // like a repeat cell's, so its src/data exclusivity is
-                // checked the same way.
-                Item::Table(table) => {
-                    for (ci, column) in table.columns.iter().enumerate() {
-                        if let Some(cell) = &column.cell {
-                            push_from(
-                                &cell.items,
-                                &format!("{prefix}[{i}].columns[{ci}].cell.items"),
-                                images,
-                            );
-                        }
-                    }
-                }
-                _ => {}
+            let path = format!("{prefix}[{i}]");
+            if let Item::Image(image) = item {
+                images.push((path.clone(), image));
+            }
+            // An image in a `repeat`/`repeat_flow` cell or a table
+            // column's `cell:` is drawn element-scoped (a static `src:`
+            // shared, a `data:` per element), so its src/data exclusivity
+            // is checked like any other image.
+            for list in item.child_lists() {
+                push_from(&list.container.items, &list.items_path(&path), images);
             }
         }
     }
@@ -232,14 +155,16 @@ pub(super) fn collect_tables(template: &Template) -> Vec<(String, &crate::templa
         tables: &mut Vec<(String, &'a crate::template::TableItem)>,
     ) {
         for (i, item) in items.iter().enumerate() {
-            match item {
-                Item::Table(table) => tables.push((format!("{prefix}[{i}]"), table)),
-                Item::Container(container) => {
-                    push_from(&container.items, &format!("{prefix}[{i}].items"), tables);
+            let path = format!("{prefix}[{i}]");
+            if let Item::Table(table) = item {
+                tables.push((path.clone(), table));
+            }
+            // Tables inside a `repeat`/table cell are unsupported (layout
+            // warns + skips), so only a container is descended into.
+            for list in item.child_lists() {
+                if list.holder == ChildHolder::Container {
+                    push_from(&list.container.items, &list.items_path(&path), tables);
                 }
-                // Tables inside a `repeat`/table cell are unsupported
-                // (layout warns + skips), so they are not collected here.
-                _ => {}
             }
         }
     }

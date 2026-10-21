@@ -163,6 +163,29 @@ fn an_undefined_style_name_inside_a_cell_is_caught() {
 }
 
 #[test]
+fn style_names_are_reported_column_by_column_each_with_its_cell() {
+    // A column's own styleNames, then its `cell:` box and that box's
+    // children, before the next column's.
+    let t = column_table(
+        "          - cell:\n              styleNames: [boxed]\n              items:\n                - { type: text, text: hi, styleNames: [inner] }\n          - { data: { key: name }, styleNames: [later] }\n",
+    );
+    let diags = validate(None, &t, None);
+    let paths: Vec<_> = diags
+        .iter()
+        .filter(|d| d.code == "undefined_style_name")
+        .map(|d| d.path.as_deref().unwrap_or_default())
+        .collect();
+    assert_eq!(
+        paths,
+        [
+            "sections.body.items[0].columns[0].cell",
+            "sections.body.items[0].columns[0].cell.items[0]",
+            "sections.body.items[0].columns[1]",
+        ]
+    );
+}
+
+#[test]
 fn an_image_inside_a_cell_needs_exactly_one_source() {
     let t = column_table(
         "          - cell:\n              items:\n                - { type: image, src: a.png, data: { key: name } }\n",

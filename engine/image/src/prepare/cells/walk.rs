@@ -2,7 +2,7 @@
 //! columns, and which `data:`-bound `image` items sit inside a cell —
 //! a `repeat`/`repeat_flow` cell or a table column's `cell:`.
 
-use shojiku_core::{Item, TableItem, Template};
+use shojiku_core::{ChildHolder, Item, TableItem, Template};
 
 use super::CellImage;
 
@@ -15,12 +15,13 @@ pub(super) fn tables(template: &Template) -> Vec<(String, &TableItem)> {
     fn push_from<'a>(items: &'a [Item], prefix: &str, out: &mut Vec<(String, &'a TableItem)>) {
         for (index, item) in items.iter().enumerate() {
             let path = format!("{prefix}[{index}]");
-            match item {
-                Item::Table(table) => out.push((path, table.as_ref())),
-                Item::Container(container) => {
-                    push_from(&container.items, &format!("{path}.items"), out);
+            if let Item::Table(table) = item {
+                out.push((path.clone(), table.as_ref()));
+            }
+            for list in item.child_lists() {
+                if list.holder == ChildHolder::Container {
+                    push_from(&list.container.items, &list.items_path(&path), out);
                 }
-                _ => {}
             }
         }
     }
@@ -44,29 +45,33 @@ pub(super) fn element_cell_images(template: &Template) -> Vec<CellImage<'_>> {
     ) {
         for (i, item) in items.iter().enumerate() {
             let path = format!("{prefix}[{i}]");
-            match item {
-                Item::Image(image) => {
-                    // `src` wins over `data` at layout (the conflict is a
-                    // validate error; best-effort render shows the static
-                    // image), so a src-carrying item loads no per-element
-                    // assets — mirroring `guarded_image_atom`. A
-                    // `scope: document` binding is one shared asset, so it
-                    // loads through the shared walk instead.
-                    if super::super::is_element_scoped(image) {
-                        if let Some(binding) = &image.data {
-                            out.push(CellImage {
-                                array_key,
-                                binding_key: &binding.key,
-                                ident: image.id.as_deref(),
-                                path,
-                            });
-                        }
+            if let Item::Image(image) = item {
+                // `src` wins over `data` at layout (the conflict is a
+                // validate error; best-effort render shows the static
+                // image), so a src-carrying item loads no per-element
+                // assets — mirroring `guarded_image_atom`. A
+                // `scope: document` binding is one shared asset, so it
+                // loads through the shared walk instead.
+                if super::super::is_element_scoped(image) {
+                    if let Some(binding) = &image.data {
+                        out.push(CellImage {
+                            array_key,
+                            binding_key: &binding.key,
+                            ident: image.id.as_deref(),
+                            path: path.clone(),
+                        });
                     }
                 }
-                Item::Container(container) => {
-                    cell_items(&container.items, array_key, &format!("{path}.items"), out);
+            }
+            for list in item.child_lists() {
+                if list.holder == ChildHolder::Container {
+                    cell_items(
+                        &list.container.items,
+                        array_key,
+                        &list.items_path(&path),
+                        out,
+                    );
                 }
-                _ => {}
             }
         }
     }
@@ -76,37 +81,19 @@ pub(super) fn element_cell_images(template: &Template) -> Vec<CellImage<'_>> {
     fn walk<'a>(items: &'a [Item], prefix: &str, repeats: bool, out: &mut Vec<CellImage<'a>>) {
         for (i, item) in items.iter().enumerate() {
             let path = format!("{prefix}[{i}]");
-            match item {
-                Item::Repeat(repeat) if repeats => cell_items(
-                    &repeat.cell.items,
-                    &repeat.data.key,
-                    &format!("{path}.cell.items"),
-                    out,
-                ),
-                Item::RepeatFlow(rf) if repeats => cell_items(
-                    &rf.item.items,
-                    &rf.data.key,
-                    &format!("{path}.item.items"),
-                    out,
-                ),
-                // A `cell:` column's images are element-scoped to the
-                // table's rows, like a repeat cell's to its elements.
-                Item::Table(table) => {
-                    for (ci, column) in table.columns.iter().enumerate() {
-                        if let Some(cell) = &column.cell {
-                            cell_items(
-                                &cell.items,
-                                &table.data.key,
-                                &format!("{path}.columns[{ci}].cell.items"),
-                                out,
-                            );
-                        }
-                    }
+            for list in item.child_lists() {
+                let items_path = list.items_path(&path);
+                // A container keeps walking at this level; every other box
+                // is a per-element cell, scoped to the array it is placed
+                // for — a `cell:` column's images to the table's rows, like
+                // a repeat cell's to its elements.
+                let Some(array_key) = list.array_key else {
+                    walk(&list.container.items, &items_path, repeats, out);
+                    continue;
+                };
+                if repeats || matches!(list.holder, ChildHolder::ColumnCell { .. }) {
+                    cell_items(&list.container.items, array_key, &items_path, out);
                 }
-                Item::Container(container) => {
-                    walk(&container.items, &format!("{path}.items"), repeats, out);
-                }
-                _ => {}
             }
         }
     }

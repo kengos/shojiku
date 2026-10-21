@@ -64,8 +64,8 @@ struct PresenceCtx<'a> {
 }
 
 impl<'a> PresenceCtx<'a> {
-    /// Walks items tracking the enclosing `repeat` array group (`None` at
-    /// document scope), descending into containers and repeat cells.
+    /// Walks items tracking the enclosing array group (`None` at document
+    /// scope), descending into every box [`Item::child_lists`] yields.
     fn walk(&mut self, items: &[Item], array: Option<&str>, prefix: &str) {
         for (i, item) in items.iter().enumerate() {
             let path = format!("{prefix}[{i}]");
@@ -94,35 +94,17 @@ impl<'a> PresenceCtx<'a> {
                         self.check_binding(binding, array, &format!("{path}.mark"));
                     }
                 }
-                Item::Container(c) => self.walk(&c.items, array, &format!("{path}.items")),
-                Item::Repeat(r) => {
-                    self.walk(
-                        &r.cell.items,
-                        Some(&r.data.key),
-                        &format!("{path}.cell.items"),
-                    );
-                }
-                Item::RepeatFlow(rf) => {
-                    self.walk(
-                        &rf.item.items,
-                        Some(&rf.data.key),
-                        &format!("{path}.item.items"),
-                    );
-                }
-                // A `cell:` column's marks are scoped to the table's row
-                // element, exactly like a repeat cell's.
-                Item::Table(table) => {
-                    for (ci, column) in table.columns.iter().enumerate() {
-                        if let Some(cell) = &column.cell {
-                            self.walk(
-                                &cell.items,
-                                Some(&table.data.key),
-                                &format!("{path}.columns[{ci}].cell.items"),
-                            );
-                        }
-                    }
-                }
                 _ => {}
+            }
+            // A container keeps its parent's scope; a `repeat` cell, a
+            // `repeat_flow` card and a `cell:` column scope their marks to
+            // the array element they are placed for.
+            for list in item.child_lists() {
+                self.walk(
+                    &list.container.items,
+                    list.array_key.or(array),
+                    &list.items_path(&path),
+                );
             }
         }
     }
