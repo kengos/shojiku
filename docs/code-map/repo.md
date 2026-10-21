@@ -527,8 +527,11 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   culprits answer WHICH FILE, diagnose answers WHY and prints the command
   that fixes it (flake -> re-run one gate; `--locked` refusal ->
   `make <scope>:lock`; example drift -> `make examples:render`). Both normalise
-  ANSI + the `pnpm -r` package prefix first, and both are validated by
-  inducing a real failure, never by reading the regex.
+  ANSI + the `pnpm -r` package prefix first, should match the tool's OWN
+  output rather than a script name or flag (every log echoes its recipe
+  line, so `gate-lock` / `--locked` appear in passing runs too; the biome
+  and reference remedies still key on a name), and both are
+  validated by inducing a real failure, never by reading the regex.
   `gate-lock.sh` — one gate per working tree (re-entrant; the outermost
   hold exports its lock dir and pid). `target-slot.sh` — the pooled cargo
   target: every engine container runs through it (`TARGET_DOCKER`), which

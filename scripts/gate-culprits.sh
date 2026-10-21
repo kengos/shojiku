@@ -43,8 +43,17 @@ emit "biome:" "$(pick '^[^ ]+\.(ts|tsx|js|jsx|json|css):[0-9]+:[0-9]+ ')"
 # tsc: "src/x.ts(12,3): error TS2345: ..."
 emit "tsc:" "$(pick '^[^ ]+\([0-9]+,[0-9]+\): error TS[0-9]+')"
 
-# the line-budget gates print their violations inline
-emit "line budget:" "$(pick 'line-budget\([a-z]+\): (FAIL|[0-9])|exceeds')"
+# the line-budget gates print one `line-budget: <file> is …` line per violation
+# (`line-budget(gui): …` on the gui side), and the same prefix on their OK line,
+# which is excluded. Anchored on the prefix rather than on a word in the message:
+# an earlier `exceeds` alternative matched none of the real violation lines and
+# instead quoted rustfmt's config warning ("… cannot have a value that exceeds
+# `max_width`"), which every fmt run prints, as the failure.
+emit "line budget:" "$(pick '^line-budget(\([a-z]+\))?: ([^O]|O[^K])')"
+
+# cargo fmt --check: one `Diff in /repo/<file>:<line>:` header per hunk (the
+# path is the container mount).
+emit "rustfmt:" "$(pick '^Diff in /')"
 
 # coverage: cargo-llvm-cov prints NO message at all when it trips the
 # --fail-under-lines threshold — it just exits non-zero — so there is nothing to

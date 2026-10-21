@@ -47,26 +47,6 @@ file is only for output that could not answer **which file / which line
       block's `LF:` with its `LH:` in `engine/lcov.info`, then the block's
       `FNDA:0` entry for the closure.
 
-- [ ] `make_issue_lock_remedy_matches_the_recipe_echo` — **When**: `make
-      engine:lint` failed at `== fmt ==` on a plain rustfmt diff, with no
-      other gate running. **Not detected by**: the FAIL block's diagnosis
-      said "REMEDY — another gate holds this tree's lock", because
-      `scripts/gate-diagnose.sh` matches `gate-lock` anywhere in the log and
-      every dockerized step echoes its recipe as `scripts/gate-lock.sh docker
-      run …` — so any such step whose failure matches no earlier rule reads
-      as a lock conflict. **Recovered by**: `make investigate:gates` ("no gate
-      lock held in this tree") and reading the `Diff in …` lines in the log.
-      The same run's clippy failure (a plain lint in a test file) was
-      diagnosed as BOTH that lock remedy and "a manifest moved and its
-      lockfile was not re-resolved" — the lockfile rule's `--locked`
-      alternative matches the echoed `cargo clippy … --locked` recipe line
-      the same way.
-      **Seen again under `engine:verify`, with a second gap**: besides the
-      same lock remedy, its "where it broke" excerpt (under `line budget:`)
-      quoted rustfmt's own config warning — `single_line_let_else_max_width`
-      cannot exceed `max_width` — which every fmt run prints, and not one of
-      the `Diff in <file>:<line>` lines that were the failure.
-
 - [ ] `make_issue_quiet_last_step_lags_the_failure` — **When**: `make
       quiet T=gui:test` (also `gui:test`) fails on the vitest COVERAGE
       thresholds. **Not detected by**: the wrapper's own summary, which
@@ -123,6 +103,55 @@ file is only for output that could not answer **which file / which line
       Left out of the cycle that found it — an unrelated file.)*
 
 ## Shipped
+
+- [x] `make_issue_lock_remedy_matches_the_recipe_echo` — **When**: `make
+      engine:lint` failed at `== fmt ==` on a plain rustfmt diff, with no
+      other gate running. **Not detected by**: the FAIL block's diagnosis
+      said "REMEDY — another gate holds this tree's lock", because
+      `scripts/gate-diagnose.sh` matches `gate-lock` anywhere in the log and
+      every dockerized step echoes its recipe as `scripts/gate-lock.sh docker
+      run …` — so any such step whose failure matches no earlier rule reads
+      as a lock conflict. **Recovered by**: `make investigate:gates` ("no gate
+      lock held in this tree") and reading the `Diff in …` lines in the log.
+      The same run's clippy failure (a plain lint in a test file) was
+      diagnosed as BOTH that lock remedy and "a manifest moved and its
+      lockfile was not re-resolved" — the lockfile rule's `--locked`
+      alternative matches the echoed `cargo clippy … --locked` recipe line
+      the same way.
+      **Seen again under `engine:verify`, with a second gap**: besides the
+      same lock remedy, its "where it broke" excerpt (under `line budget:`)
+      quoted rustfmt's own config warning — `single_line_let_else_max_width`
+      cannot exceed `max_width` — which every fmt run prints, and not one of
+      the `Diff in <file>:<line>` lines that were the failure.
+      **Closed by**: the lock, lockfile, line-budget and new rustfmt
+      matchers anchor on what the TOOL prints, not on a name or flag the
+      echoed recipe carries. (The biome remedy still matches the word
+      `biome`, which step headings and pnpm's script echo carry; that is
+      `make_issue_biome_info_outranks_the_error`, left open.) The lock
+      remedy matches the refusal `scripts/gate-lock.sh` actually prints
+      (`another gate is already running in this working tree:`) — the old
+      `another gate is running` alternative matched none of it, so a REAL
+      lock conflict got no diagnosis at all. The lockfile remedy dropped its `--locked` /
+      `frozen-lockfile` alternatives for the tools' error text (cargo's
+      wording, pnpm's `ERR_PNPM_…LOCKFILE` code family) — including
+      the pinned cargo's `error: cannot update the lock file … because
+      --locked was passed`, which the old rule's own cargo wording did not
+      match and which it had been catching only through `--locked`. A new
+      rustfmt remedy (`Diff in /…` → `make engine:format`, then
+      `make engine:map`) and a `rustfmt:` section in `gate-culprits.sh`
+      name the hunks. The `line budget:` culprits section anchors on the
+      `line-budget: ` / `line-budget(gui): ` prefix minus the OK line, and
+      the budget remedy on the violation's `<file> is …` shape (so a broken
+      scan gets the section but not the remedy): the old `exceeds`
+      alternative was what quoted the rustfmt warning, and neither old
+      pattern matched a real violation line, so an engine or gui budget
+      failure had no section and no remedy. Validated by inducing
+      each real failure and restoring it: a rustfmt diff (rustfmt remedy
+      and the `Diff in` line only), a clippy lint (no lock or lockfile
+      remedy), a held lock dir (lock remedy), a missing `//!` header and a
+      160-line gui file (budget section + remedy), and an added dependency
+      under `--locked` and a changed `package.json` specifier under
+      `--frozen-lockfile` (lockfile remedy, both).
 
 - [x] `make_issue_trivy_no_package` — **When**: `make docker:scan` fails
       on a fixable CVE. **Not detected by**: no matcher; Trivy's summary
