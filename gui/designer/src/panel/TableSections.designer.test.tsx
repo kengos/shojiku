@@ -30,45 +30,62 @@ function transport() {
   return makeTransport({ renderRaw: async () => outcomeWith([TABLE, TEXT]) });
 }
 
-/** The panel's border section — scoped, because the format toolbar has a
- * `Border` button of its own. */
+/** The property panel. Every query below is scoped to it: the format toolbar
+ * has a `Border` button of its own, and a query over the whole Designer
+ * computes the accessible name of every toolbar button too. */
+function panel() {
+  return within(screen.getByRole('complementary', { name: 'Properties' }));
+}
+
 function border(): HTMLElement {
-  return within(screen.getByRole('complementary', { name: 'Properties' })).getByRole('button', {
-    name: /^Border/,
-  });
+  return panel().getByRole('button', { name: /^Border/ });
 }
 
 function rows(): HTMLElement {
-  return screen.getByRole('button', { name: /^Rows and cells/ });
+  return panel().getByRole('button', { name: /^Rows and cells/ });
+}
+
+function tab(name: string): HTMLElement {
+  return panel().getByRole('tab', { name });
+}
+
+async function drawAndSelectTable() {
+  const view = draw(transport(), { source: SOURCE, params: '{"rows": []}' });
+  fireEvent.click(await screen.findByRole('button', { name: TABLE }));
+  return view;
 }
 
 describe('table section open state, Designer-wide', () => {
-  it('survives a tab switch and a reselection, and starts over in a fresh Designer', async () => {
-    const view = draw(transport(), { source: SOURCE, params: '{"rows": []}' });
-    fireEvent.click(await screen.findByRole('button', { name: TABLE }));
+  it('survives a tab switch and a reselection', async () => {
+    await drawAndSelectTable();
     expect(rows().getAttribute('aria-expanded')).toBe('false');
     fireEvent.click(rows());
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Style' }));
+    fireEvent.click(tab('Style'));
     fireEvent.click(border());
-    fireEvent.click(screen.getByRole('tab', { name: 'Content' }));
+    fireEvent.click(tab('Content'));
     expect(rows().getAttribute('aria-expanded')).toBe('true');
 
     fireEvent.click(screen.getByRole('button', { name: TEXT }));
-    expect(screen.queryByRole('button', { name: /^Rows and cells/ })).toBeNull();
+    expect(panel().queryByRole('button', { name: /^Rows and cells/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: TABLE }));
     expect(rows().getAttribute('aria-expanded')).toBe('true');
     // Headless UI registers the remounted tabs in an effect; a click before that
     // lands selects nothing, so wait for the tab to take it.
     await waitFor(() => {
-      fireEvent.click(screen.getByRole('tab', { name: 'Style' }));
-      expect(screen.getByRole('tab', { name: 'Style' }).getAttribute('aria-selected')).toBe('true');
+      fireEvent.click(tab('Style'));
+      expect(tab('Style').getAttribute('aria-selected')).toBe('true');
     });
     expect(border().getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('starts over in a fresh Designer', async () => {
+    const view = await drawAndSelectTable();
+    fireEvent.click(rows());
+    expect(rows().getAttribute('aria-expanded')).toBe('true');
 
     view.unmount();
-    draw(transport(), { source: SOURCE, params: '{"rows": []}' });
-    fireEvent.click(await screen.findByRole('button', { name: TABLE }));
+    await drawAndSelectTable();
     expect(rows().getAttribute('aria-expanded')).toBe('false');
   });
 });
