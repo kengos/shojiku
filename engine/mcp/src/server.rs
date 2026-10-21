@@ -3,11 +3,11 @@
 //! transport I/O failures abort the loop.
 
 use crate::rpc::{
-    clip, error_response, error_response_full, read_frame, result_response, write_frame, Frame,
-    RpcError, INVALID_REQUEST, METHOD_NOT_FOUND, PARSE_ERROR,
+    Frame, INVALID_REQUEST, METHOD_NOT_FOUND, PARSE_ERROR, RpcError, clip, error_response,
+    error_response_full, read_frame, result_response, write_frame,
 };
-use crate::{instructions, resources, tools, McpError, ServerArgs};
-use serde_json::{json, Value};
+use crate::{McpError, ServerArgs, instructions, resources, tools};
+use serde_json::{Value, json};
 use std::io::{BufRead, Write};
 
 /// Protocol revisions this server accepts, newest first (append-only).
@@ -51,7 +51,7 @@ fn handle_line(args: &ServerArgs, line: &str) -> Option<Value> {
                 Value::Null,
                 PARSE_ERROR,
                 &format!("invalid JSON: {err}"),
-            ))
+            ));
         }
     };
     let Value::Object(request) = message else {

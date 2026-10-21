@@ -8,7 +8,7 @@
 
 use crate::boxes::translate_boxes;
 
-use super::{translate, Atom, Basis, Ctx, PageBuild};
+use super::{Atom, Basis, Ctx, PageBuild, translate};
 
 impl<'a, 'b> Ctx<'a, 'b> {
     /// Places one band / absolute-body atom at `dy` into the page under

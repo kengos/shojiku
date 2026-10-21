@@ -6,7 +6,7 @@
 //! line covered only in the copy linked into another binary can still fail
 //! the gate.
 
-use super::{parse_algorithm, require_signature, MAX_SIGNATURE_BYTES};
+use super::{MAX_SIGNATURE_BYTES, parse_algorithm, require_signature};
 use crate::status::Failure;
 use shojiku_signing::SignatureAlgorithm;
 

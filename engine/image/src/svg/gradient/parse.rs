@@ -4,9 +4,9 @@
 use std::str::FromStr;
 use svgtypes::{Length, LengthUnit};
 
-use super::super::paint::{GradientStop, SpreadMode};
-use super::super::style::{parse_color, parse_transform, Affine};
 use super::super::Warnings;
+use super::super::paint::{GradientStop, SpreadMode};
+use super::super::style::{Affine, parse_color, parse_transform};
 use super::{Coord, GradientDef, Kind, Units};
 
 /// Parses one `<linearGradient>`/`<radialGradient>`. Requires an `id` (an

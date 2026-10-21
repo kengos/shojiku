@@ -27,21 +27,21 @@ mod sources;
 #[cfg(test)]
 mod test_support;
 
-pub use capabilities::{engine_info, run_capabilities, EngineInfo, CAPABILITIES};
+pub use capabilities::{CAPABILITIES, EngineInfo, engine_info, run_capabilities};
 pub use formats::{
-    check_probe_count, format_catalog, locale_facts, FormatCatalog, FormatOrigin, FormatTypeEntry,
-    FormatVariant, LocaleFacts, PatternProbe, ProbeError, ProbeRefusal, ProbeResult, ProbeType,
-    MAX_PROBES, MAX_PROBE_PATTERN,
+    FormatCatalog, FormatOrigin, FormatTypeEntry, FormatVariant, LocaleFacts, MAX_PROBE_PATTERN,
+    MAX_PROBES, PatternProbe, ProbeError, ProbeRefusal, ProbeResult, ProbeType, check_probe_count,
+    format_catalog, locale_facts,
 };
-pub use inspect::{inspect_envelope, inspect_json, InspectEnvelope};
-pub use locale::{load_pack, resolve_locale_id, valid_locale_id, LocaleError};
-pub use prepare::{prepare, AssetsInput, PrepareCtx, Prepared};
+pub use inspect::{InspectEnvelope, inspect_envelope, inspect_json};
+pub use locale::{LocaleError, load_pack, resolve_locale_id, valid_locale_id};
+pub use prepare::{AssetsInput, PrepareCtx, Prepared, prepare};
 pub use preview::{preview_page, preview_page_raw, preview_pages, preview_raw};
 
 // The raw-preview page type rides the `preview_raw` return, re-exported so a
 // host types against one surface.
 pub use shojiku_render_png::RawPage;
-pub use sources::{load_sources, validate_strings, Sources};
+pub use sources::{Sources, load_sources, validate_strings};
 
 // Hosts injecting fonts import the pack shape from one place; the verified
 // bytes-first constructor is `shojiku_layout::FontStore::load_from_injected`.

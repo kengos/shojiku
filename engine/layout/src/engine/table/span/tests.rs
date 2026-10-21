@@ -4,12 +4,12 @@
 
 use std::rc::Rc;
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use shojiku_core::{ContainerItem, ImageFit};
 
 use super::merge_empty;
-use crate::engine::table::rows::{Cell, CellContent, CellPath};
 use crate::engine::Scope;
+use crate::engine::table::rows::{Cell, CellContent, CellPath};
 use crate::style::ComputedStyle;
 
 /// A body cell for column `col`, `width` wide, drawing `content`.

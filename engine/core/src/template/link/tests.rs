@@ -1,6 +1,6 @@
 //! Wire tests for `link:`: parse shapes, typo rejection, round-trip.
 
-use crate::template::{parse_template, Body, Item};
+use crate::template::{Body, Item, parse_template};
 
 fn flow_items(yaml: &str) -> Vec<Item> {
     let template = parse_template(yaml).expect("template");

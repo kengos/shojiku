@@ -56,9 +56,11 @@ fn an_operation_that_ran_and_failed_still_reports_ok() {
 #[test]
 fn a_document_failure_carries_the_engine_diagnostics_and_others_do_not() {
     let result = Failure::document("render", &one_error()).into_result();
-    assert!(result
-        .diagnostics_for_test()
-        .contains("image_source_missing"));
+    assert!(
+        result
+            .diagnostics_for_test()
+            .contains("image_source_missing")
+    );
 
     let result = Failure::host("sign", "key", &"unusable").into_result();
     assert!(result.diagnostics_for_test().is_empty());
@@ -83,10 +85,12 @@ fn the_shield_turns_a_panic_into_a_failure_instead_of_an_unwind() {
         panic!("a panic must not look like success");
     };
     assert_eq!(failure.status(), SHOJIKU_ERR_PANIC);
-    assert!(failure
-        .into_result()
-        .error_for_test()
-        .contains("deliberate panic inside the boundary"));
+    assert!(
+        failure
+            .into_result()
+            .error_for_test()
+            .contains("deliberate panic inside the boundary")
+    );
 }
 
 #[test]
@@ -105,10 +109,12 @@ fn a_panic_message_survives_in_both_payload_shapes_and_neither_leaks_raw() {
     let Err(literal) = literal else {
         panic!("expected a failure");
     };
-    assert!(literal
-        .into_result()
-        .error_for_test()
-        .contains("a literal payload"));
+    assert!(
+        literal
+            .into_result()
+            .error_for_test()
+            .contains("a literal payload")
+    );
 
     // The argument must be computed at RUNTIME. `panic!("a {} payload",
     // "formatted")` folds to a single literal, and the panic runtime then
@@ -119,10 +125,12 @@ fn a_panic_message_survives_in_both_payload_shapes_and_neither_leaks_raw() {
     let Err(formatted) = formatted else {
         panic!("expected a failure");
     };
-    assert!(formatted
-        .into_result()
-        .error_for_test()
-        .contains("a formatted payload"));
+    assert!(
+        formatted
+            .into_result()
+            .error_for_test()
+            .contains("a formatted payload")
+    );
 }
 
 #[test]
@@ -134,8 +142,10 @@ fn a_payload_that_is_not_a_string_gets_a_fixed_message() {
     let Err(failure) = outcome else {
         panic!("expected a failure");
     };
-    assert!(failure
-        .into_result()
-        .error_for_test()
-        .contains("a panic was caught at the library boundary"));
+    assert!(
+        failure
+            .into_result()
+            .error_for_test()
+            .contains("a panic was caught at the library boundary")
+    );
 }

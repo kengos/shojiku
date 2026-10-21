@@ -11,7 +11,7 @@
 
 use super::sub;
 use crate::{FlexBasis, GridTrack, Length, TrackSpec};
-use schemars::{json_schema, JsonSchema, Schema, SchemaGenerator};
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use std::borrow::Cow;
 
 // Every class in these patterns is spelled out — `[0-9]` rather than `\d`,

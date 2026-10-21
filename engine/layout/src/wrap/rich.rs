@@ -6,7 +6,7 @@
 
 mod token;
 mod width;
-use token::{tokenize, Token};
+use token::{Token, tokenize};
 use width::{token_width, width_of};
 
 use super::hang::{apply_hang, hangable};

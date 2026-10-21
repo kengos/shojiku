@@ -142,7 +142,7 @@ first sentence of its `//!` header.
 ▲ = within 10% of the 300-line cap (≥270); ■ = over it under a
 `line-budget-exempt` waiver. Test files are summarised per crate.
 
-### `diagnostics` (L0) — 7 files / 989 lines; tests 6 files / 754 lines
+### `diagnostics` (L0) — 7 files / 989 lines; tests 6 files / 756 lines
 
 - `src/arg.rs` 132 — Typed diagnostic argument values.
 - `src/category.rs` 32 — Semantic domain grouping for diagnostics.
@@ -152,13 +152,13 @@ first sentence of its `//!` header.
 - `src/lib.rs` 221 — Structured diagnostics shared across the Shojiku engine.
 - `src/render.rs` 48 — Single-pass message-template substitution.
 
-### `signing` (L0) — 25 files / 2817 lines; tests 27 files / 4012 lines
+### `signing` (L0) — 25 files / 2816 lines; tests 27 files / 4018 lines
 
 - `src/bounded.rs` 51 — The error-echo decision, in the one form a future variant cannot miss.
 - `src/cms.rs` 167 — Assembling the CMS `SignedData` that a PDF signature dictionary carries.
 - `src/cms/attrs.rs` 44 — The signed attributes, and the exact bytes a signature covers.
 - `src/cms/error.rs` 36 — Failure modes of assembling the CMS `SignedData`.
-- `src/document.rs` 228 — Reading an existing document far enough to extend it.
+- `src/document.rs` 227 — Reading an existing document far enough to extend it.
 - `src/document/pages.rs` 45 — Finding the page a signature widget attaches to.
 - `src/error.rs` 86 — Failure modes of the incremental-update writer.
 - `src/key.rs` 154 — Loading a private key and producing raw signatures with it.
@@ -180,7 +180,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 93 files / 11758 lines; tests 108 files / 15369 lines
+### `core` (L1) — 93 files / 11757 lines; tests 108 files / 15461 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -203,7 +203,7 @@ first sentence of its `//!` header.
 - `src/geometry/point_spec.rs` 185 — A `line` endpoint: authored coordinates, or an anchor to another item.
 - `src/interpolate.rs` 178 — `{key}` / `{key:format}` interpolation inside static text.
 - `src/length.rs` 229 — Template length values: absolute points/physical units, a percentage of the parent, or a font-relative `em`/`rem`.
-- `src/lib.rs` 69 — Shojiku data model.
+- `src/lib.rs` 68 — Shojiku data model.
 - `src/params.rs` 48 — `params` — runtime data supplied by the calling application.
 - `src/parse.rs` 78 — Two-pass typed parse shared by the template and definitions entry points.
 - `src/parse/locate.rs` 124 — Re-locates a template parse failure that the tagged-enum buffering cut short.
@@ -276,7 +276,7 @@ first sentence of its `//!` header.
 - `src/yaml/read.rs` 152 — Typed reads: from a document's source, and from a [`Value`] subtree.
 - `src/yaml/value.rs` 68 — The tree a YAML document is read into, owned by the engine rather than by the parser.
 
-### `verify` (L1) — 14 files / 1577 lines; tests 20 files / 2453 lines
+### `verify` (L1) — 14 files / 1576 lines; tests 20 files / 2455 lines
 
 - `src/chain.rs` 250 — Whose signature counts, and whether it counted at the time.
 - `src/container.rs` 167 — Reading the CMS `SignedData` out of a signature dictionary.
@@ -289,11 +289,11 @@ first sentence of its `//!` header.
 - `src/locate.rs` 98 — Finding the signature the way a reader finds it.
 - `src/range.rs` 113 — The check that a valid signature is not still a forgery.
 - `src/report.rs` 138 — What verification found — including what it did not look at.
-- `src/signature.rs` 120 — Checking the signature itself.
+- `src/signature.rs` 119 — Checking the signature itself.
 - `src/testkit.rs` 204 — Test-only fixtures: minimal signable documents, and signed ones.
 - `src/testkit/keys.rs` 65 — Test key material, generated fresh for every test process.
 
-### `formatter` (L2) — 17 files / 2080 lines; tests 22 files / 4007 lines
+### `formatter` (L2) — 17 files / 2081 lines; tests 22 files / 4008 lines
 
 - `src/format.rs` 235 — `format(value, type, locale, options) -> string`
 - `src/format/dated.rs` 121 — Resolving a date/datetime pick: which tables a dated field reads, and whether a name is one it can already resolve.
@@ -311,9 +311,9 @@ first sentence of its `//!` header.
 - `src/lang/packs/confine.rs` 78 — Path confinement for font-pack resolution: what a pack id may look like, and what a manifest's `file` may point at.
 - `src/lang/read.rs` 44 — Reads a pack file from disk under the pack input cap, so the cap holds at the read and not only at the parse that follows it.
 - `src/lang/specs.rs` 101 — Pack value specs: number separators, per-code currency display, and semantic-unit display (plural categories + layout strings).
-- `src/lib.rs` 21 — Locale-aware value formatting.
+- `src/lib.rs` 22 — Locale-aware value formatting.
 
-### `image` (L2) — 21 files / 2918 lines; tests 20 files / 2601 lines
+### `image` (L2) — 21 files / 2914 lines; tests 20 files / 2618 lines
 
 - `src/decode.rs` 158 — Raster pixel decoding to straight-alpha RGBA8.
 - `src/error.rs` 55 — Error type for asset classification, resolution, and decoding.
@@ -333,24 +333,24 @@ first sentence of its `//!` header.
 - `src/svg/gradient.rs` 227 — `<linearGradient>` / `<radialGradient>` support: collect gradient definitions from the document, then resolve a `url(#id)` fill against a path's bounding box into a backend-neutral [`SvgPaint`].
 - `src/svg/gradient/parse.rs` 133 — Parsing of a single gradient element and its `<stop>` children into the owned [`GradientDef`] intermediate (no document lifetime kept).
 - `src/svg/paint.rs` 124 — SVG paint: a resolved solid color or gradient.
-- `src/svg/path.rs` 218 — Path-data parsing (`d=`) into transformed cubic commands: smooth shorthands, quadratic elevation, and arc flattening.
+- `src/svg/path.rs` 214 — Path-data parsing (`d=`) into transformed cubic commands: smooth shorthands, quadratic elevation, and arc flattening.
 - `src/svg/style.rs` 253 — SVG presentation state: affine transforms, inheritable style attributes, and their parsers.
 - `src/svg/walk.rs` 240 — The element walk: group/shape traversal with node and depth caps, emitting solid-color paths.
 
-### `layout-box` (L2) — 6 files / 686 lines; tests 6 files / 694 lines
+### `layout-box` (L2) — 6 files / 682 lines; tests 6 files / 694 lines
 
 - `src/flex.rs` 128 — Flex distribution math: main-axis spacing (`justifyContent`), cross-axis alignment (`alignItems`), and auto-margin free-space absorption.
-- `src/flex/lengths.rs` 209 — Resolving flexible lengths (CSS Flexbox §9.7): turning each unsized row child's basis into a final main size.
+- `src/flex/lengths.rs` 205 — Resolving flexible lengths (CSS Flexbox §9.7): turning each unsized row child's basis into a final main size.
 - `src/grid.rs` 30 — Static-grid track math (box-model Phase 3): equal-track sizing and cumulative track offsets.
 - `src/lib.rs` 70 — Box-model math for the layout pass: the positioning bases, guarded length/edge resolution, and the resolved CSS box.
 - `src/resolve.rs` 85 — Guarded length/edge resolution: `%` -> absolute pt against a [`Basis`], with the range caps untrusted templates require.
 - `src/resolved.rs` 164 — [`ResolvedBox`]: one item box (`OptBox`) resolved against its parent — margins, padding, and the border-box position/size, with the content-box helpers every item kind shares.
 
-### `fetch` (L3) — 7 files / 701 lines; tests 7 files / 1161 lines
+### `fetch` (L3) — 7 files / 711 lines; tests 7 files / 1163 lines
 
 - `src/cache.rs` 140 — The local font cache: content-addressed blobs keyed by the manifest sha256, so a cached face is self-describing — the file name IS the expectation, and a blob whose bytes stop matching it is simply a miss.
 - `src/ensure.rs` 184 — Making every resolved face present on disk before the font store loads it.
-- `src/error.rs` 70 — Failure modes of the host font-fetch layer.
+- `src/error.rs` 80 — Failure modes of the host font-fetch layer.
 - `src/lib.rs` 29 — Host-level font fetching: the layer that turns a *pinned reference* in a pack manifest (`sha256` + an optional `url:` hint) into bytes on disk, before any rendering starts.
 - `src/policy.rs` 94 — Which URLs the host is willing to fetch a pinned face from.
 - `src/read.rs` 80 — Reading a response body without trusting its length.
@@ -372,7 +372,7 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 132 files / 19576 lines; tests 270 files / 37967 lines
+### `layout` (L3) — 132 files / 19572 lines; tests 270 files / 38035 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -474,7 +474,7 @@ first sentence of its `//!` header.
 - `src/engine/text/vrich.rs` 226 — Vertical rich-text blocks: the `spans` counterpart of [`super::rich`] when `writingMode: vertical_rl`.
 - `src/engine/text/vrich/place.rs` 87 — Vertical rich column positioning: one wrapped column's pieces into stacked [`TextRun`]s with the shaped extent / hung-exclusion bases.
 - `src/engine/translate.rs` 82 — Whole-item translation over the layout tree: shifting positioned items vertically (flow cursor, margins) and horizontally (flex placement), recursing into clip groups.
-- `src/engine/visibility.rs` 222 — Params-conditional item visibility: turns an item's `visible:` binding into one of three placement verdicts, and blanks the atom of a hidden one.
+- `src/engine/visibility.rs` 218 — Params-conditional item visibility: turns an item's `visible:` binding into one of three placement verdicts, and blanks the atom of a hidden one.
 - `src/font.rs` 235 — Font loading and text measurement.
 - `src/font/face.rs` 261 — A loaded font face: glyph mapping, advance measurement, and outline extraction (y-down, cubics only) for pixel backends.
 - `src/font/face/decoration.rs` 52 — Decoration-line metrics (`textDecoration`): underline and strikeout positions scaled from the face's font tables, with conventional fallbacks and hostile-value clamps.
@@ -507,13 +507,13 @@ first sentence of its `//!` header.
 - `src/wrap/rich/width.rs` 79 — Per-char and per-token advances along the wrapping axis — the measurement half of the styled-char engine, tate-chu-yoko-aware.
 - `src/wrap/thai.rs` 74 — Thai word segmentation for line breaking.
 
-### `render-pdf` (L4) — 6 files / 971 lines; tests 16 files / 1809 lines
+### `render-pdf` (L4) — 6 files / 967 lines; tests 16 files / 1809 lines
 
 - `src/annot.rs` 107 — Link annotations: walks a laid-out page and emits one krilla link annotation per linked run/line rect (text) or draw box (image).
 - `src/draw.rs` 274 ▲ — krilla draw calls: layout items, images (raster + SVG playback), glyph mapping, and geometry/paint conversions at the f32 boundary.
 - `src/lib.rs` 127 — PDF rendering: draws a [`LayoutDocument`] with krilla.
 - `src/paint.rs` 90 — SVG paint -> krilla fill conversion: solid colors and linear/radial gradients.
-- `src/text.rs` 170 — Text drawing for the PDF backend: the fallback-chain glyph runs and the krilla glyph mapping.
+- `src/text.rs` 166 — Text drawing for the PDF backend: the fallback-chain glyph runs and the krilla glyph mapping.
 - `src/text/vertical.rs` 203 — Vertical text drawing for the PDF backend.
 
 ### `render-png` (L4) — 6 files / 1116 lines; tests 14 files / 2241 lines
@@ -525,7 +525,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 42 files / 5159 lines; tests 44 files / 6010 lines
+### `authoring` (L5) — 42 files / 5163 lines; tests 44 files / 6035 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -540,7 +540,7 @@ first sentence of its `//!` header.
 - `src/formats/pattern.rs` 87 — The pattern probe's input side: which types a probe may name, how a host's raw `(type name, pattern)` pair becomes a [`PatternProbe`], and the one count cap.
 - `src/formats/probe.rs` 74 — Running one pattern probe.
 - `src/formats/variants.rs` 193 — Which spellings each field type offers, and what each one renders.
-- `src/fs.rs` 120 — Filesystem pack discovery — the shared half of locale/font loading for the FS hosts (CLI, MCP server).
+- `src/fs.rs` 122 — Filesystem pack discovery — the shared half of locale/font loading for the FS hosts (CLI, MCP server).
 - `src/inspect.rs` 38 — The `inspect` envelope: engine info (version + capabilities) for GUI gating, the layout tree, the path-addressed box sidecar (one box per item, id-carrying or not), and the resolved page margins — the bundle a Designer canvas hit-tests against.
 - `src/lib.rs` 48 — Authoring surface: the shared validate / prepare / preview / inspect / capabilities layer that the CLI, the browser/Workers WASM bindings, and the MCP server all wrap.
 - `src/locale.rs` 57 — Locale-id resolution and pack loading from an overlay STRING (not a path).
@@ -566,11 +566,11 @@ first sentence of its `//!` header.
 - `src/reference/tables/registry.rs` 39 — The code→severity map, and the one place it is assembled.
 - `src/reference/tables/render.rs` 117 — Rendering a spec into GFM table markdown.
 - `src/reference/tables/spec.rs` 166 — The table spec: the editorial half of a generated table.
-- `src/reference/tables/splice.rs` 101 — Putting a generated table back into its page, between markers.
+- `src/reference/tables/splice.rs` 103 — Putting a generated table back into its page, between markers.
 - `src/sources.rs` 73 — Parsing + validation of the three source strings.
 - `src/test_support.rs` 63 — Shared fixtures for the crate's unit tests: the builtin ja pack, its filesystem-loaded font store (cached — sha256-verifying the ~47MB IPAmj fallback per test is far too slow), and a known-good single-page run.
 
-### `capi` (L6) — 17 files / 1942 lines; tests 18 files / 2832 lines
+### `capi` (L6) — 17 files / 1942 lines; tests 18 files / 2846 lines
 
 - `src/api.rs` 272 ▲ — The C entry points.
 - `src/api/work.rs` 191 — What an entry point asks [`deliver`](super::deliver) to run.
@@ -590,7 +590,7 @@ first sentence of its `//!` header.
 - `src/status.rs` 171 — Status codes, the panic shield, and the failure type every operation funnels into.
 - `src/status/wire.rs` 93 — How a [`Failure`] renders for the caller, and the JSON encoder the whole crate shares.
 
-### `cli` (L6) — 15 files / 2105 lines; tests 33 files / 5077 lines
+### `cli` (L6) — 15 files / 2109 lines; tests 33 files / 5089 lines
 
 - `src/args.rs` 204 — The flags each command takes, as clap types.
 - `src/args/font.rs` 108 — Flags for the `font` command — creating a user font pack on disk.
@@ -598,7 +598,7 @@ first sentence of its `//!` header.
 - `src/commands.rs` 260 — Command implementations: input loading, the validate/inspect/render/ preview pipelines, and output writing.
 - `src/error.rs` 202 — `CliError` and its machine-readable classification.
 - `src/external.rs` 132 — The `sign-prepare` / `sign-complete` pair: signing without a private key.
-- `src/font.rs` 189 — `shojiku font add` — creating a user font pack on disk.
+- `src/font.rs` 193 — `shojiku font add` — creating a user font pack on disk.
 - `src/font/ids.rs` 105 — The id rules `font add` applies, as pure functions.
 - `src/font/write.rs` 155 — The filesystem half of `font add`: reading the source face, reading any existing manifest, and committing both files.
 - `src/formats.rs` 59 — `shojiku formats`: the format catalog as JSON — which display variants a document can pick per field type, what each one renders, and previews of patterns that are not authored yet.
@@ -608,7 +608,7 @@ first sentence of its `//!` header.
 - `src/sign.rs` 115 — The `sign` command: a rendered PDF in, a signed one out.
 - `src/verify.rs` 58 — The `verify` command: a signed PDF and a trust anchor in, a report out.
 
-### `mcp` (L6) — 27 files / 2785 lines; tests 29 files / 4293 lines
+### `mcp` (L6) — 27 files / 2784 lines; tests 29 files / 4325 lines
 
 - `src/examples.rs` 180 — The bundled-example read surface's data model: the embedded source files (`embed`), the `shojiku://example/…` grammar (`uri`), and the catalog that gives each entry a human title and a line saying what it exercises.
 - `src/examples/embed.rs` 156 — The compile-time example table: every bundled entry's source files, embedded with `include_str!` so the surface works identically from a checkout and from the docker image, needs no root path, and cannot be pointed at anything outside this list.
@@ -632,13 +632,13 @@ first sentence of its `//!` header.
 - `src/tools/formats.rs` 140 — The `format_catalog` tool: which display variants a document may pick per field type, what each one renders, and previews of patterns the document does not carry yet.
 - `src/tools/inspect.rs` 35 — The `inspect_layout` tool: the inspect envelope (engine info, layout tree, path-addressed boxes for every item, page margins) followed by the diagnostics JSON — the machine-readable half of the preview/tree/diagnostics bundle.
 - `src/tools/pipeline.rs` 122 — Shared source→layout pipeline for the template tools: argument composition (sources in `sources.rs`, asset knobs in `assets.rs`), pack/font resolution, and the authoring `prepare` gate.
-- `src/tools/preview.rs` 100 — The `render_preview` tool: lay out, rasterize, and answer one PNG image part per selected page followed by the diagnostics JSON — never an image alone.
+- `src/tools/preview.rs` 99 — The `render_preview` tool: lay out, rasterize, and answer one PNG image part per selected page followed by the diagnostics JSON — never an image alone.
 - `src/tools/reference.rs` 67 — The two reference-reading tools.
 - `src/tools/schema.rs` 233 — Tool descriptors: names, descriptions, and hand-written JSON schemas.
 - `src/tools/sources.rs` 105 — Source arguments: each of definitions/template/params arrives either as a `*Path` file reference or as an inline string (a client without a shared filesystem passes the text itself).
 - `src/tools/validate.rs` 38 — The `validate` tool: parse + validate the sources and answer the full diagnostics list (parse failures surface as diagnostics, not errors — the client renders them like any other finding).
 
-### `wasm` (L6) — 7 files / 1072 lines; tests 7 files / 1244 lines
+### `wasm` (L6) — 7 files / 1072 lines; tests 7 files / 1264 lines
 
 - `src/error.rs` 112 — The wasm-surface host-misuse error type plus its stable `code`/`args` registry.
 - `src/formats.rs` 96 — The format-catalog op over an injected [`Session`]: which display variants the document can pick per field type, what each renders, and a preview of a pattern that is not authored yet.

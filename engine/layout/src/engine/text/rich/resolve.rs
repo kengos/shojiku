@@ -3,7 +3,7 @@
 //! missing-glyph budget, and the block-wide uniform grid.
 
 use crate::style::ComputedStyle;
-use shojiku_core::{FontStyle, FontWeight, Style, TextItem, MAX_SPANS, MAX_STYLE_NAMES};
+use shojiku_core::{FontStyle, FontWeight, MAX_SPANS, MAX_STYLE_NAMES, Style, TextItem};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::super::super::Ctx;

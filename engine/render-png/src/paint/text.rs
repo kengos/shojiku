@@ -6,10 +6,10 @@
 mod vertical;
 
 use crate::RenderPngError;
-use shojiku_layout::{shape_run, FontFace, RunView, TextBlock};
+use shojiku_layout::{FontFace, RunView, TextBlock, shape_run};
 use tiny_skia::{FillRule, Mask, Paint, Pixmap, Stroke, Transform};
 
-use super::{build_path, rect_path, rgba, Painter};
+use super::{Painter, build_path, rect_path, rgba};
 
 impl Painter<'_> {
     /// Draws one text block run by run: all runs of a line sit on the

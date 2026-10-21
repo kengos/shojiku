@@ -5,7 +5,7 @@
 //! those layers feed live in [`sane`].
 
 use crate::style::ComputedStyle;
-use shojiku_core::{FontRel, Length, OptBox, Style, MAX_STYLE_NAMES};
+use shojiku_core::{FontRel, Length, MAX_STYLE_NAMES, OptBox, Style};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_layout_box::ResolvedBox;
 

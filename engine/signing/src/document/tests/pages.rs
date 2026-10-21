@@ -1,6 +1,6 @@
 //! Unit tests for the page-tree descent.
 
-use crate::document::{first_page, PdfDocument};
+use crate::document::{PdfDocument, first_page};
 use crate::error::SigningError;
 use crate::limits::MAX_PAGE_TREE_DEPTH;
 use crate::testkit::{build_pdf, simple_pdf};

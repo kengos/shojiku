@@ -5,12 +5,12 @@
 //! against the top-level scalars instead.
 
 use crate::catalog::Catalog;
-use crate::interpolate::{parse_segments, Segment};
+use crate::interpolate::{Segment, parse_segments};
 use crate::template::{Binding, BindingScope, Bindings, ChildHolder, Item, Link};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 
-use super::decl::{check_item_keys, DeclCtx};
-use super::{check_scalar_binding, BindingCtx};
+use super::decl::{DeclCtx, check_item_keys};
+use super::{BindingCtx, check_scalar_binding};
 
 /// What a cell's bindings are checked against: the array group they are
 /// element-scoped to, plus the whole-template invariants a

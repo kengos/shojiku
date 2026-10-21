@@ -11,11 +11,11 @@ mod resolve;
 
 use crate::style::ComputedStyle;
 use crate::tree::{DecorationSpec, LayoutItem, TextBlock, TextLine};
-use crate::wrap::{wrap_spans, RichSpan};
+use crate::wrap::{RichSpan, wrap_spans};
 use shojiku_core::{FontStyle, FontWeight, TextDecoration, TextItem, TextOverflow};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::super::{placed_box, with_vertical_margin, Atom, Basis, Ctx};
+use super::super::{Atom, Basis, Ctx, placed_box, with_vertical_margin};
 use super::height::{block_height, content_avail};
 
 /// One span resolved for layout: content, style values (sanity-clamped),

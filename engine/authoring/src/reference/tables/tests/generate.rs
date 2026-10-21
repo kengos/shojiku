@@ -1,7 +1,7 @@
 //! One page's regeneration: the errors it reports, and that it reports ALL of
 //! them rather than the first.
 
-use crate::reference::tables::{page, pages, Error, Inputs};
+use crate::reference::tables::{Error, Inputs, page, pages};
 use std::collections::BTreeMap;
 
 fn inputs<'a>(

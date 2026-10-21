@@ -27,7 +27,7 @@
 //! annotation layer's job, authored per locale and merged at generation time;
 //! these impls carry structure only.
 
-use schemars::{json_schema, JsonSchema, Schema, SchemaGenerator};
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 
 mod border;
 mod edges;

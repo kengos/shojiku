@@ -4,18 +4,18 @@
 //! a fixed slot; an auto-height list simply grows. Entries wider than
 //! the box take a per-entry ellipsis (the overflow clamp).
 
-use crate::font::{run_width, RunOptions};
+use crate::font::{RunOptions, run_width};
 use crate::tree::{LayoutItem, TextBlock, TextLine};
 use serde_json::Value;
 use shojiku_core::{
-    resolve_path, BindingScope, FontStyle, FontWeight, ListItem, TextAlign, TextSpacingTrim,
+    BindingScope, FontStyle, FontWeight, ListItem, TextAlign, TextSpacingTrim, resolve_path,
 };
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 mod vertical;
 
 use super::text::clamp_line;
-use super::{placed_box, with_vertical_margin, Atom, Basis, Ctx};
+use super::{Atom, Basis, Ctx, placed_box, with_vertical_margin};
 
 /// The two identities of the array a list binds, threaded to each entry.
 /// They differ only for a NESTED source, and conflating them is exactly

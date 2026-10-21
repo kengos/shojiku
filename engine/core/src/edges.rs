@@ -13,7 +13,7 @@
 //! GUI/AI edit one key per side with no second grammar to parse (North
 //! star: named, discoverable constructs beat positional ones).
 
-use crate::length::{parse_length_text, snippet, Length};
+use crate::length::{Length, parse_length_text, snippet};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// One authored edge value: a [`Length`] or the `auto` keyword. `auto`

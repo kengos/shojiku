@@ -16,10 +16,10 @@
 
 use crate::outcome::Outcome;
 use shojiku_capi::{
-    shojiku_abi_version, shojiku_engine_info, shojiku_render, shojiku_result_diagnostics_json,
-    shojiku_result_error_json, shojiku_result_free, shojiku_result_json, shojiku_result_pdf,
-    shojiku_result_success, shojiku_sign, shojiku_sign_complete, shojiku_sign_prepare,
-    shojiku_verify, ShojikuResult,
+    ShojikuResult, shojiku_abi_version, shojiku_engine_info, shojiku_render,
+    shojiku_result_diagnostics_json, shojiku_result_error_json, shojiku_result_free,
+    shojiku_result_json, shojiku_result_pdf, shojiku_result_success, shojiku_sign,
+    shojiku_sign_complete, shojiku_sign_prepare, shojiku_verify,
 };
 
 /// A buffer accessor's shape, shared by the four this host reads.

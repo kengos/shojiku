@@ -48,11 +48,12 @@ sections:
 #[test]
 fn a_non_scalar_params_value_warns_instead_of_panicking() {
     let out = run_full(&super::stack("", ""), json!({ "show": { "a": 1 } }));
-    assert!(out
-        .diagnostics
-        .items
-        .iter()
-        .any(|d| d.code.as_str() == "visible_value_not_bool"));
+    assert!(
+        out.diagnostics
+            .items
+            .iter()
+            .any(|d| d.code.as_str() == "visible_value_not_bool")
+    );
     assert_eq!(rect_shapes(&out.document.pages[0]).len(), 2);
 }
 
@@ -62,11 +63,12 @@ fn an_explicit_null_behaves_exactly_as_a_form_mark_does() {
     // hands back `null`, which is not a boolean, so it warns. Consistency
     // with the surface being generalized is the point.
     let out = run_full(&super::stack("", ""), json!({ "show": null }));
-    assert!(out
-        .diagnostics
-        .items
-        .iter()
-        .any(|d| d.code.as_str() == "visible_value_not_bool"));
+    assert!(
+        out.diagnostics
+            .items
+            .iter()
+            .any(|d| d.code.as_str() == "visible_value_not_bool")
+    );
 }
 
 #[test]

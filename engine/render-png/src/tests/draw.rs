@@ -53,9 +53,9 @@ fn text_with_unmappable_char_routes_through_notdef() {
     // with a 0.6em advance — the same fallback the PDF backend draws —
     // so rendering proceeds without panicking.
     let pages = render(
-            "\nsections:\n  body:\n    type: absolute\n    items:\n      - type: text\n        box: { x: 10, y: 40, w: 400, h: 40 }\n        data: { key: t }\n        style: { fontSize: 20 }\n",
-            json!({ "t": "A\u{10FFFF}B" }),
-        );
+        "\nsections:\n  body:\n    type: absolute\n    items:\n      - type: text\n        box: { x: 10, y: 40, w: 400, h: 40 }\n        data: { key: t }\n        style: { fontSize: 20 }\n",
+        json!({ "t": "A\u{10FFFF}B" }),
+    );
     assert!(pages[0].starts_with(b"\x89PNG"));
 }
 

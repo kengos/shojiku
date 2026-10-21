@@ -54,9 +54,11 @@ fn serializes_flat_rects_and_shifts_both_boxes() {
     let moved = BoxIndex {
         pages: vec![translate_boxes_x(&[lit], 2.0)],
     };
-    assert!(serde_json::to_string(&moved)
-        .expect("serialize")
-        .contains("\"linked\":true"));
+    assert!(
+        serde_json::to_string(&moved)
+            .expect("serialize")
+            .contains("\"linked\":true")
+    );
 }
 
 #[test]

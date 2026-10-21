@@ -28,7 +28,7 @@ mod paint;
 mod radius;
 
 pub(super) use dash::dash_pattern;
-pub(in crate::engine) use paint::{push_side_borders, DecorationPaint, SideBorders};
+pub(in crate::engine) use paint::{DecorationPaint, SideBorders, push_side_borders};
 
 impl<'a, 'b> Ctx<'a, 'b> {
     /// Prepends the decoration for a border box at `(x, 0)` (atom

@@ -5,7 +5,7 @@
 //! degradation warnings are decided once, not per item kind.
 
 use serde_json::Value;
-use shojiku_core::{is_blank, resolve_path, BindingScope, Bindings, FieldSpec, Segment};
+use shojiku_core::{BindingScope, Bindings, FieldSpec, Segment, is_blank, resolve_path};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_formatter::format_value;
 

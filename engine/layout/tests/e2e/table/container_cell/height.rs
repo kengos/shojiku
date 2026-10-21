@@ -113,10 +113,11 @@ fn overflow_hidden_clips_the_cell_to_a_fixed_row() {
     assert_eq!(clip.h, 30.0, "the clip is the cell, not the content");
     // The rect moved inside the clip group.
     assert!(rect_shapes(page).iter().all(|r| r.h != 60.0));
-    assert!(clip
-        .items
-        .iter()
-        .any(|i| matches!(i, LayoutItem::Rect(r) if r.h == 60.0)));
+    assert!(
+        clip.items
+            .iter()
+            .any(|i| matches!(i, LayoutItem::Rect(r) if r.h == 60.0))
+    );
 }
 
 #[test]

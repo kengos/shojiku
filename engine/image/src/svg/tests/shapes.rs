@@ -96,10 +96,11 @@ fn invalid_transform_warns_and_is_truncated() {
                </svg>"#,
     );
     assert_eq!(tree.paths[0].cmds[0], PathCmd::MoveTo(1.0, 1.0));
-    assert!(tree
-        .warnings
-        .iter()
-        .any(|w| w.contains("invalid transform")));
+    assert!(
+        tree.warnings
+            .iter()
+            .any(|w| w.contains("invalid transform"))
+    );
 }
 
 #[test]

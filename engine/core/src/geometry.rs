@@ -17,7 +17,7 @@ mod point_spec;
 
 pub use box_model::{BoxSpec, OptBox};
 pub use flex::{AlignItems, BoxType, FlexBasis, FlexDirection, JustifyContent};
-pub use grid::{GridTrack, TrackSpec, MAX_GRID_TRACKS};
+pub use grid::{GridTrack, MAX_GRID_TRACKS, TrackSpec};
 pub use page_margin::PageMargin;
 pub use point_spec::{AnchorEdge, AnchorOffset, AnchorPoint, PointSpec};
 

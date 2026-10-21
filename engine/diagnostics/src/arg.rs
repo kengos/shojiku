@@ -14,7 +14,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::echo::{sanitize, MAX_ECHO};
+use crate::echo::{MAX_ECHO, sanitize};
 
 /// The longest string an argument echoes; a hostile template/params key
 /// cannot blow up a diagnostic beyond this. An arg IS one echoed value, so

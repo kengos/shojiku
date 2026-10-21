@@ -29,12 +29,12 @@ mod tests;
 
 pub use inherit::inherits;
 pub use initial::{
-    initial, line_initial, surface_initial, Initial, GRID_STROKE_PT, MARK_STROKE_PT,
-    TABLE_CELL_VERTICAL_ALIGN,
+    GRID_STROKE_PT, Initial, MARK_STROKE_PT, TABLE_CELL_VERTICAL_ALIGN, initial, line_initial,
+    surface_initial,
 };
-pub use paint::{holds_content, painted_by, takes, Surface};
+pub use paint::{Surface, holds_content, painted_by, takes};
 pub use ranges::{
-    range, ScalarRange, BORDER_WIDTH, FONT_SIZE, LETTER_SPACING, LINE_HEIGHT, LINE_WIDTH, OPACITY,
+    BORDER_WIDTH, FONT_SIZE, LETTER_SPACING, LINE_HEIGHT, LINE_WIDTH, OPACITY, ScalarRange, range,
 };
 
 /// Every surface the tables cover, for walks over them: each item kind

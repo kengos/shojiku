@@ -22,7 +22,7 @@ mod vertical_tests;
 mod zh_tests;
 
 pub(crate) use kinsoku::{no_line_end, no_line_start};
-pub use rich::{wrap_spans, wrap_spans_hung, RichPiece, RichSpan, WrappedLine};
+pub use rich::{RichPiece, RichSpan, WrappedLine, wrap_spans, wrap_spans_hung};
 
 use crate::font::FontFace;
 use shojiku_core::{HangingPunctuation, LineBreak};

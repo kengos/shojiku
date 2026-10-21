@@ -22,9 +22,9 @@ use crate::request::Request;
 use crate::status::Failure;
 use shojiku_authoring::fs::load_locale_pack;
 use shojiku_authoring::{
-    load_sources, prepare, resolve_locale_id, AssetsInput, PrepareCtx, Prepared,
+    AssetsInput, PrepareCtx, Prepared, load_sources, prepare, resolve_locale_id,
 };
-use shojiku_formatter::{resolve_face_specs, LangPack};
+use shojiku_formatter::{LangPack, resolve_face_specs};
 use shojiku_layout::FontStore;
 
 /// A laid-out document and the font store the render stage still needs — the

@@ -23,10 +23,12 @@ fn envelope_carries_engine_document_boxes_and_margin() {
     assert_eq!(envelope["engine"]["version"], env!("CARGO_PKG_VERSION"));
     let caps = envelope["engine"]["capabilities"].as_array().expect("caps");
     assert!(caps.iter().any(|c| c == "mcp.stdio"));
-    assert!(!envelope["document"]["pages"]
-        .as_array()
-        .expect("pages")
-        .is_empty());
+    assert!(
+        !envelope["document"]["pages"]
+            .as_array()
+            .expect("pages")
+            .is_empty()
+    );
     assert!(envelope["boxes"].is_object() || envelope["boxes"].is_array());
     assert_eq!(envelope["margin"].as_array().expect("margin").len(), 4);
     assert_eq!(diag_items(&parts[1]), json!([]));

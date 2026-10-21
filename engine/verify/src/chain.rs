@@ -22,13 +22,13 @@
 //! chain reaches an anchor within a bounded number of steps.
 
 use der::Encode;
-use x509_cert::ext::pkix::BasicConstraints;
 use x509_cert::Certificate;
+use x509_cert::ext::pkix::BasicConstraints;
 
 use crate::error::{Result, VerifyError};
 use crate::limits::MAX_TRUST_ANCHORS;
 use crate::report::CheckOutcome;
-use crate::signature::{verify_with, SignatureAlgorithm};
+use crate::signature::{SignatureAlgorithm, verify_with};
 
 #[cfg(test)]
 mod tests;

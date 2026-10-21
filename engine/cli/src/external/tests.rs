@@ -8,15 +8,15 @@
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use base64::engine::general_purpose::STANDARD;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
 use shojiku_signing::PrivateKey;
 
-use super::{run_sign_complete, run_sign_prepare, Prepared};
+use super::{Prepared, run_sign_complete, run_sign_prepare};
+use crate::ReportArg;
 use crate::args::{SignCompleteArgs, SignPrepareArgs};
 use crate::sign::PassphraseSource;
 use crate::tests::{example_pdf, key_dir};
-use crate::ReportArg;
 
 /// A passphrase source that answers nothing.
 ///

@@ -4,7 +4,7 @@
 //! layout concern.
 
 use crate::ruby::MAX_RUBY_LEN;
-use crate::template::{Item, Template, TextItem, MAX_RUBY_ENTRIES};
+use crate::template::{Item, MAX_RUBY_ENTRIES, Template, TextItem};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
 use super::walk_sections;

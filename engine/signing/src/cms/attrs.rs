@@ -14,8 +14,8 @@
 //! that every conformant verifier rejects.
 
 use cms::signed_data::SignedAttributes;
-use der::asn1::{ObjectIdentifier, OctetString, SetOfVec};
 use der::Encode;
+use der::asn1::{ObjectIdentifier, OctetString, SetOfVec};
 use x509_cert::attr::Attribute;
 
 use super::encode_any;

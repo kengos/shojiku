@@ -1,6 +1,6 @@
 //! Unit tests for the URL gate: allowlist, case tricks, hostile values.
 
-use super::{check_link_url, LinkReject, MAX_LINK_URL};
+use super::{LinkReject, MAX_LINK_URL, check_link_url};
 
 #[test]
 fn allowed_schemes_pass_and_trim() {

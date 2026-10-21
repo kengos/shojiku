@@ -1,6 +1,6 @@
 //! Tests for the rounded-rect path builder and the corner clamp.
 
-use super::{rounded_rect_cmds, Corners};
+use super::{Corners, rounded_rect_cmds};
 use shojiku_image::PathCmd;
 
 #[test]

@@ -18,7 +18,7 @@
 //! `include/shojiku.h`.
 
 use super::ShojikuResult;
-use crate::status::{shield_status, SHOJIKU_ERR_NULL_ARG, SHOJIKU_ERR_OUT_OF_RANGE, SHOJIKU_OK};
+use crate::status::{SHOJIKU_ERR_NULL_ARG, SHOJIKU_ERR_OUT_OF_RANGE, SHOJIKU_OK, shield_status};
 
 /// Whether the operation produced what was asked for: 1 or 0.
 ///

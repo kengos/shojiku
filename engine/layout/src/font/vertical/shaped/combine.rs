@@ -12,7 +12,7 @@ use shojiku_core::{TextCombine, TextOrientation};
 
 use super::super::super::shape::{cluster_ends, itemize, shape_segment};
 use super::super::VGlyph;
-use super::{degrade_chars, orient_segments, sane_cell, sane_offset, Arrange, SegKind};
+use super::{Arrange, SegKind, degrade_chars, orient_segments, sane_cell, sane_offset};
 
 /// Splits a column's text into arrangement segments: tate-chu-yoko digit groups
 /// (under `digits N`) — or the WHOLE text as one group (under `all`) —

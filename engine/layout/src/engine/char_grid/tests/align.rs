@@ -1,7 +1,7 @@
 //! Unit tests for the `textAlign` end-alignment shift: the pure per-line
 //! math, and the pass over an assigned grid.
 
-use super::super::cells::{align_cells, assign_cells, CellChar};
+use super::super::cells::{CellChar, align_cells, assign_cells};
 use super::{plain, run};
 use shojiku_core::{KinsokuMode, TextAlign};
 

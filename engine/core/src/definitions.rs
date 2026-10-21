@@ -23,8 +23,8 @@ mod shape;
 mod tests;
 
 pub use schema::{
-    EnumEntry, FieldType, FormatVariant, LabeledEnumValue, Schema, SchemaType, MAX_ENUM_VALUES,
-    MAX_SCHEMA_DEPTH, MAX_SCHEMA_NODES,
+    EnumEntry, FieldType, FormatVariant, LabeledEnumValue, MAX_ENUM_VALUES, MAX_SCHEMA_DEPTH,
+    MAX_SCHEMA_NODES, Schema, SchemaType,
 };
 
 /// Top-level definitions document: the root object schema. Unknown keys

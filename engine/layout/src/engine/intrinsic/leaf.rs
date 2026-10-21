@@ -5,7 +5,7 @@
 use shojiku_core::{ContainerItem, FlexDirection, TextItem, WritingMode};
 use shojiku_layout_box::resolve_edges;
 
-use crate::font::{run_width, RunOptions};
+use crate::font::{RunOptions, run_width};
 
 use super::super::flex::FlexKind;
 use super::super::{Basis, Ctx};

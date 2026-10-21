@@ -75,9 +75,11 @@ sections:
     assert_eq!(texts[0].font_size, 8.0);
     // Header fill rect (the band decoration) is 40pt tall.
     let rects = rect_shapes(&doc.pages[0]);
-    assert!(rects
-        .iter()
-        .any(|r| r.fill.is_some() && (r.h - 40.0).abs() < 0.01));
+    assert!(
+        rects
+            .iter()
+            .any(|r| r.fill.is_some() && (r.h - 40.0).abs() < 0.01)
+    );
 }
 
 #[test]

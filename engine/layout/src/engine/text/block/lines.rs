@@ -3,10 +3,10 @@
 //! (including the hanging-punctuation exclusion) into placed
 //! [`TextLine`]s. The rich counterpart is `super::super::rich`'s `lines`.
 
-use crate::font::{run_width, FontFace, RunOptions};
+use crate::font::{FontFace, RunOptions, run_width};
 use crate::style::ComputedStyle;
 use crate::tree::TextLine;
-use crate::wrap::{wrap_text_chain_hung, WrappedLine};
+use crate::wrap::{WrappedLine, wrap_text_chain_hung};
 
 /// Wraps plain text with the block's line-break and hanging-punctuation
 /// settings, giving each line's hung flag. Shared by the initial wrap and

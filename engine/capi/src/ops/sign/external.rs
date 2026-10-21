@@ -23,13 +23,13 @@
 //! [`super::run`].
 
 use crate::result::ShojikuResult;
-use crate::status::{encode, Failure};
-use base64::engine::general_purpose::STANDARD;
+use crate::status::{Failure, encode};
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
 use shojiku_diagnostics::Diagnostics;
 use shojiku_signing::{
-    prepare_sign, sign_document, CmsError, PlaceholderOptions, PresignedSigner, SignatureAlgorithm,
-    SignatureContainer,
+    CmsError, PlaceholderOptions, PresignedSigner, SignatureAlgorithm, SignatureContainer,
+    prepare_sign, sign_document,
 };
 
 /// Longest signature this library accepts.

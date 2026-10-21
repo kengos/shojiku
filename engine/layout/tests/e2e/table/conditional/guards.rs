@@ -183,8 +183,7 @@ fn a_dotted_nested_key_resolves_against_the_row() {
 fn a_blank_form_renders_the_same_geometry_as_an_unconditioned_table() {
     // The blank↔filled invariant: adding conditional entries must not
     // move anything when no row matches.
-    let entries =
-        "          conditionalStyles:\n            - when: { key: kind, equals: heading }\n              style: { textAlign: center, backgroundColor: \"#00ff00\" }\n";
+    let entries = "          conditionalStyles:\n            - when: { key: kind, equals: heading }\n              style: { textAlign: center, backgroundColor: \"#00ff00\" }\n";
     let blank = json!([{ "label": "AAA" }, { "label": "BBB" }]);
     let (with, diags_with) = conditional_table(entries, blank.clone());
     let (without, diags_without) = conditional_table("", blank);

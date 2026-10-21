@@ -3,7 +3,7 @@
 //! item, id-carrying or not), and the resolved page margins — the
 //! bundle a Designer canvas hit-tests against.
 
-use crate::capabilities::{engine_info, EngineInfo};
+use crate::capabilities::{EngineInfo, engine_info};
 use crate::prepare::Prepared;
 use shojiku_layout::{BoxIndex, LayoutDocument};
 

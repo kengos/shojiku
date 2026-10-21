@@ -20,9 +20,9 @@
 //! question than the one the caller asked.
 
 use crate::result::ShojikuResult;
-use crate::status::{encode, Failure};
+use crate::status::{Failure, encode};
 use shojiku_diagnostics::Diagnostics;
-use shojiku_verify::{verify_document, CheckOutcome, TrustAnchors, VerificationReport};
+use shojiku_verify::{CheckOutcome, TrustAnchors, VerificationReport, verify_document};
 
 /// Verifies `pdf` against `anchors`.
 pub(crate) fn run(pdf: &[u8], anchors: &[u8]) -> Result<ShojikuResult, Failure> {

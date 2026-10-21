@@ -11,8 +11,8 @@ use shojiku_image::PathCmd;
 mod meta;
 mod round;
 mod text;
-pub use meta::{DocumentMetadata, DEFAULT_DOCUMENT_TITLE};
-pub use round::{rounded_rect_cmds, Corners, Dash};
+pub use meta::{DEFAULT_DOCUMENT_TITLE, DocumentMetadata};
+pub use round::{Corners, Dash, rounded_rect_cmds};
 pub use text::{DecorationSpec, RunView, TextBlock, TextLine, TextRun};
 
 /// A laid-out document: every page's primitives, ready to draw.

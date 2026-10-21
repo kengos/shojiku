@@ -1,7 +1,7 @@
 //! [`Body::items`]: a flow body and an absolute body each give their
 //! top-level items, which [`Sections::item_lists`] places between the bands.
 
-use crate::template::{parse_template, ItemKind};
+use crate::template::{ItemKind, parse_template};
 
 fn body_kinds(body: &str) -> Vec<ItemKind> {
     let yaml = format!("sections:\n  body:\n{body}");

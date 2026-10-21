@@ -8,14 +8,14 @@
 use crate::policy::AssetPolicy;
 use crate::store::AssetStore;
 use serde_json::Value;
-use shojiku_core::{resolve_path, BindingScope, ColumnType, TableItem, Template};
+use shojiku_core::{BindingScope, ColumnType, TableItem, Template, resolve_path};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
 mod walk;
 
 use super::bundled::AssetsRoot;
 use super::load::dynamic_value;
-use super::{cell_asset_key, insert_asset, MAX_CELL_IMAGE_ASSETS};
+use super::{MAX_CELL_IMAGE_ASSETS, cell_asset_key, insert_asset};
 use walk::{element_cell_images, tables};
 
 /// The bindings a per-element cell walk shares: the policy, the assets

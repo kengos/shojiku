@@ -8,7 +8,7 @@ use shojiku_core::TextOrientation;
 
 use super::super::super::Ctx;
 use super::Cell;
-use crate::font::{arrange_vertical, shape_run, FontFace, RunOptions};
+use crate::font::{FontFace, RunOptions, arrange_vertical, shape_run};
 use crate::tree::{TextBlock, TextLine};
 
 impl<'a, 'b> Ctx<'a, 'b> {

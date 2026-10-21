@@ -75,12 +75,13 @@ fn column_direction_fills_the_last_page_height() {
 #[test]
 fn empty_array_emits_no_fragment() {
     let out = nup(0, "row");
-    assert!(!out
-        .boxes
-        .pages
-        .iter()
-        .flatten()
-        .any(|b| b.id.as_deref() == Some("cards")));
+    assert!(
+        !out.boxes
+            .pages
+            .iter()
+            .flatten()
+            .any(|b| b.id.as_deref() == Some("cards"))
+    );
 }
 
 #[test]
@@ -104,12 +105,13 @@ sections:
         json!({}),
     );
     assert!(out.diagnostics.iter().any(|d| d.code == "missing_data"));
-    assert!(!out
-        .boxes
-        .pages
-        .iter()
-        .flatten()
-        .any(|b| b.id.as_deref() == Some("cards")));
+    assert!(
+        !out.boxes
+            .pages
+            .iter()
+            .flatten()
+            .any(|b| b.id.as_deref() == Some("cards"))
+    );
 }
 
 #[test]

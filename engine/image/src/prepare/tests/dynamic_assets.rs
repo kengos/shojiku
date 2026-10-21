@@ -103,9 +103,11 @@ fn dynamic_content_problems_degrade_to_warnings() {
     };
     let (_s, diags) = prepare_assets(&tpl, &json!({ "qr": SVG }), &policy, None);
     assert!(!diags.has_errors());
-    assert!(diags
-        .iter()
-        .any(|d| d.code == "invalid_image_data" && d.message.contains("byte cap")));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "invalid_image_data" && d.message.contains("byte cap"))
+    );
 
     // Dynamic bundled selection of a missing file also degrades.
     let dir = temp_dir("dyn-missing");
@@ -125,9 +127,11 @@ fn svg_warnings_surface_as_diagnostics() {
     let (store, diags) = prepare_assets(&tpl, &json!({}), &AssetPolicy::default(), None);
     assert_eq!(store.len(), 1);
     assert!(!diags.has_errors());
-    assert!(diags
-        .iter()
-        .any(|d| d.code == "svg_unsupported" && d.message.contains("<text>")));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "svg_unsupported" && d.message.contains("<text>"))
+    );
 }
 
 #[test]

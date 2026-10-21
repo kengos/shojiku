@@ -203,9 +203,11 @@ sections:
 fn a_per_side_border_refuses_a_radius_and_says_so() {
     let (doc, diags) = run_style("{ borderWidth: { top: 2, left: 2 }, borderRadius: 6 }");
     // Bands only — no rect can carry the corner treatment.
-    assert!(rect_shapes(&doc.pages[0])
-        .iter()
-        .all(|r| r.radius.is_square()));
+    assert!(
+        rect_shapes(&doc.pages[0])
+            .iter()
+            .all(|r| r.radius.is_square())
+    );
     let d = diags
         .items
         .iter()
@@ -218,10 +220,12 @@ fn a_per_side_border_refuses_a_radius_and_says_so() {
 fn a_double_border_refuses_a_radius() {
     // `double` needs two lines per side, so it uses the band path too.
     let (_, diags) = run_style("{ borderWidth: 3, borderStyle: double, borderRadius: 6 }");
-    assert!(diags
-        .items
-        .iter()
-        .any(|d| d.code == "border_radius_ignored"));
+    assert!(
+        diags
+            .items
+            .iter()
+            .any(|d| d.code == "border_radius_ignored")
+    );
 }
 
 #[test]

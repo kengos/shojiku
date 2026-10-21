@@ -7,7 +7,7 @@
 
 use crate::request::Request;
 use crate::result::ShojikuResult;
-use crate::status::{encode, Failure};
+use crate::status::{Failure, encode};
 use shojiku_authoring::validate_strings;
 
 /// Validates the sources. Errors make the result unsuccessful; the

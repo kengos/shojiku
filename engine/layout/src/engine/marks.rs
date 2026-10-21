@@ -16,7 +16,7 @@ use shojiku_core::{CheckboxItem, EllipseItem, Length, OptBox, Style};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_image::PathCmd;
 
-use super::{placed_box, with_vertical_margin, Atom, Basis, Ctx, BLACK};
+use super::{Atom, BLACK, Basis, Ctx, placed_box, with_vertical_margin};
 
 /// Bézier circle constant: control-point offset for a quarter arc.
 const KAPPA: f64 = 0.552_284_749_830_793_9;

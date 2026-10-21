@@ -15,9 +15,9 @@
 //! discovered.
 
 use der::asn1::ObjectIdentifier;
-use ring::digest::{digest, SHA256};
+use ring::digest::{SHA256, digest};
 use ring::signature::{
-    UnparsedPublicKey, VerificationAlgorithm, ECDSA_P256_SHA256_ASN1, RSA_PKCS1_2048_8192_SHA256,
+    ECDSA_P256_SHA256_ASN1, RSA_PKCS1_2048_8192_SHA256, UnparsedPublicKey, VerificationAlgorithm,
 };
 use x509_cert::Certificate;
 
@@ -50,8 +50,7 @@ impl SignatureAlgorithm {
             return Ok(Self::EcdsaP256Sha256);
         }
         Err(VerifyError::Unsupported {
-            what:
-                "a signature algorithm other than RSA PKCS#1 v1.5 or ECDSA P-256, both over SHA-256",
+            what: "a signature algorithm other than RSA PKCS#1 v1.5 or ECDSA P-256, both over SHA-256",
         })
     }
 

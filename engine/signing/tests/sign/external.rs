@@ -1,7 +1,7 @@
 //! The path where the private key never enters this process.
 
 use shojiku_signing::{
-    complete_sign, prepare_sign, PlaceholderOptions, PrivateKey, SignatureContainer, SigningError,
+    PlaceholderOptions, PrivateKey, SignatureContainer, SigningError, complete_sign, prepare_sign,
 };
 
 use crate::common::{assert_does_not_verify, assert_verifies, covered_bytes, example, key_file};

@@ -7,11 +7,11 @@
 use crate::{CliError, PreviewArgs, RenderArgs, RenderishArgs, ValidateArgs};
 use shojiku_authoring::fs::{load_locale_pack, resolve_font_dirs, resolve_locale_dir};
 use shojiku_authoring::{
-    inspect_json, load_sources, prepare, preview_page, preview_pages, resolve_locale_id,
-    validate_strings, AssetsInput, PrepareCtx, Prepared,
+    AssetsInput, PrepareCtx, Prepared, inspect_json, load_sources, prepare, preview_page,
+    preview_pages, resolve_locale_id, validate_strings,
 };
-use shojiku_diagnostics::{sanitize, Diagnostics, MAX_MESSAGE};
-use shojiku_formatter::{resolve_face_specs_with, LangPack};
+use shojiku_diagnostics::{Diagnostics, MAX_MESSAGE, sanitize};
+use shojiku_formatter::{LangPack, resolve_face_specs_with};
 use shojiku_layout::FontStore;
 use std::path::Path;
 

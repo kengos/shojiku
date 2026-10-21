@@ -57,10 +57,12 @@ fn a_spelling_validate_calls_unknown_is_not_in_the_catalog() {
     // offered it there would be offering a live error.
     assert!(diagnose("amount", "wareki").contains(&"unknown_format".to_string()));
     let cat = catalog(&empty_template());
-    assert!(!entry(&cat, "currency")
-        .variants
-        .iter()
-        .any(|v| v.spelling == "wareki"));
+    assert!(
+        !entry(&cat, "currency")
+            .variants
+            .iter()
+            .any(|v| v.spelling == "wareki")
+    );
 }
 
 #[test]
@@ -85,8 +87,10 @@ sections:
         .collect();
     assert!(!codes.contains(&"unknown_format".to_string()));
     let cat = format_catalog(Some(&template), &ja(), &[]);
-    assert!(entry(&cat, "date")
-        .variants
-        .iter()
-        .any(|v| v.spelling == "stamp"));
+    assert!(
+        entry(&cat, "date")
+            .variants
+            .iter()
+            .any(|v| v.spelling == "stamp")
+    );
 }

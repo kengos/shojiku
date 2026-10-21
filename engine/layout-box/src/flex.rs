@@ -12,7 +12,7 @@ use shojiku_core::{AlignItems, JustifyContent};
 
 mod lengths;
 
-pub use lengths::{resolve_flex_lengths, FlexItem};
+pub use lengths::{FlexItem, resolve_flex_lengths};
 
 /// Main-axis spacing for `justifyContent` over `count` children with
 /// `free` leftover space: returns `(leading, between)` — the offset

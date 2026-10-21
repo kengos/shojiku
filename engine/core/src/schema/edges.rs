@@ -8,7 +8,7 @@
 use super::sub;
 use crate::edges::EdgeMapRepr;
 use crate::{EdgeSpec, EdgeValue, Length, PageMargin, PageSize};
-use schemars::{json_schema, JsonSchema, Schema, SchemaGenerator};
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use std::borrow::Cow;
 
 /// A side value: a length, or the keyword `auto` (meaningful on margins

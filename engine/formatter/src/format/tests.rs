@@ -11,8 +11,8 @@ mod grouping;
 mod numbers;
 
 use super::*;
-use serde_json::json;
 use serde_json::Value;
+use serde_json::json;
 
 /// A small hand-written ja pack for edge-case tests; the locale goldens
 /// use the real builtins via [`builtin_ja`]/[`builtin_en`].

@@ -10,9 +10,11 @@ fn flow_body_table_pagination_keys_are_live() {
     let t = tpl(
         "      - type: table\n        keepTogether: true\n        autoPageBreak: false\n        repeatHeader: true\n        data: { key: order_items }\n        columns:\n          - data: { key: name }\n",
     );
-    assert!(!validate(None, &t, None)
-        .iter()
-        .any(|d| d.code == "table_pagination_key_ignored"));
+    assert!(
+        !validate(None, &t, None)
+            .iter()
+            .any(|d| d.code == "table_pagination_key_ignored")
+    );
 }
 
 #[test]
@@ -69,7 +71,9 @@ fn bounded_table_without_pagination_keys_is_clean() {
         1,
         "- type: table\n  data: { key: order_items }\n  columns:\n    - data: { key: name }",
     );
-    assert!(!validate(None, &t, None)
-        .iter()
-        .any(|d| d.code == "table_pagination_key_ignored"));
+    assert!(
+        !validate(None, &t, None)
+            .iter()
+            .any(|d| d.code == "table_pagination_key_ignored")
+    );
 }

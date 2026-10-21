@@ -12,7 +12,7 @@
 //! against is a panic on a boundary, not a rejection.
 
 use shojiku_core::{
-    parse_aozora_ruby, parse_definitions, parse_params, parse_template, validate, Catalog,
+    Catalog, parse_aozora_ruby, parse_definitions, parse_params, parse_template, validate,
 };
 
 /// Every seed committed for one fuzz target, as text.

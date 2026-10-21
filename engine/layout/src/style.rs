@@ -15,9 +15,9 @@
 //! (it needs the template's `styles`); this module is the pure algebra.
 
 use shojiku_core::{
-    BorderStyleKind, FontRel, FontStyle, FontWeight, HangingPunctuation, Length, LineBreak,
-    Overflow, Style, TextAlign, TextCombineUpright, TextDecoration, TextOrientation, TextOverflow,
-    TextSpacingTrim, VerticalAlign, WritingMode, DEFAULT_FONT_SIZE_PT, DEFAULT_LINE_HEIGHT,
+    BorderStyleKind, DEFAULT_FONT_SIZE_PT, DEFAULT_LINE_HEIGHT, FontRel, FontStyle, FontWeight,
+    HangingPunctuation, Length, LineBreak, Overflow, Style, TextAlign, TextCombineUpright,
+    TextDecoration, TextOrientation, TextOverflow, TextSpacingTrim, VerticalAlign, WritingMode,
 };
 
 /// A fully resolved style: every property concrete, ready for measurement

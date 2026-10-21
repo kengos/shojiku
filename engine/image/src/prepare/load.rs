@@ -4,7 +4,7 @@
 use crate::error::ImageError;
 use crate::policy::AssetPolicy;
 use crate::raster::{checked_dimensions, sniff};
-use crate::source::{classify, decode_data_uri, DataUriPayload, ImageSource};
+use crate::source::{DataUriPayload, ImageSource, classify, decode_data_uri};
 use crate::store::AssetKind;
 use crate::svg::parse_svg;
 use serde_json::Value;
@@ -12,8 +12,8 @@ use shojiku_core::resolve_path;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 use std::sync::Arc;
 
-use super::bundled::{load_bytes, AssetsRoot};
 use super::Origin;
+use super::bundled::{AssetsRoot, load_bytes};
 
 pub(super) fn static_asset(
     src: &str,

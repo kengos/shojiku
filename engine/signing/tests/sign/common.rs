@@ -14,9 +14,9 @@ use std::sync::OnceLock;
 use cms::content_info::ContentInfo;
 use cms::signed_data::SignedData;
 use der::{Decode, Encode, SliceReader};
-use ring::digest::{digest, SHA256};
+use ring::digest::{SHA256, digest};
 use ring::signature::{
-    UnparsedPublicKey, VerificationAlgorithm, ECDSA_P256_SHA256_ASN1, RSA_PKCS1_2048_8192_SHA256,
+    ECDSA_P256_SHA256_ASN1, RSA_PKCS1_2048_8192_SHA256, UnparsedPublicKey, VerificationAlgorithm,
 };
 use shojiku_signing::LocalPemSigner;
 

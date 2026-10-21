@@ -38,12 +38,16 @@ fn each_source_takes_a_path_or_inline_text_but_never_both() {
 
 #[test]
 fn an_absent_source_is_none_and_a_required_one_names_both_spellings() {
-    assert!(opt_source(&json!({}), "params")
-        .expect("absent is fine")
-        .is_none());
-    assert!(opt_source(&json!({ "params": null }), "params")
-        .expect("null is absent")
-        .is_none());
+    assert!(
+        opt_source(&json!({}), "params")
+            .expect("absent is fine")
+            .is_none()
+    );
+    assert!(
+        opt_source(&json!({ "params": null }), "params")
+            .expect("null is absent")
+            .is_none()
+    );
 
     let Err((code, message)) = req_source(&json!({}), "template") else {
         panic!("expected invalid params");

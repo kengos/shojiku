@@ -169,7 +169,7 @@ fn cover_fit_clips_the_cell_image() {
 
 #[test]
 fn svg_cell_image_is_clipped_even_when_it_fits() {
-    use shojiku_image::{parse_svg, Asset, AssetKind, AssetStore, SvgLimits};
+    use shojiku_image::{Asset, AssetKind, AssetStore, SvgLimits, parse_svg};
     let mut store = AssetStore::empty();
     store.insert(Asset {
         id: shojiku_image::cell_asset_key("items", 0, "photo"),

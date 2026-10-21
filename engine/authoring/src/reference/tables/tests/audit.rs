@@ -1,7 +1,7 @@
 //! The completeness rule. Rendering makes the tables consistent; only this
 //! notices that a key was added to the wire and to nobody's table.
 
-use crate::reference::tables::{audit, parse, Problem};
+use crate::reference::tables::{Problem, audit, parse};
 
 /// The catalog-only cases pass an EMPTY registry: with no diagnostics table
 /// in the fixture, any code in the registry would correctly be reported as

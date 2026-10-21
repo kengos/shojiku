@@ -19,10 +19,12 @@ fn empty_base_or_text_warns_per_entry() {
         .filter(|d| d.code == "empty_ruby_entry")
         .collect();
     assert_eq!(empties.len(), 2);
-    assert!(empties[0]
-        .path
-        .as_deref()
-        .is_some_and(|p| p.ends_with(".ruby[0]")));
+    assert!(
+        empties[0]
+            .path
+            .as_deref()
+            .is_some_and(|p| p.ends_with(".ruby[0]"))
+    );
 }
 
 #[test]

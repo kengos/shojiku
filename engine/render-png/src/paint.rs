@@ -9,8 +9,8 @@ mod text;
 use crate::RenderPngError;
 use shojiku_image::{AssetStore, PathCmd};
 use shojiku_layout::{
-    rounded_rect_cmds, ClipShape, Corners, Dash, FontFace, FontStore, LayoutItem, LineShape,
-    PathShape, RectShape, MAX_CLIP_DEPTH,
+    ClipShape, Corners, Dash, FontFace, FontStore, LayoutItem, LineShape, MAX_CLIP_DEPTH,
+    PathShape, RectShape, rounded_rect_cmds,
 };
 use std::collections::HashMap;
 use tiny_skia::{

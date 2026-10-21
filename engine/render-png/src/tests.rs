@@ -20,8 +20,8 @@ use serde_json::json;
 use shojiku_core::parse_template;
 use shojiku_formatter::LangPack;
 use shojiku_image::{AssetKind, PathCmd, RgbaImage};
-use shojiku_layout::{layout, LayoutInput, LayoutPage};
 use shojiku_layout::{ImageShape, LayoutItem, LineShape, RectShape, TextBlock};
+use shojiku_layout::{LayoutInput, LayoutPage, layout};
 use std::path::PathBuf;
 
 pub(super) fn font_dir() -> PathBuf {
@@ -80,8 +80,8 @@ pub(super) fn pixel(rgba: &[u8], w: u32, x: u32, y: u32) -> [u8; 4] {
 
 /// A valid 1x1 red PNG (opaque), base64.
 pub(super) fn png_1x1_red() -> String {
-    use base64::engine::general_purpose::STANDARD;
     use base64::Engine;
+    use base64::engine::general_purpose::STANDARD;
     let mut out = Vec::new();
     {
         let mut enc = png::Encoder::new(&mut out, 1, 1);

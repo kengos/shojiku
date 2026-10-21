@@ -116,9 +116,11 @@ fn control_char_base_yields_no_cells_and_no_ruby() {
         "        text: \"あ\\r《ふね》\"\n        grid: { charsPerLine: 4, lines: 1, cellSize: 20 }\n        markup: aozora\n",
     );
     let (doc, _) = run(&yaml, json!({}));
-    assert!(!text_blocks(&doc.pages[0])
-        .iter()
-        .any(|b| b.lines.iter().any(|l| l.text.contains('ふ'))));
+    assert!(
+        !text_blocks(&doc.pages[0])
+            .iter()
+            .any(|b| b.lines.iter().any(|l| l.text.contains('ふ')))
+    );
 }
 
 #[test]

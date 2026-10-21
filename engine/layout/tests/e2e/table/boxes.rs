@@ -92,12 +92,13 @@ sections:
     );
     assert!(out.diagnostics.iter().any(|d| d.code == "page_overflow"));
     assert_eq!(out.document.pages.len(), MAX_PAGES);
-    assert!(!out
-        .boxes
-        .pages
-        .iter()
-        .flatten()
-        .any(|b| b.id.as_deref() == Some("late")));
+    assert!(
+        !out.boxes
+            .pages
+            .iter()
+            .flatten()
+            .any(|b| b.id.as_deref() == Some("late"))
+    );
 }
 
 #[test]

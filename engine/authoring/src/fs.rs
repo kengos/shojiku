@@ -4,9 +4,9 @@
 //! here so both hosts agree; bytes-injecting hosts (WASM) build the crate
 //! with `default-features = false` and never compile this module.
 
-use crate::locale::{load_pack, valid_locale_id, LocaleError, MAX_LOCALE_ID};
+use crate::locale::{LocaleError, MAX_LOCALE_ID, load_pack, valid_locale_id};
 use shojiku_diagnostics::Echo;
-use shojiku_formatter::{read_pack_file, LangPack, LangPackError};
+use shojiku_formatter::{LangPack, LangPackError, read_pack_file};
 use std::path::PathBuf;
 use thiserror::Error;
 
@@ -21,7 +21,9 @@ pub enum FsPackError {
         path: PathBuf,
         source: std::io::Error,
     },
-    #[error("locale `{locale}` not found: not a builtin locale ({builtins}) and no `{locale}.yml` (lowercased) in the locale dirs ({dirs})")]
+    #[error(
+        "locale `{locale}` not found: not a builtin locale ({builtins}) and no `{locale}.yml` (lowercased) in the locale dirs ({dirs})"
+    )]
     LocaleNotFound {
         locale: String,
         /// The builtin locale ids, comma-separated.

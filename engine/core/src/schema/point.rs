@@ -7,9 +7,9 @@
 //! rejects (see the note atop [`super::length`]).
 
 use super::sub;
-use crate::geometry::{AnchorEdge, AnchorOffset, PointSpec};
 use crate::Length;
-use schemars::{json_schema, JsonSchema, Schema, SchemaGenerator};
+use crate::geometry::{AnchorEdge, AnchorOffset, PointSpec};
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use std::borrow::Cow;
 
 /// `{ x, y }` (both required) or `{ item, edge?, offset? }` — never a mix.

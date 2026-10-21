@@ -6,7 +6,7 @@
 use crate::error::WasmError;
 use crate::render::{Pages, PdfOutcome, RenderOutcome};
 use js_sys::{Array, Error, Object, Reflect, Uint8Array};
-use shojiku_diagnostics::{sanitize, ArgValue, MAX_MESSAGE};
+use shojiku_diagnostics::{ArgValue, MAX_MESSAGE, sanitize};
 use wasm_bindgen::prelude::*;
 
 /// Maps a host-misuse error to a thrown JS `Error` carrying a stable `code`

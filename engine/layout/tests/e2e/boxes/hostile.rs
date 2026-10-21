@@ -35,9 +35,10 @@ sections:
     assert!(out.diagnostics.is_empty(), "diags: {:?}", out.diagnostics);
     let all: Vec<String> = page_boxes(&out, 0).iter().map(|b| b.path.clone()).collect();
     // The deepest rect composes three item steps.
-    assert!(all
-        .iter()
-        .any(|p| p == "sections.body.items[0].items[0].items[0]"));
+    assert!(
+        all.iter()
+            .any(|p| p == "sections.body.items[0].items[0].items[0]")
+    );
     // The top-level sibling is items[1] — proof the stack popped back out
     // of the nested subtree instead of accumulating its segments.
     assert!(all.iter().any(|p| p == "sections.body.items[1]"));
@@ -102,10 +103,11 @@ sections:
         json!({ "arr": [ {"v": "a"}, {"v": "b"}, {"v": "c"} ] }),
     );
     // The hostile grid is clamped, not expanded into millions of slots.
-    assert!(out
-        .diagnostics
-        .iter()
-        .any(|d| d.code == "imposition_grid_clamped"));
+    assert!(
+        out.diagnostics
+            .iter()
+            .any(|d| d.code == "imposition_grid_clamped")
+    );
     // Exactly one cell box per bound element — never one per grid slot.
     let cells = out
         .boxes

@@ -73,9 +73,11 @@ fn the_time_verification_asks_about_is_the_callers() {
         year_one.certificate_validity(),
         CheckOutcome::failed("a certificate in the chain is not yet valid")
     );
-    assert!(verify_document(&signed, &anchors)
-        .expect("evaluates")
-        .is_valid());
+    assert!(
+        verify_document(&signed, &anchors)
+            .expect("evaluates")
+            .is_valid()
+    );
 }
 
 #[test]

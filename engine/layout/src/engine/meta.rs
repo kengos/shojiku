@@ -14,7 +14,7 @@ use shojiku_core::{Bindings, DocumentMeta, MAX_DOCUMENT_ENTRIES};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::Ctx;
-use crate::tree::{DocumentMetadata, DEFAULT_DOCUMENT_TITLE};
+use crate::tree::{DEFAULT_DOCUMENT_TITLE, DocumentMetadata};
 
 /// Longest metadata value, in bytes, after interpolation. Params are
 /// untrusted; the cap bounds what a hostile value can grow the PDF by,

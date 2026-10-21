@@ -5,7 +5,7 @@
 //! dispatch, this owns everything that depends on the dated TABLES.
 
 use super::datetime::render_datetime_pattern;
-use super::{money, FormatContext, FormatWarning, Formatted, Pick};
+use super::{FormatContext, FormatWarning, Formatted, Pick, money};
 use crate::lang::LangPack;
 use shojiku_core::FieldType;
 use std::collections::BTreeMap;

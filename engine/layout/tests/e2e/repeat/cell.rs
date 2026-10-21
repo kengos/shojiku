@@ -63,11 +63,13 @@ sections:
     );
     let a = blocks.iter().find(|b| b.lines[0].text == "A").expect("A");
     assert_eq!(a.lines[0].x, 100.0); // 50% of the 200-wide slot
-                                     // slot is 200×400; rect w 50% = 100, h 25% = 100.
+    // slot is 200×400; rect w 50% = 100, h 25% = 100.
     let rects = rect_shapes(&doc.pages[0]);
-    assert!(rects
-        .iter()
-        .any(|r| (r.w - 100.0).abs() < 1e-9 && (r.h - 100.0).abs() < 1e-9));
+    assert!(
+        rects
+            .iter()
+            .any(|r| (r.w - 100.0).abs() < 1e-9 && (r.h - 100.0).abs() < 1e-9)
+    );
 }
 
 #[test]

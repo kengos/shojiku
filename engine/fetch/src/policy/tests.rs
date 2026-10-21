@@ -9,9 +9,11 @@ fn policy() -> FetchPolicy {
 #[test]
 fn allowlisted_host_and_its_subdomains_pass() {
     assert!(policy().check("https://github.com/a/b.ttf").is_ok());
-    assert!(policy()
-        .check("https://objects.githubusercontent.com/x.ttf")
-        .is_ok());
+    assert!(
+        policy()
+            .check("https://objects.githubusercontent.com/x.ttf")
+            .is_ok()
+    );
     // A subdomain of an allowlisted host.
     assert!(policy().check("https://cdn.github.com/x.ttf").is_ok());
 }

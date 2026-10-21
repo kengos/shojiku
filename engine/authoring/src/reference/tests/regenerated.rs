@@ -5,7 +5,7 @@
 //! workspace coverage gate never sees them, which is exactly why the
 //! artifact's own properties are pinned in the sibling file instead.
 
-use crate::reference::{generate, CATALOG};
+use crate::reference::{CATALOG, generate};
 
 /// A key added to the wire without regenerating is a red gate, not a silent
 /// lie. The failure names the fix rather than printing a 64 KB diff.

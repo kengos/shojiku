@@ -5,7 +5,7 @@ use shojiku_core::{Band, Item, PageNumberItem, WritingMode};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::visibility::{self, Visibility};
-use super::{placed_box, with_vertical_margin, Atom, Basis, Ctx, PageBuild};
+use super::{Atom, Basis, Ctx, PageBuild, placed_box, with_vertical_margin};
 
 impl<'a, 'b> Ctx<'a, 'b> {
     pub(super) fn layout_band(

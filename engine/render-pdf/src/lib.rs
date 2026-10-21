@@ -9,10 +9,10 @@
 //! face to the glyphs actually used, so CJK faces no longer inflate the
 //! output.
 
+use krilla::Document;
 use krilla::metadata::Metadata;
 use krilla::page::PageSettings;
 use krilla::text::Font;
-use krilla::Document;
 use shojiku_image::AssetStore;
 use shojiku_layout::{DocumentMetadata, FontFace, FontStore, LayoutDocument};
 use std::collections::HashMap;

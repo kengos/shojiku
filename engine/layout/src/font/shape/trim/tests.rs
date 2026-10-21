@@ -5,7 +5,7 @@
 //! fullwidth glyph advances `size`, a trimmed one `size / 2`.
 
 use crate::font::test_support::ja_store;
-use crate::font::{run_width, shape_run, RunOptions};
+use crate::font::{RunOptions, run_width, shape_run};
 use shojiku_core::TextSpacingTrim;
 
 /// The fixed-pitch face (uniform 1em fullwidth advances).

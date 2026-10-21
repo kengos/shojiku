@@ -10,8 +10,8 @@ const TINY_JPEG_B64: &str = "/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAg
 /// copy of shojiku-image exercises every decoder (not just PNG).
 #[test]
 fn renders_every_raster_format_and_a_line() {
-    use base64::engine::general_purpose::STANDARD;
     use base64::Engine;
+    use base64::engine::general_purpose::STANDARD;
 
     let png = {
         let mut o = Vec::new();

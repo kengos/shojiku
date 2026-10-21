@@ -7,7 +7,7 @@
 use krilla::action::{Action, LinkAction};
 use krilla::annotation::{Annotation, LinkAnnotation, Target};
 use krilla::geom::Rect;
-use shojiku_layout::{LayoutItem, TextBlock, MAX_CLIP_DEPTH};
+use shojiku_layout::{LayoutItem, MAX_CLIP_DEPTH, TextBlock};
 
 /// Collects the page's link annotations, recursing into clip groups with
 /// the same depth cap and degenerate-rect guard as drawing — content that

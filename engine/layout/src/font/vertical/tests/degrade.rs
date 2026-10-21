@@ -4,8 +4,8 @@
 
 use super::super::*;
 use super::arrange::ud_chain;
-use crate::font::test_support::ja_store;
 use crate::font::RunOptions;
+use crate::font::test_support::ja_store;
 use shojiku_core::TextOrientation::Mixed;
 
 #[test]

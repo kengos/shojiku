@@ -63,13 +63,13 @@ pub use error::{Result, SigningError};
 // over the same bytes can disagree, and a disagreement means the verifier
 // checked something other than what a reader sees.
 pub use key::{
-    KeyError, PrivateKey, SignatureAlgorithm, MAX_RSA_MODULUS_BITS, MIN_RSA_MODULUS_BITS,
+    KeyError, MAX_RSA_MODULUS_BITS, MIN_RSA_MODULUS_BITS, PrivateKey, SignatureAlgorithm,
 };
 pub use limits::{DEFAULT_CONTENTS_CAPACITY, MAX_CONTENTS_CAPACITY, MIN_CONTENTS_CAPACITY};
-pub use object::{array_elements, dict_value_span, parse_ref, parse_uint, Dict, ObjRef};
-pub use placeholder::{append_signature_placeholder, PlaceholderOptions, PreparedPdf};
+pub use object::{Dict, ObjRef, array_elements, dict_value_span, parse_ref, parse_uint};
+pub use placeholder::{PlaceholderOptions, PreparedPdf, append_signature_placeholder};
 pub use revision::{Revision, RevisionBuilder};
-pub use sign::{complete_sign, prepare_sign, sign_document, PreparedSign};
+pub use sign::{PreparedSign, complete_sign, prepare_sign, sign_document};
 pub use signer::{LocalPemSigner, PresignedSigner, Signer};
 
 // Every error this crate can hand a caller, held to the bound the `bounded`

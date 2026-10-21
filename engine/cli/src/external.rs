@@ -17,17 +17,17 @@
 //! signer produces a document that will not verify. The two are named apart
 //! for exactly that reason.
 
-use base64::engine::general_purpose::STANDARD;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
 use serde::Serialize;
 use shojiku_signing::{
-    prepare_sign, sign_document, PlaceholderOptions, PresignedSigner, SignatureAlgorithm,
-    SignatureContainer,
+    PlaceholderOptions, PresignedSigner, SignatureAlgorithm, SignatureContainer, prepare_sign,
+    sign_document,
 };
 use std::path::{Path, PathBuf};
 
-use crate::args::{SignCompleteArgs, SignPrepareArgs};
 use crate::CliError;
+use crate::args::{SignCompleteArgs, SignPrepareArgs};
 
 #[cfg(test)]
 mod tests;

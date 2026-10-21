@@ -2,13 +2,13 @@
 //! absolutely-positioned child atoms of the shared box-children walk
 //! (the walk itself, with flex placement, lives in `super::flex`).
 
-use shojiku_core::{BindingScope, ContainerItem, ImageItem, Item, Overflow, MAX_CONTAINER_DEPTH};
+use shojiku_core::{BindingScope, ContainerItem, ImageItem, Item, MAX_CONTAINER_DEPTH, Overflow};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use crate::boxes::translate_boxes;
 use crate::tree::{ClipShape, Corners, LayoutItem};
 
-use super::{placed_box, translate, with_vertical_margin, Atom, Basis, Ctx};
+use super::{Atom, Basis, Ctx, placed_box, translate, with_vertical_margin};
 
 /// Wraps a box's already-positioned children in a clip node over its
 /// border box (`overflow: hidden`). The box's own decoration stays

@@ -63,9 +63,11 @@ fn the_catalog_prints_without_any_template() {
     let value: serde_json::Value = serde_json::from_str(&out).expect("json");
     let types = value["types"].as_array().expect("types");
     assert_eq!(types.len(), 6);
-    assert!(types
-        .iter()
-        .any(|t| t["fieldType"] == "date" && !t["variants"].as_array().unwrap().is_empty()));
+    assert!(
+        types
+            .iter()
+            .any(|t| t["fieldType"] == "date" && !t["variants"].as_array().unwrap().is_empty())
+    );
 }
 
 #[test]

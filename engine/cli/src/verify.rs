@@ -15,7 +15,7 @@
 
 use std::path::{Path, PathBuf};
 
-use shojiku_verify::{verify_document, TrustAnchors, VerificationReport};
+use shojiku_verify::{TrustAnchors, VerificationReport, verify_document};
 
 use crate::{CliError, VerifyArgs};
 

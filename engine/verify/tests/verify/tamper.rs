@@ -1,8 +1,8 @@
 //! One byte changed after signing, in each of the two places it can be.
 
-use shojiku_verify::{verify_document, CheckOutcome};
+use shojiku_verify::{CheckOutcome, verify_document};
 
-use crate::common::{anchors, bundled_examples, layout, sign, ALGORITHMS};
+use crate::common::{ALGORITHMS, anchors, bundled_examples, layout, sign};
 
 #[test]
 fn a_byte_changed_inside_the_signed_region_fails_the_signature_and_nothing_else() {

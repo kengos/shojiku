@@ -190,9 +190,11 @@ fn table_style_cascades_inherited_properties_but_not_background() {
     // fontSize inherits into the cell text.
     assert_eq!(text_blocks(&doc.pages[0])[0].font_size, 8.0);
     // backgroundColor is not inherited: no green fill anywhere.
-    assert!(!rect_shapes(&doc.pages[0])
-        .iter()
-        .any(|r| r.fill == Some((0.0, 1.0, 0.0))));
+    assert!(
+        !rect_shapes(&doc.pages[0])
+            .iter()
+            .any(|r| r.fill == Some((0.0, 1.0, 0.0)))
+    );
 }
 
 #[test]

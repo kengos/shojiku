@@ -2,11 +2,11 @@
 //! cells: static `src:` loads once (shared), a `data:` binding loads one
 //! asset per element (`dyn:<array>[<i>].<key>`), all under the shared cap.
 
-use super::super::{cell_asset_key, prepare_assets, MAX_CELL_IMAGE_ASSETS};
+use super::super::{MAX_CELL_IMAGE_ASSETS, cell_asset_key, prepare_assets};
 use super::png_data_uri;
 use crate::policy::{AssetMode, AssetPolicy};
 use serde_json::json;
-use shojiku_core::{parse_template, Template};
+use shojiku_core::{Template, parse_template};
 
 /// A flow body with one `repeat` whose cell holds `cell_yaml`.
 fn repeat_template(cell_yaml: &str) -> Template {

@@ -6,7 +6,7 @@ use super::{ok_call, spellings};
 use crate::rpc::INVALID_PARAMS;
 use crate::test_support::{call_tool, content};
 use crate::tools::sources::MAX_INLINE_BYTES;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use shojiku_authoring::MAX_PROBES;
 
 #[test]

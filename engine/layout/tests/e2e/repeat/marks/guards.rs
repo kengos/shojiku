@@ -143,8 +143,9 @@ sections:
     );
     assert_eq!(doc.pages.len(), MAX_PAGES);
     // Every page that exists is marked (4 cuts × 2 ends on a 1×1 grid).
-    assert!(doc
-        .pages
-        .iter()
-        .all(|page| line_shapes(page).len() == 2 * 2 + 2 * 2));
+    assert!(
+        doc.pages
+            .iter()
+            .all(|page| line_shapes(page).len() == 2 * 2 + 2 * 2)
+    );
 }

@@ -3,7 +3,7 @@
 use std::cell::Cell;
 use std::path::PathBuf;
 
-use super::{run_sign_with, PassphraseSource};
+use super::{PassphraseSource, run_sign_with};
 use crate::tests::{example_pdf, key_dir};
 use crate::{CliError, ReportArg, SignArgs};
 use zeroize::Zeroizing;

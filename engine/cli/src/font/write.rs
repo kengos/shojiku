@@ -8,7 +8,7 @@
 use super::{FontPackError, MAX_FONT_FILE};
 use shojiku_authoring::fs::primary_font_dir;
 use shojiku_diagnostics::Echo;
-use shojiku_formatter::{read_pack_file, PackManifest};
+use shojiku_formatter::{PackManifest, read_pack_file};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -68,7 +68,7 @@ pub(super) fn read_manifest(dir: &Path) -> Result<Option<PackManifest>, FontPack
             return Err(FontPackError::Read {
                 path: Echo::from(path.as_path()),
                 source,
-            })
+            });
         }
     };
     PackManifest::from_yaml(&content)
@@ -102,14 +102,14 @@ pub(super) fn commit(
             return Err(FontPackError::FileExists {
                 pack: Echo::from(pack),
                 file: Echo::from(file),
-            })
+            });
         }
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => write_file(&face_path, bytes)?,
         Err(source) => {
             return Err(FontPackError::Read {
                 path: Echo::from(face_path.as_path()),
                 source,
-            })
+            });
         }
     }
     if let Some(src) = &args.license_file {

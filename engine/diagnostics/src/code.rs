@@ -15,9 +15,9 @@
 //! read back through [`DiagnosticCode::deprecation`], and a test fails once
 //! the workspace version reaches a `removed_in` the row is still listed under.
 
-use crate::category::Category;
 use crate::Deprecation;
 use crate::Severity;
+use crate::category::Category;
 
 /// Expands one table into the [`DiagnosticCode`] enum plus its accessors. A
 /// row ending in `deprecated(since, removed_in)` is a code marked for removal.

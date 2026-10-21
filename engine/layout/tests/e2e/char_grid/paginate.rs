@@ -62,9 +62,11 @@ fn id_lands_in_the_box_index_per_sheet_page() {
     let out = run_full(&yaml, json!({}));
     assert_eq!(out.document.pages.len(), 2);
     for page_boxes in &out.boxes.pages {
-        assert!(page_boxes
-            .iter()
-            .any(|b| b.id.as_deref() == Some("manuscript")));
+        assert!(
+            page_boxes
+                .iter()
+                .any(|b| b.id.as_deref() == Some("manuscript"))
+        );
     }
 }
 

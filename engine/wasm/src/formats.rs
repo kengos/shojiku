@@ -11,8 +11,8 @@ use crate::error::WasmError;
 use crate::session::Session;
 use serde::Deserialize;
 use shojiku_authoring::{
-    check_probe_count, format_catalog, load_pack, locale_facts, FormatCatalog, LocaleFacts,
-    PatternProbe,
+    FormatCatalog, LocaleFacts, PatternProbe, check_probe_count, format_catalog, load_pack,
+    locale_facts,
 };
 use shojiku_core::parse_template;
 

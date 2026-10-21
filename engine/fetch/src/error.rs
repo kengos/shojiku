@@ -13,11 +13,17 @@ use thiserror::Error;
 /// the URLs, leaving pack ids, face ids and file paths unbounded.
 #[derive(Debug, Error)]
 pub enum FetchError {
-    #[error("font pack `{pack}` face `{id}`: file `{path}` is missing and the manifest declares no `url:` to fetch it from")]
+    #[error(
+        "font pack `{pack}` face `{id}`: file `{path}` is missing and the manifest declares no `url:` to fetch it from"
+    )]
     MissingNoUrl { pack: Echo, id: Echo, path: Echo },
-    #[error("font pack `{pack}` face `{id}`: file is missing and offline mode blocked the fetch from `{url}` (warm the cache with an online run, or install the pack locally)")]
+    #[error(
+        "font pack `{pack}` face `{id}`: file is missing and offline mode blocked the fetch from `{url}` (warm the cache with an online run, or install the pack locally)"
+    )]
     Offline { pack: Echo, id: Echo, url: Echo },
-    #[error("font pack `{pack}` face `{id}`: `{url}` is not an allowed fetch source ({reason}); pass `--font-fetch-allow <host>` to trust it")]
+    #[error(
+        "font pack `{pack}` face `{id}`: `{url}` is not an allowed fetch source ({reason}); pass `--font-fetch-allow <host>` to trust it"
+    )]
     Policy {
         pack: Echo,
         id: Echo,
@@ -31,7 +37,9 @@ pub enum FetchError {
         url: Echo,
         source: TransportError,
     },
-    #[error("font pack `{pack}` face `{id}`: bytes fetched from `{url}` do not match the manifest sha256 (expected {expected}, got {actual}) — refusing to use them")]
+    #[error(
+        "font pack `{pack}` face `{id}`: bytes fetched from `{url}` do not match the manifest sha256 (expected {expected}, got {actual}) — refusing to use them"
+    )]
     Sha256Mismatch {
         pack: Echo,
         id: Echo,
@@ -39,7 +47,9 @@ pub enum FetchError {
         expected: Echo,
         actual: Echo,
     },
-    #[error("font pack `{pack}` face `{id}`: manifest sha256 `{sha256}` is not 64 lowercase hex characters")]
+    #[error(
+        "font pack `{pack}` face `{id}`: manifest sha256 `{sha256}` is not 64 lowercase hex characters"
+    )]
     BadSha256 { pack: Echo, id: Echo, sha256: Echo },
     #[error("font cache: failed to {action} {path}: {source}")]
     Cache {

@@ -11,8 +11,8 @@
 //! A line anchored to its own id resolves to nothing, and an A->B / B->A pair
 //! is impossible by construction rather than by luck.
 
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 
 use crate::boxes::PlacedBox;
 use crate::engine::PageBuild;

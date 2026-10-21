@@ -8,8 +8,8 @@
 //! exhaust a thread's stack while being read into the model — an abort, not
 //! an error. The rest run after it, over the parsed [`Definitions`].
 
-use super::schema::{Schema, SchemaType, MAX_ENUM_VALUES, MAX_SCHEMA_DEPTH, MAX_SCHEMA_NODES};
 use super::Definitions;
+use super::schema::{MAX_ENUM_VALUES, MAX_SCHEMA_DEPTH, MAX_SCHEMA_NODES, Schema, SchemaType};
 use crate::error::CoreError;
 use crate::yaml::Value;
 use shojiku_diagnostics::Echo;

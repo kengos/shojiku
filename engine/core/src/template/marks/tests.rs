@@ -94,14 +94,16 @@ fn mark_binding_without_equals() {
 
 #[test]
 fn rejects_unknown_field() {
-    assert!(serde_yaml::from_str::<Item>(
-        "type: ellipse\nbox: { x: 0, y: 0, w: 8, h: 8 }\nbogus: 1"
-    )
-    .is_err());
-    assert!(serde_yaml::from_str::<Item>(
-        "type: checkbox\nbox: { x: 0, y: 0, w: 8, h: 8 }\ndata: { key: k, nope: 1 }"
-    )
-    .is_err());
+    assert!(
+        serde_yaml::from_str::<Item>("type: ellipse\nbox: { x: 0, y: 0, w: 8, h: 8 }\nbogus: 1")
+            .is_err()
+    );
+    assert!(
+        serde_yaml::from_str::<Item>(
+            "type: checkbox\nbox: { x: 0, y: 0, w: 8, h: 8 }\ndata: { key: k, nope: 1 }"
+        )
+        .is_err()
+    );
 }
 
 #[test]

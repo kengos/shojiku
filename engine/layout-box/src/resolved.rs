@@ -2,8 +2,8 @@
 //! — margins, padding, and the border-box position/size, with the
 //! content-box helpers every item kind shares.
 
-use crate::resolve::{clamp_size, resolve_edges, resolve_x, resolve_y};
 use crate::Basis;
+use crate::resolve::{clamp_size, resolve_edges, resolve_x, resolve_y};
 use shojiku_core::OptBox;
 use shojiku_diagnostics::Diagnostics;
 

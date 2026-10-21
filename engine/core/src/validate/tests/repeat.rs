@@ -56,9 +56,11 @@ fn repeat_cell_key_not_in_array_group_is_error() {
               data: { key: ghost }
 "#);
     let diags = validate(Some(&defs()), &template, None);
-    assert!(diags
-        .iter()
-        .any(|d| d.message.contains("ghost") && d.message.contains("order_items")));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.message.contains("ghost") && d.message.contains("order_items"))
+    );
 }
 
 #[test]
@@ -72,9 +74,11 @@ fn repeat_cell_interpolation_key_is_checked() {
               text: "count: {ghost}"
 "#);
     let diags = validate(Some(&defs()), &template, None);
-    assert!(diags
-        .iter()
-        .any(|d| d.code == "unknown_data_key" && d.message.contains("ghost")));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "unknown_data_key" && d.message.contains("ghost"))
+    );
 }
 
 #[test]
@@ -90,13 +94,16 @@ fn repeat_cell_container_bindings_are_checked_recursively() {
                   data: { key: ghost }
 "#);
     let diags = validate(Some(&defs()), &template, None);
-    assert!(diags
-        .iter()
-        .any(|d| d.code == "unknown_data_key" && d.message.contains("ghost")));
-    assert!(diags.iter().any(|d| d
-        .path
-        .as_deref()
-        .is_some_and(|p| p.contains(".cell.items[0].items[0]"))));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "unknown_data_key" && d.message.contains("ghost"))
+    );
+    assert!(diags.iter().any(|d| {
+        d.path
+            .as_deref()
+            .is_some_and(|p| p.contains(".cell.items[0].items[0]"))
+    }));
 }
 
 #[test]

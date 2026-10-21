@@ -40,9 +40,10 @@ fn engine_info_reports_version_capabilities_and_locales() {
     // rounding, and the `line` item's own stroke pattern. Each is pinned
     // individually — the registry's structural tests pass whether or not
     // a given key is present, so this is the only per-key proof.
-    assert!(info
-        .capabilities
-        .contains(&"style.borderStyle.dashed_dotted"));
+    assert!(
+        info.capabilities
+            .contains(&"style.borderStyle.dashed_dotted")
+    );
     assert!(info.capabilities.contains(&"style.borderRadius"));
     assert!(info.capabilities.contains(&"line.style"));
     // The imposition small-flag set: the grid's `gap` shorthand, its trim
@@ -108,9 +109,10 @@ fn engine_info_reports_version_capabilities_and_locales() {
     assert!(info.capabilities.contains(&"table.header.hidden_boxes"));
     // The box index's link flag, pinned for the same reason.
     assert!(info.capabilities.contains(&"inspect.boxes.linked"));
-    assert!(info
-        .capabilities
-        .contains(&"table.header.style.verticalAlign"));
+    assert!(
+        info.capabilities
+            .contains(&"table.header.style.verticalAlign")
+    );
     assert!(info.capabilities.contains(&"table.style.verticalAlign"));
     assert!(info.builtin_locales.contains(&"ja-JP"));
 }
@@ -119,10 +121,12 @@ fn engine_info_reports_version_capabilities_and_locales() {
 fn run_capabilities_emits_camelcase_json() {
     let json = run_capabilities().unwrap();
     let value: serde_json::Value = serde_json::from_str(&json).unwrap();
-    assert!(value["capabilities"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|c| c == "text"));
+    assert!(
+        value["capabilities"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|c| c == "text")
+    );
     assert!(value.get("builtinLocales").is_some());
 }

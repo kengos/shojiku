@@ -6,11 +6,11 @@
 //! block is authored by hand more often than not, and a check gated on a
 //! catalog would go silent exactly there.
 
-use crate::interpolate::{parse_segments, scan_suspect_keys, Segment};
-use crate::template::{DocumentMeta, Template, MAX_DOCUMENT_ENTRIES};
+use crate::interpolate::{Segment, parse_segments, scan_suspect_keys};
+use crate::template::{DocumentMeta, MAX_DOCUMENT_ENTRIES, Template};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
-use super::bindings::{check_scalar_binding, BindingCtx};
+use super::bindings::{BindingCtx, check_scalar_binding};
 
 /// Every authored metadata string with the document path it lives at.
 /// List entries are addressed by index, so a diagnostic points at the

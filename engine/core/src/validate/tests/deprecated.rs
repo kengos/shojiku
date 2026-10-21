@@ -5,9 +5,9 @@
 //! between deprecations, so the pass is driven through a probe row.
 
 use super::*;
-use crate::validate::deprecated::{DeprecatedForm, DEPRECATED_FORMS};
-use crate::validate::validate_with;
 use crate::Length;
+use crate::validate::deprecated::{DEPRECATED_FORMS, DeprecatedForm};
+use crate::validate::validate_with;
 use shojiku_diagnostics::{ArgValue, Deprecation, Severity};
 
 /// A row whose detector fires on a zero top margin.

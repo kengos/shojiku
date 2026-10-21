@@ -2,7 +2,7 @@
 //! MAX_STYLES / MAX_STYLE_NAMES sanity caps.
 
 use crate::length::snippet;
-use crate::style::{Style, MAX_STYLES, MAX_STYLE_NAMES};
+use crate::style::{MAX_STYLE_NAMES, MAX_STYLES, Style};
 use crate::template::{ChildHolder, ChildList, Item, Template};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 use std::collections::BTreeMap;

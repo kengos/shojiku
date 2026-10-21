@@ -4,8 +4,8 @@
 //! all-or-nothing claim is about an EARLIER page not being written, and a
 //! page the spec does not walk cannot express it.
 
-use super::{assert_landed, spliceable, with_code, Tree, FIRST};
-use crate::reference::run::{run, Job, Refusal};
+use super::{FIRST, Tree, assert_landed, spliceable, with_code};
+use crate::reference::run::{Job, Refusal, run};
 use crate::reference::tables::CLOSE;
 
 /// The happy path — and the CONTROL every refusal leans on. Without it,

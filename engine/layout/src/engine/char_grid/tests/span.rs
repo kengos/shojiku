@@ -118,7 +118,7 @@ fn a_carriage_return_and_newline_inside_a_span_are_skipped() {
 #[test]
 fn block_rect_horizontal_covers_the_scale_square() {
     let g = geom(false); // cell 10, char_gap 1, line_gap 4
-                         // 2×2 block at (0,0): 2 cells + 1 char_gap along x, + 1 line_gap down.
+    // 2×2 block at (0,0): 2 cells + 1 char_gap along x, + 1 line_gap down.
     assert_eq!(g.block_rect(0, 0, 2), (0.0, 0.0, 21.0, 24.0));
     // scale 1 reduces to a single cell.
     assert_eq!(g.block_rect(1, 2, 1), (22.0, 14.0, 10.0, 10.0));
@@ -127,7 +127,7 @@ fn block_rect_horizontal_covers_the_scale_square() {
 #[test]
 fn block_rect_vertical_anchors_the_min_x_at_the_last_line() {
     let g = geom(true); // 3 cells tall, 2 lines (cols) — a full 2-line grid
-                        // A 2×2 block at top line 0: its leftmost line is line 1, so min-x is
-                        // cell_origin(1,0).x = 0; the block is 24 wide (across) × 21 tall.
+    // A 2×2 block at top line 0: its leftmost line is line 1, so min-x is
+    // cell_origin(1,0).x = 0; the block is 24 wide (across) × 21 tall.
     assert_eq!(g.block_rect(0, 0, 2), (0.0, 0.0, 24.0, 21.0));
 }

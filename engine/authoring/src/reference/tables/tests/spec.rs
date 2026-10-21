@@ -1,7 +1,7 @@
 //! Parsing the spec file. Unknown keys are refused rather than ignored — a
 //! typo'd column or row key would otherwise render a silently different table.
 
-use crate::reference::tables::{parse, Cell, Coverage};
+use crate::reference::tables::{Cell, Coverage, parse};
 
 #[test]
 fn parses_the_baseline() {

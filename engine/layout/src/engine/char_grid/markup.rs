@@ -3,7 +3,7 @@
 //! every string stays ONE verbatim segment, markup characters included —
 //! bound user data is never interpreted by default.
 
-use shojiku_core::{parse_aozora_ruby, Markup, RubySegment, RubyWarning};
+use shojiku_core::{Markup, RubySegment, RubyWarning, parse_aozora_ruby};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 /// The segments `content` parses into under `markup`, with whatever the

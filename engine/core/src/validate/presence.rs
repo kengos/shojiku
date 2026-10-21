@@ -9,7 +9,7 @@
 //! costs ("mark not drawn" vs "item not shown"), so the walk is shared and
 //! the codes are a parameter.
 
-use super::equals::{equals_fault, reads_as_boolean, resolve_target, EqualsFault, EqualsTarget};
+use super::equals::{EqualsFault, EqualsTarget, equals_fault, reads_as_boolean, resolve_target};
 use crate::catalog::Catalog;
 use crate::params::resolve_path;
 use crate::template::{

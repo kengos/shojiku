@@ -8,7 +8,7 @@
 //! its neighbour's trailing corner. No `Ctx` — the arithmetic is
 //! unit-testable on its own.
 
-use crate::font::{run_width, vertical_extent, FontFace, RunOptions};
+use crate::font::{FontFace, RunOptions, run_width, vertical_extent};
 use crate::tree::TextLine;
 use shojiku_core::{TextOrientation, TextSpacingTrim};
 

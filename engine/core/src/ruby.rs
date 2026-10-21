@@ -18,7 +18,7 @@ pub use placement::LinePlacement;
 pub use warning::RubyWarning;
 
 use grammar::NoteKind;
-use note::{scan_note, Note};
+use note::{Note, scan_note};
 
 /// Cap on one reading's length in chars. Untrusted params drive the
 /// parser; a reading past the cap renders literally (with a warning)

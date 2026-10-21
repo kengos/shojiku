@@ -16,11 +16,11 @@ mod resolve;
 mod resolved;
 
 pub use flex::{
-    auto_share, cross_offset, equal_share, grow_shares, main_spacing, resolve_flex_lengths,
-    FlexItem,
+    FlexItem, auto_share, cross_offset, equal_share, grow_shares, main_spacing,
+    resolve_flex_lengths,
 };
 pub use grid::{equal_track, track_offsets};
-pub use resolve::{clamp_size, resolve_edges, resolve_x, resolve_y, MAX_RESOLVED_PT};
+pub use resolve::{MAX_RESOLVED_PT, clamp_size, resolve_edges, resolve_x, resolve_y};
 pub use resolved::ResolvedBox;
 
 /// The parent box lengths resolve against: an x origin plus the `%` and

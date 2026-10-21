@@ -103,9 +103,11 @@ sections:
 "#,
         json!({}),
     );
-    assert!(diags
-        .iter()
-        .any(|d| d.code == "empty_qr_code_item" && d.message.contains("no content")));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "empty_qr_code_item" && d.message.contains("no content"))
+    );
     assert!(qr_rects(&doc.pages[0]).is_empty());
 }
 
@@ -126,8 +128,10 @@ sections:
 "#,
         json!({}),
     );
-    assert!(diags
-        .iter()
-        .any(|d| d.code == "qr_missing_size" && d.message.contains("positive")));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "qr_missing_size" && d.message.contains("positive"))
+    );
     assert!(qr_rects(&doc.pages[0]).is_empty());
 }

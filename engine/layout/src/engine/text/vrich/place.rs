@@ -6,7 +6,7 @@ use shojiku_core::{TextOrientation, TextSpacingTrim};
 
 use super::super::rich::SpanRun;
 use super::super::vcol::vertical_decoration_specs;
-use crate::font::{down_advance_over, RunOptions};
+use crate::font::{RunOptions, down_advance_over};
 use crate::tree::TextRun;
 use crate::wrap::WrappedLine;
 

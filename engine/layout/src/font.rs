@@ -20,9 +20,9 @@ pub(crate) mod vertical;
 
 pub use face::{FontFace, PositionedGlyph};
 pub(crate) use shape::char_width;
-pub use shape::{all_missing, run_width, shape_run, RunOptions};
+pub use shape::{RunOptions, all_missing, run_width, shape_run};
 pub(crate) use vertical::vertical_extent;
-pub use vertical::{arrange_vertical, down_advance_over, VGlyph};
+pub use vertical::{VGlyph, arrange_vertical, down_advance_over};
 // The pack-integrity rules, exposed so a pack GENERATOR satisfies exactly
 // what the loader checks rather than reimplementing either rule.
 pub use verify::{embedding_restricted, face_sha256};

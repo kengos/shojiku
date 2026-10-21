@@ -132,7 +132,9 @@ fn every_pattern_token_is_classified_against_the_exemplars() {
     );
     assert_eq!(
         moves_with_date,
-        ["E", "EEEE", "G", "GG", "M", "MM", "MMM", "MMMM", "d", "dd", "y", "yyyy"],
+        [
+            "E", "EEEE", "G", "GG", "M", "MM", "MMM", "MMMM", "d", "dd", "y", "yyyy"
+        ],
         "the DATE-visible token set moved — classify the new token"
     );
     // Nothing may be invisible to both: such a token renders the same text for

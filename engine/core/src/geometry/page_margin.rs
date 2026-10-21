@@ -12,7 +12,7 @@
 //! authored form is preserved for round-trip serialization.
 
 use crate::edges::EdgeSpec;
-use crate::length::{snippet, Length};
+use crate::length::{Length, snippet};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// The page margins in one of the two wire forms, kept verbatim for

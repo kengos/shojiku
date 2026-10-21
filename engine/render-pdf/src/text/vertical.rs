@@ -8,12 +8,12 @@
 //! `rotated` cell 90° clockwise about its center.
 
 use super::em_advance;
-use crate::draw::solid_fill;
 use crate::RenderError;
+use crate::draw::solid_fill;
 use krilla::geom::{Point, Transform};
 use krilla::surface::Surface;
 use krilla::text::{Font, GlyphId, KrillaGlyph};
-use shojiku_layout::{arrange_vertical, FontFace, RunOptions, TextBlock, TextOrientation, VGlyph};
+use shojiku_layout::{FontFace, RunOptions, TextBlock, TextOrientation, VGlyph, arrange_vertical};
 use std::collections::HashMap;
 
 type Embedded<'a> = HashMap<String, (&'a FontFace, Font)>;

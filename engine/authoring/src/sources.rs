@@ -6,7 +6,7 @@
 
 use serde_json::Value;
 use shojiku_core::{
-    parse_definitions, parse_params, parse_template, validate, Catalog, CoreError, Template,
+    Catalog, CoreError, Template, parse_definitions, parse_params, parse_template, validate,
 };
 use shojiku_diagnostics::Diagnostics;
 

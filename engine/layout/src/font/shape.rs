@@ -23,7 +23,7 @@ use shojiku_core::{TextCombine, TextSpacingTrim};
 // The vertical arrangement (`super::vertical::shaped`) reuses the same
 // itemize → shape-per-segment machinery for its upright (top-to-bottom)
 // and rotated (horizontal, then rotated as a run) segments.
-pub(crate) use harf::{shape_segment, shape_segment_vertical, ShapedGlyph, VerticalShapedGlyph};
+pub(crate) use harf::{ShapedGlyph, VerticalShapedGlyph, shape_segment, shape_segment_vertical};
 pub(crate) use itemize::itemize;
 pub(in crate::font) use trim::{is_close, is_open};
 

@@ -2,7 +2,7 @@
 //! to the node that broke the rule, and the parser's location.
 
 use super::refused;
-use crate::yaml::{parse, Value, YamlErrorKind, MAX_DEPTH, MAX_INPUT_BYTES};
+use crate::yaml::{MAX_DEPTH, MAX_INPUT_BYTES, Value, YamlErrorKind, parse};
 use shojiku_diagnostics::Echo;
 
 #[test]
@@ -146,9 +146,10 @@ fn an_integer_past_64_bits_is_refused_where_it_sits() {
     for literal in ["18446744073709551616", "-9223372036854775809"] {
         let err = refused(&format!("a:\n  b: {literal}\n"), YamlErrorKind::OutOfRange);
         assert_eq!(err.path.as_deref(), Some("a.b"), "{literal}");
-        assert!(err
-            .message
-            .contains(&format!("`{literal}` is outside the 64-bit range")));
+        assert!(
+            err.message
+                .contains(&format!("`{literal}` is outside the 64-bit range"))
+        );
         let err = refused(&format!("{literal}: x\n"), YamlErrorKind::NonStringKey);
         assert!(
             err.message.contains(&format!("mapping key `{literal}`")),

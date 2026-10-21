@@ -18,7 +18,9 @@ fn ellipse_is_four_cubics_check_is_a_polyline() {
     assert!(matches!(ellipse[5], PathCmd::Close));
 
     let (doc, _) = run(
-        &flow("      - type: checkbox\n        box: { x: 0, y: 0, w: 10, h: 10 }\n        checked: true\n"),
+        &flow(
+            "      - type: checkbox\n        box: { x: 0, y: 0, w: 10, h: 10 }\n        checked: true\n",
+        ),
         json!({}),
     );
     let check = &path_shapes(&doc.pages[0])[0].cmds;
@@ -29,7 +31,9 @@ fn ellipse_is_four_cubics_check_is_a_polyline() {
 #[test]
 fn zero_border_width_suppresses_stroke_but_keeps_fill() {
     let (doc, _) = run(
-        &flow("      - type: ellipse\n        box: { x: 0, y: 0, w: 20, h: 14 }\n        style: { borderWidth: 0, backgroundColor: \"#ff0000\" }\n"),
+        &flow(
+            "      - type: ellipse\n        box: { x: 0, y: 0, w: 20, h: 14 }\n        style: { borderWidth: 0, backgroundColor: \"#ff0000\" }\n",
+        ),
         json!({}),
     );
     let path = path_shapes(&doc.pages[0])[0];
@@ -82,7 +86,9 @@ fn a_width_in_a_name_past_the_style_names_cap_does_not_count_as_authored() {
 #[test]
 fn per_side_border_on_a_mark_reduces_to_the_top_side_with_a_warning() {
     let (doc, diags) = run(
-        &flow("      - type: ellipse\n        box: { x: 0, y: 0, w: 20, h: 14 }\n        style: { borderWidth: { top: 2, left: 5 } }\n"),
+        &flow(
+            "      - type: ellipse\n        box: { x: 0, y: 0, w: 20, h: 14 }\n        style: { borderWidth: { top: 2, left: 5 } }\n",
+        ),
         json!({}),
     );
     assert!(
@@ -96,7 +102,9 @@ fn per_side_border_on_a_mark_reduces_to_the_top_side_with_a_warning() {
 fn em_rem_sizing_resolves() {
     // rem root is the 10pt document default → a 1rem box is 10pt.
     let (doc, _) = run(
-        &flow("      - type: checkbox\n        box: { x: 0, y: 0, w: 1rem, h: 1rem }\n        checked: true\n"),
+        &flow(
+            "      - type: checkbox\n        box: { x: 0, y: 0, w: 1rem, h: 1rem }\n        checked: true\n",
+        ),
         json!({}),
     );
     assert_eq!(rect_shapes(&doc.pages[0])[0].w, 10.0);
@@ -106,12 +114,16 @@ fn em_rem_sizing_resolves() {
 #[test]
 fn id_lands_in_the_box_index() {
     let out = run_full(
-        &flow("      - type: checkbox\n        id: agree_box\n        box: { x: 5, y: 5, w: 10, h: 10 }\n"),
+        &flow(
+            "      - type: checkbox\n        id: agree_box\n        box: { x: 5, y: 5, w: 10, h: 10 }\n",
+        ),
         json!({}),
     );
-    assert!(out.boxes.pages[0]
-        .iter()
-        .any(|b| b.id.as_deref() == Some("agree_box")));
+    assert!(
+        out.boxes.pages[0]
+            .iter()
+            .any(|b| b.id.as_deref() == Some("agree_box"))
+    );
 }
 
 #[test]
@@ -133,7 +145,9 @@ fn ellipse_without_a_size_warns_and_skips() {
 #[test]
 fn checkbox_frame_honors_fill_and_border_color() {
     let (doc, _) = run(
-        &flow("      - type: checkbox\n        box: { x: 5, y: 5, w: 20, h: 20 }\n        style: { backgroundColor: \"#eeeeee\", borderColor: \"#0000ff\" }\n"),
+        &flow(
+            "      - type: checkbox\n        box: { x: 5, y: 5, w: 20, h: 20 }\n        style: { backgroundColor: \"#eeeeee\", borderColor: \"#0000ff\" }\n",
+        ),
         json!({}),
     );
     let frame = rect_shapes(&doc.pages[0])[0];

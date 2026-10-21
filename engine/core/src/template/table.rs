@@ -11,15 +11,15 @@ mod column;
 mod row;
 
 pub use column::{Column, ColumnType};
-pub use row::{RowConditionalStyle, RowSpec, MAX_ROW_CONDITIONAL_STYLES};
+pub use row::{MAX_ROW_CONDITIONAL_STYLES, RowConditionalStyle, RowSpec};
 
 use crate::geometry::OptBox;
 use crate::length::Length;
 use crate::style::Style;
 use serde::{Deserialize, Serialize};
 
-use super::visibility::VisibleBinding;
 use super::Binding;
+use super::visibility::VisibleBinding;
 
 /// A data-driven table. Rows come from an array params key; each column
 /// binds a key relative to the row object. `style`/`styleNames` control

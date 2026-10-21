@@ -30,10 +30,12 @@ fn inert_keys_on_shape_inline_styles_warn_by_item_and_name() {
     assert!(inert[1].message.contains("ellipse") && inert[1].message.contains("textAlign"));
     assert!(inert[2].message.contains("checkbox") && inert[2].message.contains("color"));
     assert!(inert[3].message.contains("mark") && inert[3].message.contains("lineHeight"));
-    assert!(inert[3]
-        .path
-        .as_deref()
-        .is_some_and(|p| p.ends_with(".mark")));
+    assert!(
+        inert[3]
+            .path
+            .as_deref()
+            .is_some_and(|p| p.ends_with(".mark"))
+    );
 }
 
 /// An ellipse, a checkbox and a mark stroke their outline as one path, so a
@@ -123,8 +125,10 @@ sections:
         .filter(|d| d.code == "undefined_style_name")
         .collect();
     assert_eq!(undefined.len(), 4, "got: {undefined:?}");
-    assert!(undefined[3]
-        .path
-        .as_deref()
-        .is_some_and(|p| p.ends_with(".mark")));
+    assert!(
+        undefined[3]
+            .path
+            .as_deref()
+            .is_some_and(|p| p.ends_with(".mark"))
+    );
 }

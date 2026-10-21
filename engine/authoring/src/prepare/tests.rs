@@ -3,7 +3,7 @@
 
 use super::*;
 use crate::sources::load_sources;
-use crate::test_support::{ja_fonts, ja_pack, run, SIMPLE};
+use crate::test_support::{SIMPLE, ja_fonts, ja_pack, run};
 use shojiku_image::{AssetPolicy, AssetStore};
 use std::collections::BTreeMap;
 

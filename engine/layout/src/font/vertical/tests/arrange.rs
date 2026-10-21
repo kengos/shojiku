@@ -6,8 +6,8 @@
 //! every full-width advance exactly 1em.
 
 use super::super::*;
-use crate::font::test_support::ja_store;
 use crate::font::RunOptions;
+use crate::font::test_support::ja_store;
 use shojiku_core::TextOrientation::{Mixed, Upright};
 
 pub(super) fn ud_chain() -> Vec<&'static crate::font::FontFace> {

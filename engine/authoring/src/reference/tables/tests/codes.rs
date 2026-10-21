@@ -2,7 +2,7 @@
 //! real — plus the half nothing checked before this change, that every code
 //! the engine can emit is documented somewhere.
 
-use crate::reference::tables::{audit, parse, render, Problem};
+use crate::reference::tables::{Problem, audit, parse, render};
 use std::collections::{BTreeMap, BTreeSet};
 
 fn problems(yaml: &str) -> Vec<Problem> {
@@ -79,9 +79,11 @@ fn a_code_documented_in_two_rows_is_not_a_duplicate() {
 fn a_diagnostics_table_needs_no_node() {
     // `node:` addresses the wire catalog, which a code table has nothing to
     // do with. A catalog table without one is the error; this is not.
-    assert!(!problems(super::diagnostics_yaml())
-        .iter()
-        .any(|p| matches!(p, Problem::NoNode { .. })));
+    assert!(
+        !problems(super::diagnostics_yaml())
+            .iter()
+            .any(|p| matches!(p, Problem::NoNode { .. }))
+    );
 }
 
 #[test]

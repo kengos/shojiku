@@ -29,8 +29,8 @@ mod visibility;
 
 use super::*;
 use crate::definitions::parse_definitions;
-use crate::style::{MAX_STYLES, MAX_STYLE_NAMES};
-use crate::template::{parse_template, MAX_CONTAINER_DEPTH, MAX_ROW_CONDITIONAL_STYLES, MAX_SPANS};
+use crate::style::{MAX_STYLE_NAMES, MAX_STYLES};
+use crate::template::{MAX_CONTAINER_DEPTH, MAX_ROW_CONDITIONAL_STYLES, MAX_SPANS, parse_template};
 use serde_json::json;
 
 pub(super) fn defs() -> Definitions {

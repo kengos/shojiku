@@ -22,8 +22,8 @@ use shojiku_core::{FieldSpec, FieldType, FormatDefaults, FormatRef, NamedFormat}
 use shojiku_diagnostics::Echo;
 use std::collections::BTreeMap;
 use thiserror::Error;
-use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
+use time::format_description::well_known::Rfc3339;
 
 /// Value-formatting failures.
 ///

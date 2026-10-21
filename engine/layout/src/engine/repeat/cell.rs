@@ -1,14 +1,14 @@
 //! One imposition cell: the `repeat` face of the shared slot-filling
 //! cell — a grid slot at an absolute page position, always definite.
 
-use crate::boxes::{translate_boxes, PlacedBox};
+use crate::boxes::{PlacedBox, translate_boxes};
 use crate::tree::LayoutItem;
 use serde_json::Value;
 use shojiku_core::ContainerItem;
 use std::rc::Rc;
 
 use super::super::cell::CellSlot;
-use super::super::{translate, Ctx, Scope};
+use super::super::{Ctx, Scope, translate};
 use super::Slot;
 
 impl<'a, 'b> Ctx<'a, 'b> {

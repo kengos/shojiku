@@ -5,8 +5,8 @@
 //! directory walk, no file reads. sha256 verification stays downstream (the
 //! layout `FontStore`), so a bad face is caught the same way on both paths.
 
-use super::confine::{check_pack_id, confine};
 use super::PackError;
+use super::confine::{check_pack_id, confine};
 use crate::lang::{LangPack, PackManifest};
 use shojiku_core::{FontStyle, FontWeight};
 use shojiku_diagnostics::Echo;

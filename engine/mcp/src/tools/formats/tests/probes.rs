@@ -3,7 +3,7 @@
 
 use super::{descriptor, ok_call};
 use serde_json::json;
-use shojiku_authoring::{MAX_PROBES, MAX_PROBE_PATTERN};
+use shojiku_authoring::{MAX_PROBE_PATTERN, MAX_PROBES};
 
 #[test]
 fn the_probe_schema_pins_its_vocabulary_and_caps_by_value() {
@@ -23,10 +23,12 @@ fn the_probe_schema_pins_its_vocabulary_and_caps_by_value() {
     // client not to send the one input that reaches that answer. It stays
     // discoverable in the description instead.
     assert!(probes["items"]["properties"]["pattern"]["maxLength"].is_null());
-    assert!(probes["description"]
-        .as_str()
-        .expect("description")
-        .contains(&MAX_PROBE_PATTERN.to_string()));
+    assert!(
+        probes["description"]
+            .as_str()
+            .expect("description")
+            .contains(&MAX_PROBE_PATTERN.to_string())
+    );
     assert_eq!(probes["items"]["required"], json!(["fieldType", "pattern"]));
 }
 

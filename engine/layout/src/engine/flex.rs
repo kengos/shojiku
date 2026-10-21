@@ -24,7 +24,7 @@ mod child;
 use super::{Atom, Basis, Ctx};
 
 pub(in crate::engine) use kind::FlexKind;
-pub(in crate::engine) use slots::{emit_slots, h_auto_margin, Slot};
+pub(in crate::engine) use slots::{Slot, emit_slots, h_auto_margin};
 
 /// Runaway cap on the placements the layout walk makes a SECOND time.
 ///

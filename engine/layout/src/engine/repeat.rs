@@ -6,7 +6,7 @@ mod marks;
 mod pages;
 
 use serde_json::Value;
-use shojiku_core::{resolve_path, BreakBefore, RepeatItem, MAX_IMPOSITION_PER_PAGE};
+use shojiku_core::{BreakBefore, MAX_IMPOSITION_PER_PAGE, RepeatItem, resolve_path};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use std::rc::Rc;
 

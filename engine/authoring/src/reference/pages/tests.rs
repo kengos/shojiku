@@ -11,7 +11,7 @@ mod prose;
 mod rules;
 mod vocabulary;
 
-use super::{audit, Census, Problem, Vocabulary};
+use super::{Census, Problem, Vocabulary, audit};
 use std::collections::BTreeSet;
 
 fn set(words: &[&str]) -> BTreeSet<String> {
@@ -60,7 +60,9 @@ fn run(text: &str) -> (Vec<Problem>, Census) {
 /// rules could no longer be told apart in these fixtures. `prose` covers the
 /// third rule on its own.
 fn page(body: &str) -> String {
-    format!("# Title\n\nintro `intro_Token`\n\n## Diagnostics\n\n{body}\n\n## See also\n\ntail `tail_Token`\n")
+    format!(
+        "# Title\n\nintro `intro_Token`\n\n## Diagnostics\n\n{body}\n\n## See also\n\ntail `tail_Token`\n"
+    )
 }
 
 /// The messages, so a test asserts what a reader would actually see.

@@ -7,7 +7,7 @@
 //! implementation below is the only place a connection is opened.
 
 use crate::error::TransportError;
-use crate::read::{read_capped, Hashed, MAX_FACE_BYTES};
+use crate::read::{Hashed, MAX_FACE_BYTES, read_capped};
 use shojiku_diagnostics::Echo;
 use std::sync::Arc;
 use std::time::Duration;

@@ -11,7 +11,7 @@
 //! nuisance; a message that quotes the file is an injection channel into
 //! whatever reads the log.
 
-use shojiku_verify::{verify_document, TrustAnchors};
+use shojiku_verify::{TrustAnchors, verify_document};
 
 use crate::common::{anchors, bundled_examples, sign};
 

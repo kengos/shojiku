@@ -16,7 +16,7 @@ mod vertical;
 
 use std::ops::Range;
 
-use shojiku_core::{RubyPair, MAX_RUBY_ENTRIES, MAX_RUBY_LEN};
+use shojiku_core::{MAX_RUBY_ENTRIES, MAX_RUBY_LEN, RubyPair};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
 use crate::tree::LayoutItem;

@@ -5,7 +5,7 @@
 //! keys the Designer does.
 
 use crate::result::ShojikuResult;
-use crate::status::{encode, Failure};
+use crate::status::{Failure, encode};
 
 /// The engine info payload. Takes no request: a caller gates features before
 /// it has a template.

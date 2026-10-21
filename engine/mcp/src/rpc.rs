@@ -1,7 +1,7 @@
 //! JSON-RPC 2.0 plumbing: newline-delimited framing with a line cap,
 //! response/error builders, and the bounded echo for hostile strings.
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::io::{BufRead, Read, Write};
 
 /// JSON-RPC error codes (the standard set).

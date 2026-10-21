@@ -12,7 +12,7 @@
 
 use pkcs8::PrivateKeyInfo;
 use ring::rand::SystemRandom;
-use ring::signature::{EcdsaKeyPair, RsaKeyPair, ECDSA_P256_SHA256_ASN1_SIGNING, RSA_PKCS1_SHA256};
+use ring::signature::{ECDSA_P256_SHA256_ASN1_SIGNING, EcdsaKeyPair, RSA_PKCS1_SHA256, RsaKeyPair};
 
 use crate::oid;
 

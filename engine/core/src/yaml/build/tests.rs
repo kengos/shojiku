@@ -3,8 +3,8 @@
 
 use super::key::Key;
 use super::{Node, State};
-use serde::de::value::{BytesDeserializer, Error as DeError};
 use serde::de::DeserializeSeed;
+use serde::de::value::{BytesDeserializer, Error as DeError};
 
 #[test]
 fn a_node_or_key_of_an_unread_type_is_refused_naming_what_was_expected() {

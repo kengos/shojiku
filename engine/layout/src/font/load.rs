@@ -4,11 +4,11 @@
 //! locale fallback chain; they share one `assemble` step so the WASM/MCP
 //! bytes path is byte-for-byte the same store as the CLI filesystem path.
 
-use super::{verify, FontError, FontFace, FontStore};
+use super::{FontError, FontFace, FontStore, verify};
 use shojiku_diagnostics::Echo;
 use shojiku_formatter::{
-    resolve_face_bytes, resolve_face_bytes_subset, resolve_face_specs, FaceBytes, FaceSpec,
-    InjectedPack, LangPack, SubsetFaces,
+    FaceBytes, FaceSpec, InjectedPack, LangPack, SubsetFaces, resolve_face_bytes,
+    resolve_face_bytes_subset, resolve_face_specs,
 };
 use std::collections::HashMap;
 use std::path::PathBuf;

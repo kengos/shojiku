@@ -12,8 +12,8 @@ mod tests;
 use crate::args::FormatsArgs;
 use crate::error::CliError;
 use shojiku_authoring::fs::{load_locale_pack, resolve_locale_dir};
-use shojiku_authoring::{check_probe_count, format_catalog, resolve_locale_id, PatternProbe};
-use shojiku_core::{parse_template, Template};
+use shojiku_authoring::{PatternProbe, check_probe_count, format_catalog, resolve_locale_id};
+use shojiku_core::{Template, parse_template};
 
 /// Reads `--templates` when given. A missing file is an error (the caller
 /// named it); NO `--templates` at all is the locale-only catalog.

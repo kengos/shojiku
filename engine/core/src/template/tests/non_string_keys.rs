@@ -8,7 +8,7 @@
 //! the sixth field) — past the nesting bound, which counts only `items:` keys.
 
 use crate::error::CoreError;
-use crate::template::{parse_template, Template, MAX_CONTAINER_DEPTH};
+use crate::template::{MAX_CONTAINER_DEPTH, Template, parse_template};
 
 const TEXT: &str = "{ type: text, text: x }";
 

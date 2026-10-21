@@ -5,9 +5,9 @@
 //! which is why coverage is a check of its own, and why its failure has to
 //! be distinguishable from a bad signature.
 
-use ring::digest::{digest, SHA256};
+use ring::digest::{SHA256, digest};
 use shojiku_signing::{PdfDocument, RevisionBuilder, SignatureContainer, Signer};
-use shojiku_verify::{verify_document, CheckOutcome};
+use shojiku_verify::{CheckOutcome, verify_document};
 
 use crate::common::{anchors, bundled_examples, layout, sign, signer_with};
 

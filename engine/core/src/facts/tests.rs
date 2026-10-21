@@ -2,8 +2,8 @@
 //! context-inert lists are derived from.
 
 use super::*;
-use crate::style::Style;
 use crate::ItemKind;
+use crate::style::Style;
 use std::collections::BTreeSet;
 
 fn names(keys: impl IntoIterator<Item = StyleKey>) -> BTreeSet<&'static str> {

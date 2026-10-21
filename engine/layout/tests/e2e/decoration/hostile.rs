@@ -68,10 +68,12 @@ sections:
     );
     let r = rect_shapes(&doc.pages[0])[0];
     assert!(r.radius.is_square());
-    assert!(diags
-        .items
-        .iter()
-        .any(|d| d.code == "invalid_border_radius"));
+    assert!(
+        diags
+            .items
+            .iter()
+            .any(|d| d.code == "invalid_border_radius")
+    );
 }
 
 #[test]

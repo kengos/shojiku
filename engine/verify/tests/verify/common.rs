@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::OnceLock;
 
-use shojiku_signing::{sign_document, LocalPemSigner, PlaceholderOptions};
+use shojiku_signing::{LocalPemSigner, PlaceholderOptions, sign_document};
 use shojiku_verify::TrustAnchors;
 
 /// Reads a committed example's rendered output — real engine output, pinned

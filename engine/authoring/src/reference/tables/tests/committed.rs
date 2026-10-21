@@ -9,7 +9,7 @@
 //! lives in the DEFAULT suite so `engine:test` and the coverage run both see
 //! it — not only `make reference:check`.
 
-use crate::reference::tables::{audit, page, pages, parse, registry, Inputs};
+use crate::reference::tables::{Inputs, audit, page, pages, parse, registry};
 use crate::reference::{CATALOG, TABLES};
 use serde_json::Value;
 use shojiku_diagnostics::DiagnosticCode;

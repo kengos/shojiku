@@ -1,7 +1,7 @@
 //! Unit tests for the loaded-asset store.
 
 use super::*;
-use crate::svg::{parse_svg, SvgLimits};
+use crate::svg::{SvgLimits, parse_svg};
 
 fn raster_asset(id: &str) -> Asset {
     Asset {

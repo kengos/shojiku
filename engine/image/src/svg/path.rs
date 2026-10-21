@@ -5,8 +5,8 @@ use crate::geom::PathCmd;
 use kurbo::{Arc, Point, SvgArc, Vec2};
 use svgtypes::{PathParser, PathSegment};
 
-use super::style::Affine;
 use super::Warnings;
+use super::style::Affine;
 
 /// Emits transformed commands (shape math happens in local coordinates;
 /// points pass through the CTM exactly once, here).
@@ -159,11 +159,7 @@ pub(super) fn parse_path_data(d: &str, ctm: &Affine, warnings: &mut Warnings) ->
 
 /// Absolute endpoint for a possibly-relative coordinate pair.
 fn absolute(abs: bool, p: (f64, f64), cur: (f64, f64)) -> (f64, f64) {
-    if abs {
-        p
-    } else {
-        (cur.0 + p.0, cur.1 + p.1)
-    }
+    if abs { p } else { (cur.0 + p.0, cur.1 + p.1) }
 }
 
 /// Reflection of the previous control point around the current point

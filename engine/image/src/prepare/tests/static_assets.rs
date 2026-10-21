@@ -128,9 +128,11 @@ fn oversized_bundled_asset_is_rejected_by_metadata() {
     };
     let tpl = template_with_image("        src: big.png");
     let (_store, diags) = prepare_assets(&tpl, &json!({}), &policy, Some(&dir));
-    assert!(diags
-        .iter()
-        .any(|d| d.code == "invalid_image_asset" && d.message.contains("byte cap")));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "invalid_image_asset" && d.message.contains("byte cap"))
+    );
 }
 
 #[test]
@@ -151,9 +153,11 @@ fn pixel_cap_and_unrecognized_bytes_are_static_errors() {
 
     let tpl = template_with_image("        src: junk.bin");
     let (_store, diags) = prepare_assets(&tpl, &json!({}), &AssetPolicy::default(), Some(&dir));
-    assert!(diags
-        .iter()
-        .any(|d| d.message.contains("unrecognized image format")));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.message.contains("unrecognized image format"))
+    );
 }
 
 #[test]

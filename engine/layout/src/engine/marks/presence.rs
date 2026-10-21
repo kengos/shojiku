@@ -2,11 +2,11 @@
 //! against the current data scope, warning on the two params shapes the
 //! predicate cannot use.
 
-use shojiku_core::{resolve_path, BindingScope, EqualsValue, MarkBinding};
+use shojiku_core::{BindingScope, EqualsValue, MarkBinding, resolve_path};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::super::predicate::{eval_predicate, PredicateEval};
 use super::super::Ctx;
+use super::super::predicate::{PredicateEval, eval_predicate};
 
 impl Ctx<'_, '_> {
     /// Resolves a `{ key, equals? }` presence binding against the current

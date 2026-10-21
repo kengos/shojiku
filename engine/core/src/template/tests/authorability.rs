@@ -91,16 +91,19 @@ fn every_wire_struct_rejects_unknown_keys() {
     // A typo'd key anywhere is a parse error, never a silent no-op.
     // One probe per struct, each with a plausible author mistake.
     let cases: &[(&str, &str)] = &[
-        ("Template", "sections: { body: { type: absolute } }\nbogus: 1\n"),
-        ("Sections", "sections: { body: { type: absolute }, sidebar: {} }\n"),
+        (
+            "Template",
+            "sections: { body: { type: absolute } }\nbogus: 1\n",
+        ),
+        (
+            "Sections",
+            "sections: { body: { type: absolute }, sidebar: {} }\n",
+        ),
         (
             "Band",
             "sections:\n  header: { hight: 20 }\n  body: { type: absolute }\n",
         ),
-        (
-            "FlowBody",
-            "sections:\n  body: { type: flow, gaps: 4 }\n",
-        ),
+        ("FlowBody", "sections:\n  body: { type: flow, gaps: 4 }\n"),
         (
             "AbsoluteBody",
             "sections:\n  body: { type: absolute, gap: 4 }\n",
@@ -172,7 +175,10 @@ fn every_wire_struct_rejects_unknown_keys() {
             "BoxSpec",
             "sections:\n  body:\n    type: flow\n    box: { x: 0, y: 0, w: 1, h: 1, gap: 3 }\n",
         ),
-        ("PageSpec", "page: { margins: 10 }\nsections: { body: { type: absolute } }\n"),
+        (
+            "PageSpec",
+            "page: { margins: 10 }\nsections: { body: { type: absolute } }\n",
+        ),
     ];
     for (name, yaml) in cases {
         let err = parse_template(yaml).expect_err(&format!("{name} must reject"));

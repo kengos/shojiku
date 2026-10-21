@@ -7,8 +7,8 @@ use svgtypes::PointsParser;
 
 use super::gradient::{self, GradientMap};
 use super::paint::SvgPaint;
-use super::path::{parse_path_data, PathSink};
-use super::style::{attr_num, parse_transform, Affine, PaintRef, Style};
+use super::path::{PathSink, parse_path_data};
+use super::style::{Affine, PaintRef, Style, attr_num, parse_transform};
 use super::{SvgLimits, SvgPath, Warnings};
 
 pub(super) struct ParseCtx<'l> {

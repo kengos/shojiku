@@ -13,15 +13,15 @@
 
 use crate::style::ComputedStyle;
 use crate::tree::{LayoutItem, TextBlock, TextLine};
-use crate::wrap::{wrap_spans_hung, RichSpan};
+use crate::wrap::{RichSpan, wrap_spans_hung};
 use shojiku_core::{FontWeight, TextItem, TextOverflow};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::super::{placed_box, with_vertical_margin, Atom, Basis, Ctx};
+use super::super::{Atom, Basis, Ctx, placed_box, with_vertical_margin};
 use super::height::content_avail;
 use super::vcol::{along_offset, column_left, stack_shift};
 mod place;
-use place::{place_col, PlacedCol};
+use place::{PlacedCol, place_col};
 
 impl<'a, 'b> Ctx<'a, 'b> {
     /// Builds a vertical rich item's atom — the spans counterpart of

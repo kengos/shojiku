@@ -3,7 +3,7 @@
 //! come from the shaped measurement, not per-char advance sums.
 
 use crate::common::*;
-use shojiku_layout::{shape_run, RunOptions};
+use shojiku_layout::{RunOptions, shape_run};
 
 /// Noto Sans regular (a Latin face with kern pairs), loaded as a
 /// single-face store for `run_with_fonts`.

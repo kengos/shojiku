@@ -1,9 +1,9 @@
 //! Image drawing for the PNG painter: raster embed (decoded RGBA) and
 //! SVG vector playback, both under the active clip mask.
 
-use super::{build_path, rgb, Painter};
+use super::{Painter, build_path, rgb};
 use crate::RenderPngError;
-use shojiku_image::{decode_raster, AssetKind, RgbaImage, SvgTree};
+use shojiku_image::{AssetKind, RgbaImage, SvgTree, decode_raster};
 use shojiku_layout::ImageShape;
 use tiny_skia::{FillRule, Mask, Paint, Pixmap, PixmapPaint, Stroke, Transform};
 

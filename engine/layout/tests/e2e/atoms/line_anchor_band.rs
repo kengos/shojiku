@@ -140,10 +140,11 @@ fn a_band_anchor_is_ambiguous_only_on_its_own_page() {
          - { type: line, from: { x: 100, y: 5 }, to: { item: label, edge: right } }",
         "",
     );
-    assert!(out
-        .diagnostics
-        .iter()
-        .any(|d| d.code == "anchor_ambiguous_target"));
+    assert!(
+        out.diagnostics
+            .iter()
+            .any(|d| d.code == "anchor_ambiguous_target")
+    );
     for page in &out.document.pages {
         let lines = line_shapes(page);
         assert_eq!(lines.len(), 1);

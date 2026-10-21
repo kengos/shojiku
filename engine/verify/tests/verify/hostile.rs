@@ -1,6 +1,6 @@
 //! Malformed and crafted documents: structured failure, never a panic.
 
-use shojiku_verify::{verify_document, TrustAnchors, VerifyError};
+use shojiku_verify::{TrustAnchors, VerifyError, verify_document};
 
 use crate::common::{anchors, bundled_examples, example, find, layout, sign};
 

@@ -2,7 +2,7 @@
 //! weight, shrinking in proportion to the bases, and freezing at a
 //! violated bound — each probed at the admitted extremes too.
 
-use super::super::{resolve_flex_lengths, FlexItem};
+use super::super::{FlexItem, resolve_flex_lengths};
 
 fn item(basis: f64, weight: f64) -> FlexItem {
     FlexItem {

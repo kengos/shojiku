@@ -10,8 +10,8 @@ mod place;
 mod span;
 
 pub(super) use align::align_cells;
-use combine::place_combined;
 pub(in crate::engine) use combine::CombinedDigits;
+use combine::place_combined;
 use place::place_wrapped;
 
 use shojiku_core::{KinsokuMode, LinePlacement, RubySegment};

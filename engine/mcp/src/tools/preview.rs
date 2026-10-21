@@ -3,10 +3,10 @@
 //! image alone. Page selection is capped so a hostile/paginating document
 //! cannot balloon the response.
 
-use super::pipeline::{prepare_from, tool_msg, CallArgs, ToolFailure};
-use super::{failure_result, image_part, json_text, text_part, tool_result, ToolOutcome};
-use crate::rpc::INVALID_PARAMS;
+use super::pipeline::{CallArgs, ToolFailure, prepare_from, tool_msg};
+use super::{ToolOutcome, failure_result, image_part, json_text, text_part, tool_result};
 use crate::ServerArgs;
+use crate::rpc::INVALID_PARAMS;
 use serde_json::Value;
 use shojiku_authoring::{preview_page, preview_pages};
 
@@ -61,10 +61,9 @@ fn run_inner(
 pub(crate) fn select_pages(total: usize, page: Option<usize>) -> Result<Vec<usize>, String> {
     match page {
         Some(page) => {
-            let index = page
-                .checked_sub(1)
-                .filter(|i| *i < total)
-                .ok_or_else(|| format!("page {page} is out of range (document has {total} pages)"))?;
+            let index = page.checked_sub(1).filter(|i| *i < total).ok_or_else(|| {
+                format!("page {page} is out of range (document has {total} pages)")
+            })?;
             Ok(vec![index])
         }
         None if total > MAX_PREVIEW_PAGES => Err(format!(

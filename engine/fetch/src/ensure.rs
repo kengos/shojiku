@@ -10,7 +10,7 @@
 use crate::cache::FontCache;
 use crate::error::{FetchError, TransportError};
 use crate::policy::FetchPolicy;
-use crate::read::{is_sha256_hex, MAX_FACE_BYTES};
+use crate::read::{MAX_FACE_BYTES, is_sha256_hex};
 use crate::transport::Transport;
 use shojiku_diagnostics::Echo;
 use shojiku_formatter::FaceSpec;
@@ -152,7 +152,7 @@ fn fetch_verified(
                     id: Echo::from(&spec.id),
                     url: Echo::from(&current),
                     source,
-                })
+                });
             }
         }
     }

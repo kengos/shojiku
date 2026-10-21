@@ -1,6 +1,6 @@
 //! Signing every bundled shape, and what has to remain true afterwards.
 
-use shojiku_signing::{sign_document, PdfDocument, PlaceholderOptions};
+use shojiku_signing::{PdfDocument, PlaceholderOptions, sign_document};
 
 use crate::common::{assert_verifies, bundled_examples, declared_ranges, find, signer};
 

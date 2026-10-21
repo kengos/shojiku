@@ -19,15 +19,15 @@
 //! the catalog the same way; it is a property of `format_catalog` rather
 //! than of this host.
 
-use super::pipeline::{opt_string, tool_msg, ToolFailure};
-use super::sources::{opt_source, Source};
-use super::{failure_result, json_text, text_part, tool_result, ToolOutcome};
-use crate::rpc::INVALID_PARAMS;
+use super::pipeline::{ToolFailure, opt_string, tool_msg};
+use super::sources::{Source, opt_source};
+use super::{ToolOutcome, failure_result, json_text, text_part, tool_result};
 use crate::ServerArgs;
+use crate::rpc::INVALID_PARAMS;
 use serde_json::Value;
 use shojiku_authoring::fs::{load_locale_pack, resolve_locale_dir};
-use shojiku_authoring::{check_probe_count, format_catalog, resolve_locale_id, PatternProbe};
-use shojiku_core::{parse_template, Template};
+use shojiku_authoring::{PatternProbe, check_probe_count, format_catalog, resolve_locale_id};
+use shojiku_core::{Template, parse_template};
 use shojiku_diagnostics::Diagnostics;
 
 /// Runs `format_catalog`. Every argument is optional: with no template at all

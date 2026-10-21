@@ -3,7 +3,7 @@
 //! read into the model on a small stack.
 
 use crate::error::CoreError;
-use crate::template::{parse_template, Template, MAX_CONTAINER_DEPTH};
+use crate::template::{MAX_CONTAINER_DEPTH, Template, parse_template};
 use crate::validate;
 use shojiku_diagnostics::Diagnostic;
 
@@ -75,19 +75,34 @@ fn every_holder_is_refused_with_validations_own_diagnostic() {
             "sections:\n  body:\n    type: absolute\n    items: [ {} ]\n",
             chain(MAX_CONTAINER_DEPTH + 1, TEXT)
         ),
-        format!("sections:\n  header:\n    items: [ {} ]\n  body:\n    type: absolute\n", chain(MAX_CONTAINER_DEPTH + 1, TEXT)),
-        format!("sections:\n  body:\n    type: absolute\n  footer:\n    items: [ {} ]\n", chain(MAX_CONTAINER_DEPTH + 1, TEXT)),
-        body(&format!("{{ type: repeat, data: {{ key: rows }}, cell: {{ items: [ {deep} ] }} }}")),
-        body(&format!("{{ type: repeat_flow, data: {{ key: rows }}, item: {{ items: [ {deep} ] }} }}")),
+        format!(
+            "sections:\n  header:\n    items: [ {} ]\n  body:\n    type: absolute\n",
+            chain(MAX_CONTAINER_DEPTH + 1, TEXT)
+        ),
+        format!(
+            "sections:\n  body:\n    type: absolute\n  footer:\n    items: [ {} ]\n",
+            chain(MAX_CONTAINER_DEPTH + 1, TEXT)
+        ),
+        body(&format!(
+            "{{ type: repeat, data: {{ key: rows }}, cell: {{ items: [ {deep} ] }} }}"
+        )),
+        body(&format!(
+            "{{ type: repeat_flow, data: {{ key: rows }}, item: {{ items: [ {deep} ] }} }}"
+        )),
         body(&chain(
             MAX_CONTAINER_DEPTH,
-            &format!("{{ type: table, data: {{ key: rows }}, columns: [ {{ label: a }}, {{ cell: {{ items: [ {TEXT} ] }} }} ] }}"),
+            &format!(
+                "{{ type: table, data: {{ key: rows }}, columns: [ {{ label: a }}, {{ cell: {{ items: [ {TEXT} ] }} }} ] }}"
+            ),
         )),
         body(&format!(
             "{{ type: table, data: {{ key: rows }}, columns: [ {{ cell: {{ items: [ {} ] }} }} ] }}",
             chain(MAX_CONTAINER_DEPTH, TEXT)
         )),
-        body(&chain(1, &format!("{{ type: repeat, data: {{ key: rows }}, cell: {{ items: [ {past} ] }} }}"))),
+        body(&chain(
+            1,
+            &format!("{{ type: repeat, data: {{ key: rows }}, cell: {{ items: [ {past} ] }} }}"),
+        )),
     ];
     for yaml in &docs {
         let (parsed, checked) = (refusal(yaml), validated(yaml));

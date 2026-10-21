@@ -273,9 +273,11 @@ fn table_box_parses_and_round_trips_and_is_unset_by_default() {
     let plain =
         parse_table("        data: { key: rows }\n        columns: [ { data: { key: a } } ]\n");
     assert!(plain.box_.is_none());
-    assert!(!serde_yaml::to_string(&plain)
-        .expect("yaml")
-        .contains("box:"));
+    assert!(
+        !serde_yaml::to_string(&plain)
+            .expect("yaml")
+            .contains("box:")
+    );
 
     let boxed = parse_table(
         "        box: { x: 10, w: 200, margin: { left: auto } }\n        data: { key: rows }\n        columns: [ { data: { key: a } } ]\n",

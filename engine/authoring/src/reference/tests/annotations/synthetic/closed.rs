@@ -6,7 +6,7 @@
 //! teaches an agent to emit input the engine rejects.
 
 use super::{catalog, complete, prose};
-use crate::reference::annotations::{audit, Problem};
+use crate::reference::annotations::{Problem, audit};
 use serde_json::json;
 use std::collections::BTreeMap;
 

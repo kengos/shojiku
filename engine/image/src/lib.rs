@@ -18,17 +18,17 @@ mod source;
 mod store;
 mod svg;
 
-pub use decode::{decode_raster, RgbaImage};
+pub use decode::{RgbaImage, decode_raster};
 pub use error::ImageError;
 pub use geom::PathCmd;
 pub use policy::{AssetMode, AssetPolicy};
 pub use prepare::{
-    asset_key, cell_asset_key, prepare_assets, prepare_assets_injected, MAX_CELL_IMAGE_ASSETS,
+    MAX_CELL_IMAGE_ASSETS, asset_key, cell_asset_key, prepare_assets, prepare_assets_injected,
 };
-pub use raster::{checked_dimensions, sniff, RasterFormat};
-pub use source::{classify, decode_data_uri, DataUriPayload, ImageSource};
+pub use raster::{RasterFormat, checked_dimensions, sniff};
+pub use source::{DataUriPayload, ImageSource, classify, decode_data_uri};
 pub use store::{Asset, AssetKind, AssetStore};
 pub use svg::{
-    parse_svg, GradientStop, GradientTransform, LinearGradient, RadialGradient, SpreadMode,
-    SvgLimits, SvgPaint, SvgPath, SvgTree,
+    GradientStop, GradientTransform, LinearGradient, RadialGradient, SpreadMode, SvgLimits,
+    SvgPaint, SvgPath, SvgTree, parse_svg,
 };

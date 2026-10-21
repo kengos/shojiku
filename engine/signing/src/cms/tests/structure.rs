@@ -1,11 +1,11 @@
 //! What a verifier finds inside a finished container.
 
 use cms::signed_data::SignerIdentifier;
-use der::asn1::ObjectIdentifier;
 use der::Decode;
-use ring::signature::{VerificationAlgorithm, ECDSA_P256_SHA256_ASN1, RSA_PKCS1_2048_8192_SHA256};
+use der::asn1::ObjectIdentifier;
+use ring::signature::{ECDSA_P256_SHA256_ASN1, RSA_PKCS1_2048_8192_SHA256, VerificationAlgorithm};
 
-use super::{attributes, container, decode, only_signer, private_key, DIGEST};
+use super::{DIGEST, attributes, container, decode, only_signer, private_key};
 use crate::key::SignatureAlgorithm;
 use crate::oid;
 
@@ -37,10 +37,12 @@ fn no_signing_time_attribute_is_written() {
     // clock is the signer's own claim.
     let signing_time = ObjectIdentifier::new_unwrap("1.2.840.113549.1.9.5");
     let signed = decode(&finished("rsa2048", SignatureAlgorithm::RsaPkcs1Sha256));
-    assert!(attributes(&signed)
-        .as_ref()
-        .iter()
-        .all(|attribute| attribute.oid != signing_time));
+    assert!(
+        attributes(&signed)
+            .as_ref()
+            .iter()
+            .all(|attribute| attribute.oid != signing_time)
+    );
 }
 
 #[test]

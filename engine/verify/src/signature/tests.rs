@@ -20,8 +20,7 @@ fn any_other_cms_signature_algorithm_is_refused_by_name() {
     assert_eq!(
         SignatureAlgorithm::from_oid(oid::ID_SHA_256).expect_err("fails"),
         VerifyError::Unsupported {
-            what:
-                "a signature algorithm other than RSA PKCS#1 v1.5 or ECDSA P-256, both over SHA-256"
+            what: "a signature algorithm other than RSA PKCS#1 v1.5 or ECDSA P-256, both over SHA-256"
         }
     );
 }

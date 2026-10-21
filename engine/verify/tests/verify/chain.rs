@@ -1,9 +1,9 @@
 //! Certificates that should not be trusted, over real documents.
 
-use shojiku_verify::{verify_document, CheckOutcome};
+use shojiku_verify::{CheckOutcome, verify_document};
 
 use crate::common::{anchors, bundled_examples, signer_with};
-use shojiku_signing::{sign_document, PlaceholderOptions};
+use shojiku_signing::{PlaceholderOptions, sign_document};
 
 /// Signs the first bundled example with `key_stem`'s key under
 /// `cert_stem`'s certificate.

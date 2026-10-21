@@ -2,7 +2,7 @@
 //! annotates, and validating the pair. Every rejection leaves the
 //! characters literal, so untrusted content never loses text here.
 
-use super::{RubyWarning, MAX_RUBY_LEN};
+use super::{MAX_RUBY_LEN, RubyWarning};
 
 /// Reads a `《…》` body; the caller has consumed the opener. The closing
 /// bracket is optional — an unclosed reading renders literally, so the

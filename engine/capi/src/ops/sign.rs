@@ -17,9 +17,9 @@
 pub(crate) mod external;
 
 use crate::result::ShojikuResult;
-use crate::status::{encode, Failure};
+use crate::status::{Failure, encode};
 use shojiku_diagnostics::Diagnostics;
-use shojiku_signing::{sign_document, KeyError, LocalPemSigner, PlaceholderOptions};
+use shojiku_signing::{KeyError, LocalPemSigner, PlaceholderOptions, sign_document};
 
 /// Signs `pdf`. The signed bytes begin with `pdf` byte for byte — signing
 /// appends a revision, it never rewrites what was there.

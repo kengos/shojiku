@@ -129,10 +129,12 @@ sections:
     // and the valid footer binding pass.
     assert_eq!(diags.items.len(), 1);
     assert_eq!(diags.items[0].code, "unknown_data_key");
-    assert!(diags.items[0]
-        .path
-        .as_deref()
-        .is_some_and(|p| p.contains("sections.body")));
+    assert!(
+        diags.items[0]
+            .path
+            .as_deref()
+            .is_some_and(|p| p.contains("sections.body"))
+    );
 }
 
 #[test]
@@ -216,10 +218,12 @@ sections:
     assert!(codes.contains(&"image_source_conflict"));
     // The footer image is fine: exactly 2 structural errors.
     assert_eq!(diags.items.len(), 2);
-    assert!(diags.items[0]
-        .path
-        .as_deref()
-        .is_some_and(|p| p.contains("header")));
+    assert!(
+        diags.items[0]
+            .path
+            .as_deref()
+            .is_some_and(|p| p.contains("header"))
+    );
 }
 
 #[test]
@@ -248,10 +252,12 @@ fn link_url_keys_are_checked_like_text() {
         .collect();
     assert_eq!(ghosts.len(), 3, "{diags:?}");
     assert!(ghosts[1].contains("order.phantom"));
-    assert!(diags.items[1]
-        .path
-        .as_deref()
-        .is_some_and(|p| p.contains("spans[0]")));
+    assert!(
+        diags.items[1]
+            .path
+            .as_deref()
+            .is_some_and(|p| p.contains("spans[0]"))
+    );
 }
 
 #[test]

@@ -43,9 +43,11 @@ fn repeat_flow_data_key_must_be_an_array_group() {
           items: []
 "#);
     let diags = validate(Some(&defs()), &template, None);
-    assert!(diags
-        .iter()
-        .any(|d| d.code == "not_an_array" && d.message.contains("order.code")));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "not_an_array" && d.message.contains("order.code"))
+    );
 }
 
 #[test]
@@ -61,13 +63,16 @@ fn repeat_flow_card_bindings_are_array_scoped_and_pathed() {
                   data: { key: ghost }
 "#);
     let diags = validate(Some(&defs()), &template, None);
-    assert!(diags
-        .iter()
-        .any(|d| d.code == "unknown_data_key" && d.message.contains("ghost")));
-    assert!(diags.iter().any(|d| d
-        .path
-        .as_deref()
-        .is_some_and(|p| p.contains(".item.items[0].items[0]"))));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "unknown_data_key" && d.message.contains("ghost"))
+    );
+    assert!(diags.iter().any(|d| {
+        d.path
+            .as_deref()
+            .is_some_and(|p| p.contains(".item.items[0].items[0]"))
+    }));
 }
 
 #[test]
