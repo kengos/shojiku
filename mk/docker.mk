@@ -1,4 +1,5 @@
-# docker/ — the runtime image: build, render-verify, scan
+# docker/ — the runtime image (build, render-verify, scan) and the Docker
+# resources the gates leave behind (clean)
 #
 # Every target defined here is named `docker:<job>` (public) or `_docker-<job>`
 # (private, carrying the recipe). `make make:check` enforces exactly that.
@@ -39,3 +40,34 @@ _docker-scan:
 		-v "$(CURDIR)/.trivyignore.yaml:/.trivyignore.yaml:ro" $(TRIVY_IMAGE) \
 		image --exit-code 1 --ignore-unfixed --ignorefile /.trivyignore.yaml \
 		--severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL $(IMAGE)
+
+## ---- job: clean --------------------------------------------------------
+#
+# The Docker resources the gates leave behind. They remove things and prove
+# nothing, so they do not go through `quiet`. The files inside a working tree
+# are `clean:*`, kept apart on purpose.
+
+# The images a local gate run leaves behind. They are cheap to lose — each
+# rebuilds from the layer cache in seconds — but there are eleven of them and
+# together they run to gigabytes, so a machine that has run `make verify` a few
+# times accumulates silently with nothing offering to clean up.
+#
+# Deliberately driven off the same variables the gates BUILD with, rather than
+# a `docker images` name pattern: that makes it WORK_TAG-aware for free, so a
+# parallel session removes exactly its own images and cannot reach another
+# session's. It also means a renamed image cannot be missed here.
+BUILT_IMAGES := $(IMAGE) $(GUI_APP_IMAGE) $(APP_E2E_IMAGE) $(WASM_E2E_IMAGE) \
+                $(PHP_IMAGE) $(GO_IMAGE) $(RUBY_IMAGE) $(PYTHON_IMAGE) \
+                $(DOTNET_IMAGE) $(JAVA_IMAGE) $(JS_IMAGE)
+
+docker\:clean\:images: ## Remove the docker images this tree's gates build (keeps the cache volumes)
+	@docker rmi $(BUILT_IMAGES) 2>/dev/null || true
+	@echo "removed this tree's built images (WORK_TAG=$(WORK_TAG)); cache and target volumes kept — 'make docker:clean:volumes' drops those"
+
+# The pooled target volumes no gate is using and the cargo/rustup/pnpm caches.
+# A slot another tree is using is reported and kept. SLOT=<k> drops that one
+# slot and nothing else — the reset for a slot that went bad, which must not
+# cost the caches minutes to refill.
+docker\:clean\:volumes: ## Drop the free pooled target volumes and the cargo/rustup/pnpm caches (SLOT=<k>: that slot only)
+	@$(GATE_LOCK) scripts/target-slot.sh clean $(SLOT)
+	$(if $(SLOT),,-docker volume rm $(CARGO_VOLUME) $(RUSTUP_VOLUME) $(PNPM_VOLUME))

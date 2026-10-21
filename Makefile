@@ -299,7 +299,7 @@ GATE_LOCK  := scripts/gate-lock.sh
 # scrub that keeps one tree from running another tree's stale build.
 #
 #   make investigate:gates      who holds which slot
-#   make clean:target           drop the free slot volumes (SLOT=<k> for one)
+#   make docker:clean:volumes   drop the free slot volumes (SLOT=<k> for one)
 #   TARGET_SLOTS=0              no pool: engine/target on the bind mount
 #
 # CI sets CI=true and so gets 0 — one checkout per job, engine/target restored
@@ -315,7 +315,7 @@ IMAGE        := shojiku-ci:$(WORK_TAG)
 
 # The two browser golden paths build their images from shell scripts rather
 # than from a recipe here, so their names are declared alongside the other
-# session-namespaced ones — both so `clean:images` can name them and so the
+# session-namespaced ones — both so `docker:clean:images` can name them and so the
 # WORK_TAG scheme has a single place to read. The scripts derive the same
 # names from $WORK_TAG.
 APP_E2E_IMAGE  := shojiku-designer-app-e2e:$(WORK_TAG)
@@ -458,7 +458,7 @@ WASM_MAX_GZIP := 3145728
 #     cache, and the symptom outlives the fix: the stale test binary keeps
 #     failing under a CORRECT mount. Recovery is to re-bake the path —
 #     `touch engine/layout/tests/e2e/main.rs` for one suite, or
-#     `make clean:target SLOT=<k>` to start that target slot over (the
+#     `make docker:clean:volumes SLOT=<k>` to start that target slot over (the
 #     poisoned binary lives in the target, not in the cargo volume).
 CARGO_VOLUME  ?= shojiku-cargo
 PNPM_VOLUME   ?= shojiku-pnpm
@@ -509,7 +509,8 @@ include mk/investigate.mk
         _sdk-php-verify _sdk-python-lint _sdk-python-test _sdk-python-verify \
         _sdk-ruby-lint _sdk-ruby-test _sdk-ruby-verify _site-build _site-check \
         _site-gates _site-lint _site-node-modules _site-test _site-verify _verify \
-        _version-check _examples-render clean clean\:cache clean\:images clean\:target docker\:build \
+        _version-check _examples-render clean clean\:target docker\:build \
+        docker\:clean\:images docker\:clean\:volumes \
         docker\:render docker\:scan docker\:verify engine\:budget \
         engine\:capi-dist engine\:capi-lib engine\:cli-bin engine\:cli-dist \
         engine\:clippy engine\:coverage engine\:coverage-why engine\:deny \
@@ -715,37 +716,11 @@ _make-check:
 clean: ## Remove local artifacts (out.pdf, lcov.info, stderr.txt)
 	rm -f out.pdf stderr.txt engine/lcov.info
 
-clean\:cache: ## Drop the persistent cargo/rustup/pnpm Docker volumes
-	-docker volume rm $(CARGO_VOLUME) $(RUSTUP_VOLUME) $(PNPM_VOLUME)
-
-# Two things, both safe to lose (the next gate rebuilds): the pooled target
-# volumes no gate is using — or only slot SLOT=<k>, the reset for one that went
-# bad — and THIS tree's engine/target on the host, which under the pool is only
-# a mount point (anything in it predates the pool and is never read again).
-# Under this tree's gate lock, so it cannot delete a build in progress here; a
-# slot another tree is using is reported and kept.
-clean\:target: ## Drop the free pooled target volumes (SLOT=<k> for one) and this tree's host engine/target
-	@$(GATE_LOCK) scripts/target-slot.sh clean $(SLOT)
+# Files inside THIS working tree only; the Docker resources are docker:clean:*.
+#
+# Under the pool engine/target on the host is only a mount point: anything in
+# it predates the pool and is never read again. Under this tree's gate lock, so
+# it cannot delete a build in progress here.
+clean\:target: ## Remove this tree's host engine/target (the pooled target volumes are docker:clean:volumes)
 	@$(GATE_LOCK) rm -rf engine/target
 	@echo "removed this tree's host engine/target"
-
-# The images a local gate run leaves behind. They are cheap to lose — each
-# rebuilds from the layer cache in seconds — but there are eleven of them and
-# together they run to gigabytes, so a machine that has run `make verify` a few
-# times accumulates silently with nothing offering to clean up.
-#
-# Deliberately driven off the same variables the gates BUILD with, rather than
-# a `docker images` name pattern: that makes it WORK_TAG-aware for free, so a
-# parallel session removes exactly its own images and cannot reach another
-# session's. It also means a renamed image cannot be missed here.
-#
-# Cache VOLUMES are NOT touched — they are shared on purpose and cost minutes
-# to rebuild, not seconds. `clean:cache` above is the deliberate way to drop
-# those.
-BUILT_IMAGES := $(IMAGE) $(GUI_APP_IMAGE) $(APP_E2E_IMAGE) $(WASM_E2E_IMAGE) \
-                $(PHP_IMAGE) $(GO_IMAGE) $(RUBY_IMAGE) $(PYTHON_IMAGE) \
-                $(DOTNET_IMAGE) $(JAVA_IMAGE) $(JS_IMAGE)
-
-clean\:images: ## Remove the docker images this tree's gates build (keeps the cache volumes)
-	@docker rmi $(BUILT_IMAGES) 2>/dev/null || true
-	@echo "removed this tree's built images (WORK_TAG=$(WORK_TAG)); cache volumes kept — 'make clean:cache' drops those"
