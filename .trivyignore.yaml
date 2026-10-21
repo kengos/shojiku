@@ -16,3 +16,14 @@ vulnerabilities:
       :nonroot tag still carries 2026b, so pinning the newest digest reports the
       same row. Drop this entry once distroless rebuilds on 2026c.
     expired_at: 2026-12-31
+  - id: DLA-4845-1
+    statement: >-
+      A ca-certificates refresh (20250419~deb12u1 -> ~deb12u2) in the distroless
+      base, not a code defect. Rendering, signing and verifying open no
+      connection and never read the CA bundle; only the authoring-time font
+      fetch in the CLI does, and it is not a path the scanned image runs by
+      default. There is nothing to upgrade to either — the current
+      gcr.io/distroless/base-nossl-debian12:nonroot tag still has the pinned
+      digest, so pinning the newest digest reports the same row.
+      Drop this entry once distroless rebuilds on ~deb12u2.
+    expired_at: 2026-12-31
