@@ -57,18 +57,23 @@ updates:
   # branches/titles so the three are recognizable as one logical bump — merge
   # them together, and revisit this if docker ever gains `group-by`.
   #
-  # AND EVERY ONE OF THOSE PRs IS INCOMPLETE. The version lives in FIVE pins;
-  # dependabot parses only the three Dockerfiles. The other two are plain
-  # variables it cannot see:
-  #   - Makefile                 -> RUST_VERSION (drives the local `make` gates)
-  #   - .github/workflows/ci.yml -> RUST_VERSION
-  # Hand-edit both before merging, or the gates keep building on the old
-  # toolchain. Locally the bump also does not take effect until
-  # `docker volume rm shojiku-rustup`.
-  # The five pins that must move together: `Makefile` (RUST_VERSION),
-  # `.github/workflows/ci.yml` (RUST_VERSION), `docker/Dockerfile`,
-  # `engine/wasm`'s toolchain, and the wasm-bindgen pin set, which has to
-  # match the wasm-bindgen-cli the wasm gate installs.
+  # AND EVERY ONE OF THOSE PRs IS INCOMPLETE. The version lives in SIX pins;
+  # dependabot parses only the three Dockerfiles' `FROM` lines. The other
+  # three are values it cannot see:
+  #   - Makefile                 -> RUST_VERSION
+  #   - docker/toolchain.Dockerfile -> `ARG RUST_VERSION=` (a FROM through an
+  #                                 ARG, which dependabot does not read)
+  #   - .github/workflows/release-artifacts.yml -> RUST_VERSION
+  # `make engine:budget` fails while the first two disagree. Even with all six
+  # moved, the `make` gates keep running the old toolchain: they run the
+  # toolchain image pinned by digest, which moves only in the second of the
+  # two PRs written down above RUST_VERSION in the Makefile.
+  # The six pins that must move together: `Makefile` (RUST_VERSION),
+  # `docker/toolchain.Dockerfile` (`ARG RUST_VERSION`),
+  # `.github/workflows/release-artifacts.yml` (RUST_VERSION), `docker/Dockerfile`,
+  # `engine/wasm/e2e/Dockerfile` and `gui/designer-app/Dockerfile`. Check the
+  # wasm-bindgen pin set with them: it has to match the wasm-bindgen-cli the
+  # wasm gate installs.
   #
   # NODE HAS THE SAME SPLIT, in miniature — and it is FIVE pins, not three.
   # A `node:` bump PR touches only `gui/designer-app/Dockerfile`; the ones

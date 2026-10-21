@@ -62,18 +62,24 @@ BUILT_IMAGES := $(IMAGE) $(GUI_APP_IMAGE) $(APP_E2E_IMAGE) $(WASM_E2E_IMAGE) \
                 $(PHP_IMAGE) $(GO_IMAGE) $(RUBY_IMAGE) $(PYTHON_IMAGE) \
                 $(DOTNET_IMAGE) $(JAVA_IMAGE) $(JS_IMAGE)
 
+# The toolchain image is REMOVED, unlike the other pulled images: only this
+# repository runs it, and the next engine gate pulls it again. The plain rust
+# image stays listed: docker/Dockerfile, engine/wasm/e2e and gui/designer-app
+# build FROM it, and other repositories may use it too.
 DOCKER_CLEAN = SHOJIKU_BUILT_IMAGES="$(BUILT_IMAGES)" \
-	SHOJIKU_PULLED_IMAGES="$(RUST_IMAGE) $(NODE_IMAGE) $(NODE_FLOOR_IMAGE) $(TRIVY_IMAGE) $(SYFT_IMAGE)" \
-	SHOJIKU_CACHE_VOLUMES="$(CARGO_VOLUME) $(RUSTUP_VOLUME) $(PNPM_VOLUME)" \
+	SHOJIKU_TOOLCHAIN_IMAGE="$(RUST_IMAGE)" \
+	SHOJIKU_PULLED_IMAGES="rust:$(RUST_VERSION)-slim-bookworm $(NODE_IMAGE) $(NODE_FLOOR_IMAGE) $(TRIVY_IMAGE) $(SYFT_IMAGE)" \
+	SHOJIKU_CACHE_VOLUMES="$(CARGO_VOLUME) $(PNPM_VOLUME)" \
+	SHOJIKU_LEGACY_VOLUMES="$(LEGACY_CACHE_VOLUMES)" \
 	SLOT="$(SLOT)" scripts/docker-clean.sh
 
 docker\:clean\:containers: ## Remove stopped gate containers from any worktree (running ones are only listed)
 	@$(DOCKER_CLEAN) containers
 
-docker\:clean\:volumes: ## Drop the free pooled target volumes and the cargo/rustup/pnpm caches (SLOT=<k>: that slot only)
+docker\:clean\:volumes: ## Drop the free pooled target volumes, the cargo/pnpm caches and the pre-toolchain-image cargo/rustup volumes (SLOT=<k>: that slot only)
 	@$(DOCKER_CLEAN) volumes
 
-docker\:clean\:images: ## Remove this WORK_TAG's built images (other sessions' images, base images and the build cache are only listed)
+docker\:clean\:images: ## Remove this WORK_TAG's built images and every pin of the toolchain image (other sessions' images, base images and the build cache are only listed)
 	@$(DOCKER_CLEAN) images
 
 docker\:clean\:all: ## All three above, reporting what was removed and what was kept

@@ -100,10 +100,11 @@ investigate\:pins: ## Are the cached images the pinned versions, or something th
 	@printf 'pinned by this Makefile, and what is cached for that tag:\n'
 	@for img in $(RUST_IMAGE) $(NODE_IMAGE); do \
 		digest=$$(docker inspect "$$img" --format '{{if .RepoDigests}}{{index .RepoDigests 0}}{{else}}(built locally, no digest){{end}}' 2>/dev/null); \
-		if [ -n "$$digest" ]; then printf '  %-42s %s\n' "$$img" "$$digest"; \
-		else printf '  %-42s NOT CACHED — the next gate pulls it\n' "$$img"; fi; \
+		if [ -n "$$digest" ]; then printf '  %s\n    %s\n' "$$img" "$$digest"; \
+		else printf '  %s\n    NOT CACHED — the next gate pulls it\n' "$$img"; fi; \
 	done
-	@printf '\nA tag that MOVED upstream still matches the name and not the bytes.\n'
+	@printf '\nRUST_IMAGE is pinned by digest, so it cannot move; NODE_IMAGE is a tag.\n'
+	@printf 'A tag that MOVED upstream still matches the name and not the bytes.\n'
 	@printf 'The registry answers in one second, and a stalled `docker pull` never\n'
 	@printf 'had to be part of the question:\n'
 	@printf '  curl -s https://hub.docker.com/v2/repositories/<repo>/tags/<tag> | \\\n'

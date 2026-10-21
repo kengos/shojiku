@@ -327,7 +327,7 @@ takes `version-check-exempt: <reason>`, the same shape as
 > judges freshness by file time and would otherwise run the other tree's
 > build. A gate that seems stuck may be waiting for a slot:
 > `make investigate:gates` shows who holds what; `make docker:clean:volumes`
-> frees the disk — the free slots and the cargo/rustup/pnpm caches, which
+> frees the disk — the free slots and the cargo/pnpm caches, which
 > take minutes to refill (`SLOT=<k>` resets one slot and keeps the
 > caches) — and `make clean:target`
 > removes the pre-pool `engine/target` a tree may still carry. `TARGET_SLOTS=<n>`
@@ -335,6 +335,21 @@ takes `version-check-exempt: <reason>`, the same shape as
 > off. On macOS, Docker Desktop's disk image (Settings → Resources) must
 > hold the slots on top of the images and caches — about 15 GB for
 > three, so give it 64 GB or more.
+
+> **The engine gates run in a pinned toolchain image.** The first engine
+> gate pulls `ghcr.io/kengos/shojiku-toolchain` (pinned by digest in the
+> `Makefile`; no login needed), which already holds Rust, rustfmt, clippy
+> and `cargo-llvm-cov`, and downloads the crates into the Docker volume
+> `shojiku-cargo-cache`. The cargo subcommands the image does not hold
+> (`cargo-deny`, `wasm-bindgen`, `wasm-opt`, `cargo-fuzz`) are installed
+> into that volume on first use, and the extra Rust targets (wasm32, the
+> dist cross targets, nightly for fuzzing) are downloaded by each run that
+> needs them. So `make docker:clean:all` is safe at any time: the next
+> gate pulls and downloads again and never rebuilds the toolchain. If you
+> ran the gates before the toolchain image, the same command removes the
+> volumes that layout left behind (`shojiku-cargo`, `shojiku-rustup`);
+> `rust:<version>-slim-bookworm` is only listed, since the runtime and
+> designer images still build from it.
 
 > **You need GNU Make 4 or newer.** make is the one tool that does not
 > run in a container, and macOS still ships 3.81 (2006), which parses

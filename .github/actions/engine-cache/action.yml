@@ -24,17 +24,21 @@ inputs:
 runs:
   using: composite
   steps:
-    # Only engine/target is cached. The cargo and rustup homes stay Docker
-    # NAMED VOLUMES, because the pinned image ships cargo and rustc inside
-    # /usr/local/cargo — a named volume inherits that content on first use,
-    # while a host bind mount would MASK it and leave the container with no
-    # toolchain at all. Compilation output is the expensive part anyway; the
-    # registry download is seconds.
+    # Only engine/target is cached. The toolchain is the pinned image's own
+    # (nothing is mounted over it), and cargo's download cache stays a Docker
+    # named volume that starts empty on each runner. Compilation output is the
+    # expensive part anyway; the registry download is seconds.
+    #
+    # `cargo-home` in the key: the build's dependency records name the crate
+    # sources by path, and that path moved when CARGO_HOME left
+    # /usr/local/cargo. An entry saved before would be restored by an exact
+    # key match, rebuilt from scratch, and never replaced (a save under an
+    # existing key is skipped), until engine/Cargo.lock next changed.
     - uses: actions/cache/restore@v4
       with:
         path: engine/target
-        key: engine-${{ inputs.key }}-${{ hashFiles('engine/Cargo.lock') }}
-        restore-keys: engine-${{ inputs.key }}-
+        key: engine-${{ inputs.key }}-cargo-home-${{ hashFiles('engine/Cargo.lock') }}
+        restore-keys: engine-${{ inputs.key }}-cargo-home-
 
     - shell: bash
       run: make ${{ inputs.target }} ${{ inputs.env }}
@@ -51,4 +55,4 @@ runs:
       if: always()
       with:
         path: engine/target
-        key: engine-${{ inputs.key }}-${{ hashFiles('engine/Cargo.lock') }}
+        key: engine-${{ inputs.key }}-cargo-home-${{ hashFiles('engine/Cargo.lock') }}

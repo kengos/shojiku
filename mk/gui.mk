@@ -26,7 +26,7 @@ PNPM_VERSION     := $(shell sed -n 's/.*"packageManager": *"pnpm@\([^"]*\)".*/\1
 PNPM_VERSION_SDK := $(shell sed -n 's/.*"packageManager": *"pnpm@\([^"]*\)".*/\1/p' sdk/js/package.json)
 
 # Run a pnpm command over the gui/ workspace in the pinned Node image. A named
-# volume persists the pnpm store across runs (like the cargo/rustup volumes).
+# volume persists the pnpm store across runs (like the cargo volume).
 # pnpm is installed at the version gui/package.json pins (see PNPM_VERSION).
 #
 # Iterating on a few gui test files is much faster than the whole `make gui:verify`,
