@@ -2,7 +2,7 @@
 
 use crate::facts::Surface;
 use crate::style::Style;
-use crate::{parse_template, Body, Item};
+use crate::{Body, Item, parse_template};
 
 /// The shape that paints with the whole box-decoration subset.
 const RECT: Surface = Surface::Item(crate::ItemKind::Rect);

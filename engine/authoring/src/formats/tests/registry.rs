@@ -154,10 +154,11 @@ fn no_document_still_yields_the_pack_and_builtin_vocabulary() {
         .find(|t| t.field_type == "date")
         .expect("date present");
     assert!(!date.variants.is_empty());
-    assert!(date
-        .variants
-        .iter()
-        .all(|v| v.origin != FormatOrigin::Registry));
+    assert!(
+        date.variants
+            .iter()
+            .all(|v| v.origin != FormatOrigin::Registry)
+    );
 }
 
 #[test]

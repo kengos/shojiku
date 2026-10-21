@@ -32,7 +32,7 @@ use crate::tree::LayoutItem;
 use shojiku_core::{TextAlign, TextItem, VerticalAlign};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::{placed_box, with_vertical_margin, Atom, Basis, Ctx};
+use super::{Atom, Basis, Ctx, placed_box, with_vertical_margin};
 
 /// Attaches a resolved link to the text block the builder just produced,
 /// reaching through a `textOverflow: clip` wrapper. Runs on the atom's

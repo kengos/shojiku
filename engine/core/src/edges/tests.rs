@@ -1,8 +1,8 @@
 //! Unit tests for the per-side `EdgeSpec` parser and its round-trip.
 
 use super::*;
-use crate::geometry::OptBox;
 use crate::PhysicalUnit;
+use crate::geometry::OptBox;
 
 fn parse(yaml: &str) -> EdgeSpec {
     serde_yaml::from_str(yaml).expect("edge spec should parse")

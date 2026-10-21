@@ -90,16 +90,22 @@ fn wasm_error_messages_carry_context() {
     assert!(WasmError::LocaleNotSet.to_string().contains("locale"));
     assert!(WasmError::FontsNotLoaded.to_string().contains("fonts"));
     assert!(WasmError::Locale("x".into()).to_string().contains('x'));
-    assert!(WasmError::UnknownFontPack("p".into())
-        .to_string()
-        .contains('p'));
+    assert!(
+        WasmError::UnknownFontPack("p".into())
+            .to_string()
+            .contains('p')
+    );
     assert!(WasmError::Fonts("f".into()).to_string().contains('f'));
     assert!(WasmError::BadScale(-1.0).to_string().contains("-1"));
     assert!(WasmError::Render("r".into()).to_string().contains('r'));
-    assert!(WasmError::PageOutOfRange { page: 3, total: 2 }
-        .to_string()
-        .contains("page 3 is out of range"));
-    assert!(WasmError::TooManyRawPages { total: 30, cap: 20 }
-        .to_string()
-        .contains("over the 20-page raw cap"));
+    assert!(
+        WasmError::PageOutOfRange { page: 3, total: 2 }
+            .to_string()
+            .contains("page 3 is out of range")
+    );
+    assert!(
+        WasmError::TooManyRawPages { total: 30, cap: 20 }
+            .to_string()
+            .contains("over the 20-page raw cap")
+    );
 }

@@ -8,12 +8,12 @@
 
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::band::{glyph_band, BAND_PAD_FRACTION};
+use super::band::{BAND_PAD_FRACTION, glyph_band};
 use super::index::{Lookup, TargetIndex};
-use super::{anchor_point, PendingAnchor, PendingEllipse, PendingEnd, PendingKind, PendingLine};
+use super::{PendingAnchor, PendingEllipse, PendingEnd, PendingKind, PendingLine, anchor_point};
 use crate::boxes::PlacedBox;
 use crate::engine::marks::ellipse_cmds;
-use crate::engine::{line_placed_box, placed_box_rect, Basis, Ctx, PageBuild};
+use crate::engine::{Basis, Ctx, PageBuild, line_placed_box, placed_box_rect};
 use crate::tree::{LayoutItem, PathShape};
 
 /// A resolved deferred item: its page, what it draws, and its placement.

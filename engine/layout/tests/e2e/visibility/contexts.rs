@@ -58,9 +58,11 @@ sections:
 "#;
     let out = run_full(yaml, json!({ "draft": false }));
     assert!(rect_shapes(&out.document.pages[0]).is_empty());
-    assert!(out.boxes.pages[0]
-        .iter()
-        .all(|b| b.id.as_deref() != Some("stamp")));
+    assert!(
+        out.boxes.pages[0]
+            .iter()
+            .all(|b| b.id.as_deref() != Some("stamp"))
+    );
 }
 
 /// A flex parent whose FIRST child conditionally disappears; `direction`

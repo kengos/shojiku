@@ -1,6 +1,6 @@
 //! The two rules themselves — what each one refuses, and what it must NOT.
 
-use super::{messages, page, run, Problem};
+use super::{Problem, messages, page, run};
 
 const HEADER: &str = "| Code | Meaning |\n| --- | --- |";
 

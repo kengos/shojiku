@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::OnceLock;
 
-use shojiku_signing::{sign_document, LocalPemSigner, PlaceholderOptions};
+use shojiku_signing::{LocalPemSigner, PlaceholderOptions, sign_document};
 use shojiku_verify::{CheckOutcome, NotChecked, VerifyError};
 
 use super::run_verify;
@@ -110,9 +110,11 @@ fn several_anchor_flags_are_read_as_one_set() {
 #[test]
 fn a_certificate_issued_by_a_trusted_authority_verifies() {
     let signed = signed_file("leaf.pdf", "leaf", "leaf");
-    assert!(run_verify(&args(signed, "ca"))
-        .expect("evaluates")
-        .is_valid());
+    assert!(
+        run_verify(&args(signed, "ca"))
+            .expect("evaluates")
+            .is_valid()
+    );
 }
 
 #[test]

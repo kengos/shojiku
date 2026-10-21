@@ -16,8 +16,8 @@
 //! recursion" posture holds for the catalog half as well as the page scan.
 
 use super::Vocabulary;
-use crate::reference::CATALOG;
 use crate::CAPABILITIES;
+use crate::reference::CATALOG;
 use serde_json::Value;
 use shojiku_diagnostics::DiagnosticCode;
 use std::collections::BTreeSet;

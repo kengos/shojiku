@@ -17,11 +17,11 @@ use std::ops::Range;
 use shojiku_core::{TextCombine, TextOrientation, TextSpacingTrim};
 
 use super::super::shape::{
-    cluster_ends, itemize, shape_segment, shape_segment_vertical, ShapedGlyph, VerticalShapedGlyph,
+    ShapedGlyph, VerticalShapedGlyph, cluster_ends, itemize, shape_segment, shape_segment_vertical,
 };
 use super::{
-    down_advance_over, first_face, mapped_face, orientation, vertical_form, vertical_offset,
-    FontFace, Orientation, VGlyph,
+    FontFace, Orientation, VGlyph, down_advance_over, first_face, mapped_face, orientation,
+    vertical_form, vertical_offset,
 };
 
 /// Everything a column arrangement shares: the face chain, the size and

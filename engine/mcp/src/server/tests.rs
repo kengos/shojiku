@@ -5,7 +5,7 @@ mod handshake;
 mod protocol;
 
 use crate::test_support::server_args;
-use crate::{serve, McpError};
+use crate::{McpError, serve};
 use serde_json::Value;
 use std::io::Cursor;
 

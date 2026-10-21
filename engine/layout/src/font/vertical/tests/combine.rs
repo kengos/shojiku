@@ -3,7 +3,7 @@
 //! posture. Fixed-pitch `biz-ud-gothic`: full-width = 1em, halfwidth
 //! digits exactly 0.5em, so extents are exact.
 
-use super::super::shaped::{segments, SegKind};
+use super::super::shaped::{SegKind, segments};
 use super::super::*;
 use super::arrange::ud_chain;
 use crate::font::RunOptions;

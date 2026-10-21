@@ -12,7 +12,7 @@
 use crate::ops::lay_out;
 use crate::request::Request;
 use crate::result::ShojikuResult;
-use crate::status::{encode, Failure};
+use crate::status::{Failure, encode};
 use shojiku_authoring::{preview_page, preview_pages};
 use shojiku_render_png::RenderPngError;
 

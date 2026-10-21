@@ -8,7 +8,7 @@
 //! box of size × multiplier).
 
 use crate::length::DEFAULT_FONT_SIZE_PT;
-use crate::style::{StyleKey, DEFAULT_LINE_HEIGHT, DEFAULT_STROKE_PT};
+use crate::style::{DEFAULT_LINE_HEIGHT, DEFAULT_STROKE_PT, StyleKey};
 
 /// A closed or half-open interval of admitted values, plus the fallback.
 #[derive(Debug, Clone, Copy, PartialEq)]

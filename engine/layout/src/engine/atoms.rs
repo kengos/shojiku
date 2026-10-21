@@ -8,7 +8,7 @@ use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_image::asset_key;
 
 use super::anchor::{PendingEnd, PendingKind, PendingLine};
-use super::{placed_box, with_vertical_margin, Atom, Basis, Ctx};
+use super::{Atom, Basis, Ctx, placed_box, with_vertical_margin};
 
 /// Splits a `double` line into the two parallel strokes CSS draws: each a
 /// third of the authored width, their centres a third of the width either

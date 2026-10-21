@@ -101,7 +101,7 @@ fn load_pack(pack_id: &str, font_dirs: &[PathBuf]) -> Result<(PackManifest, Path
         match std::fs::symlink_metadata(&pack_dir) {
             Err(_) => continue,
             Ok(meta) if meta.is_symlink() => {
-                return Err(PackError::PackTraversal(Echo::from(pack_id)))
+                return Err(PackError::PackTraversal(Echo::from(pack_id)));
             }
             Ok(_) => {}
         }
@@ -125,7 +125,7 @@ fn load_pack(pack_id: &str, font_dirs: &[PathBuf]) -> Result<(PackManifest, Path
                 return Err(PackError::Io {
                     path: Echo::from(manifest_path.as_path()),
                     source,
-                })
+                });
             }
         }
     }
@@ -137,7 +137,7 @@ use confine::{check_pack_id, confine, contained};
 
 mod bytes;
 pub use bytes::{
-    resolve_face_bytes, resolve_face_bytes_subset, FaceBytes, InjectedPack, SubsetFaces,
+    FaceBytes, InjectedPack, SubsetFaces, resolve_face_bytes, resolve_face_bytes_subset,
 };
 
 #[cfg(test)]

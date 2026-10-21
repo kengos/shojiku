@@ -1,7 +1,7 @@
 //! Structural checks for rich-text `spans`: content exclusivity,
 //! the MAX_SPANS cap, and span-inapplicable style keys.
 
-use crate::template::{Item, Template, TextItem, MAX_SPANS};
+use crate::template::{Item, MAX_SPANS, Template, TextItem};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
 use super::walk_sections;

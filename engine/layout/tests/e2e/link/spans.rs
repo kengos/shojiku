@@ -66,10 +66,12 @@ fn rejected_span_link_does_not_fall_back_to_the_block() {
         ),
         json!({}),
     );
-    assert!(diags
-        .items
-        .iter()
-        .any(|d| d.code == "unsupported_link_scheme"));
+    assert!(
+        diags
+            .items
+            .iter()
+            .any(|d| d.code == "unsupported_link_scheme")
+    );
     let runs = &text_blocks(&doc.pages[0])[0].lines[0].runs;
     assert_eq!(runs[0].link, None);
 }

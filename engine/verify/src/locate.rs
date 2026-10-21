@@ -15,7 +15,7 @@
 
 use core::ops::Range;
 
-use shojiku_signing::{array_elements, dict_value_span, parse_ref, Dict, PdfDocument};
+use shojiku_signing::{Dict, PdfDocument, array_elements, dict_value_span, parse_ref};
 
 use crate::error::{Result, VerifyError};
 use crate::limits::MAX_FORM_FIELDS;

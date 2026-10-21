@@ -3,8 +3,8 @@
 
 use super::*;
 use crate::test_support::{call_tool, content, diag_items, examples_dir, path_arg, temp_file};
-use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
 use serde_json::json;
 
 fn example_args() -> Value {

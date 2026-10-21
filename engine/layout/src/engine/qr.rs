@@ -9,7 +9,7 @@ use qrcodegen::{QrCode, QrCodeEcc};
 use shojiku_core::{EcLevel, QrCodeItem};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::{placed_box, with_vertical_margin, Atom, Basis, Ctx, BLACK};
+use super::{Atom, BLACK, Basis, Ctx, placed_box, with_vertical_margin};
 
 /// Cap on the encoded content size. Params are untrusted; module count
 /// grows with content, and every dark module run becomes a tree item —

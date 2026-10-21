@@ -6,7 +6,7 @@
 //! the same reason the annotation audit next door is tested this way.
 
 use super::spec::{Spec, Table};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 mod audit;
 mod codes;

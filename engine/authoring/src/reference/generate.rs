@@ -8,9 +8,9 @@
 //! `for_deserialize` is the contract that matters here: the catalog says
 //! what an author may WRITE, not what the engine emits.
 
-use schemars::generate::SchemaSettings;
-use schemars::transform::{transform_subschemas, Transform};
 use schemars::Schema;
+use schemars::generate::SchemaSettings;
+use schemars::transform::{Transform, transform_subschemas};
 use shojiku_core::{Definitions, Template};
 
 /// The catalog's `$id`.

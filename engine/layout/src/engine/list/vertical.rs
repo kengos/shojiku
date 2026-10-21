@@ -21,7 +21,7 @@ use shojiku_layout_box::ResolvedBox;
 use super::super::text::{
     along_offset, clamp_column_down, column_extent, column_left, vertical_decoration_specs,
 };
-use super::super::{placed_box, with_vertical_margin, Atom, Ctx};
+use super::super::{Atom, Ctx, placed_box, with_vertical_margin};
 use super::{EntryKeys, MAX_LIST_ENTRIES};
 
 impl Ctx<'_, '_> {

@@ -3,8 +3,8 @@
 //! fractions precision chain, and semantic-unit quantities with plural
 //! words from the pack.
 
-use super::{format_number, FormatWarning, Formatted, Pick};
-use crate::lang::{currency_fraction_digits, LangPack};
+use super::{FormatWarning, Formatted, Pick, format_number};
+use crate::lang::{LangPack, currency_fraction_digits};
 use shojiku_core::FieldSpec;
 
 /// The cap for a name echoed into a format warning. Deliberately tighter

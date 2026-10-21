@@ -3,7 +3,7 @@
 //! caller considers ordinary is the pain this project exists to avoid.
 
 use shojiku_signing::{
-    append_signature_placeholder, PdfDocument, PlaceholderOptions, SigningError,
+    PdfDocument, PlaceholderOptions, SigningError, append_signature_placeholder,
 };
 
 use crate::common::{example, rfind_bytes, splice};

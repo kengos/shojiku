@@ -7,7 +7,7 @@ use crate::font::test_support::{ja_store, repo_font_dir};
 use crate::font::{FontError, FontStore};
 use sha2::{Digest, Sha256};
 use shojiku_core::{FontStyle, FontWeight};
-use shojiku_formatter::{resolve_face_specs, InjectedPack, LangPack};
+use shojiku_formatter::{InjectedPack, LangPack, resolve_face_specs};
 use std::collections::BTreeMap;
 
 fn ja_pack() -> LangPack {

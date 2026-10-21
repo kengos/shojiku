@@ -15,7 +15,7 @@ use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use crate::tree::{LayoutItem, LineShape};
 
 use super::super::flow::FlowLayouter;
-use super::super::{Ctx, BLACK};
+use super::super::{BLACK, Ctx};
 use super::pages::GridPages;
 
 /// How far a tick reaches out from the grid's edge, before the per-side

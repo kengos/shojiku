@@ -77,7 +77,7 @@ use std::fmt;
 mod prose;
 mod scan;
 mod vocabulary;
-pub use vocabulary::{catalog_vocabulary, Known};
+pub use vocabulary::{Known, catalog_vocabulary};
 
 /// One way a page's diagnostics section and the engine disagree.
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -3,8 +3,8 @@
 //! the client renders them like any other finding).
 
 use super::pipeline::ToolFailure;
-use super::sources::{opt_source, req_source, Source};
-use super::{failure_result, json_text, text_part, tool_result, ToolOutcome};
+use super::sources::{Source, opt_source, req_source};
+use super::{ToolOutcome, failure_result, json_text, text_part, tool_result};
 use serde_json::Value;
 use shojiku_authoring::validate_strings;
 

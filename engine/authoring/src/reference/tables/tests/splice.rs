@@ -3,7 +3,7 @@
 //! A silent no-op is the failure mode worth the most tests here — it leaves a
 //! stale table in a file the gate then compares against itself, so it passes.
 
-use crate::reference::tables::{splice, start_marker, SpliceError, CLOSE, OPEN};
+use crate::reference::tables::{CLOSE, OPEN, SpliceError, splice, start_marker};
 
 fn page(id: &str) -> String {
     format!(

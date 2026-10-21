@@ -62,10 +62,12 @@ fn the_id_lists_reach_the_policy() {
     .policy();
     assert_eq!(policy.dynamic_allow, ["qr"]);
     assert_eq!(policy.dynamic_deny, ["stamp"]);
-    assert!(parsed(&json!({ "allowDynamicImage": null }))
-        .policy()
-        .dynamic_allow
-        .is_empty());
+    assert!(
+        parsed(&json!({ "allowDynamicImage": null }))
+            .policy()
+            .dynamic_allow
+            .is_empty()
+    );
 }
 
 #[test]

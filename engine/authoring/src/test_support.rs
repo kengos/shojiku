@@ -2,7 +2,7 @@
 //! filesystem-loaded font store (cached — sha256-verifying the ~47MB IPAmj
 //! fallback per test is far too slow), and a known-good single-page run.
 
-use crate::prepare::{prepare, AssetsInput, PrepareCtx, Prepared};
+use crate::prepare::{AssetsInput, PrepareCtx, Prepared, prepare};
 use crate::sources::load_sources;
 use shojiku_diagnostics::Diagnostics;
 use shojiku_formatter::LangPack;

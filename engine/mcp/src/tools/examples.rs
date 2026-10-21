@@ -14,7 +14,7 @@
 use super::{json_text, text_part, tool_result};
 use crate::examples::{self, uri};
 use crate::resources;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// `list_examples`: the whole bundled catalog, one line of prose each.
 pub(crate) fn list(_arguments: &Value) -> super::ToolOutcome {

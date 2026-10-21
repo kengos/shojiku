@@ -21,9 +21,9 @@ mod policy;
 mod read;
 mod transport;
 
-pub use cache::{default_cache_root, FontCache};
-pub use ensure::{ensure_faces, FetchReport, Mode};
+pub use cache::{FontCache, default_cache_root};
+pub use ensure::{FetchReport, Mode, ensure_faces};
 pub use error::{FetchError, TransportError};
-pub use policy::{FetchPolicy, DEFAULT_ALLOWED_HOSTS};
+pub use policy::{DEFAULT_ALLOWED_HOSTS, FetchPolicy};
 pub use read::{Hashed, MAX_FACE_BYTES};
 pub use transport::{HttpTransport, Transport};

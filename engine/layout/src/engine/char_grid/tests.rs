@@ -8,8 +8,8 @@ mod combine;
 mod placement;
 mod span;
 
-use super::cells::{assign_cells, CellChar};
 use super::GridGeom;
+use super::cells::{CellChar, assign_cells};
 use shojiku_core::{KinsokuMode, LinePlacement, RubySegment};
 
 /// One unannotated run with no sheet break before it.

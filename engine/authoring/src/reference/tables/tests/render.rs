@@ -1,7 +1,7 @@
 //! Rendering. The invariant every test here circles is that a row emits one
 //! cell per COLUMN — the property the hand-written tables did not have.
 
-use crate::reference::tables::{render, Cell, Column, Missing};
+use crate::reference::tables::{Cell, Column, Missing, render};
 
 /// Unescaped `|` count — the only honest way to measure a GFM row's width,
 /// because `\|` is one character of CONTENT and not a cell boundary.

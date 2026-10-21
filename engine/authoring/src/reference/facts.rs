@@ -31,7 +31,7 @@
 //! back rather than refusing a document, so the schema is NARROWER than the
 //! parser there — the direction that never teaches a rejected input.
 
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 use shojiku_core::facts::{self, ScalarRange, Surface};
 use shojiku_core::{ItemKind, StyleKey};
 

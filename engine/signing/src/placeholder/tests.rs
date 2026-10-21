@@ -63,11 +63,13 @@ fn the_reserved_window_spans_the_hex_string_including_its_delimiters() {
     assert_eq!(window.last(), Some(&b'>'));
     // Two hexadecimal digits per reserved byte, plus the two delimiters.
     assert_eq!(window.len(), MIN_CONTENTS_CAPACITY * 2 + 2);
-    assert!(window
-        .get(1..window.len() - 1)
-        .expect("digits")
-        .iter()
-        .all(|b| *b == b'0'));
+    assert!(
+        window
+            .get(1..window.len() - 1)
+            .expect("digits")
+            .iter()
+            .all(|b| *b == b'0')
+    );
 }
 
 #[test]

@@ -9,12 +9,12 @@
 mod tests;
 mod vertical;
 
-use crate::draw::{solid_fill, solid_stroke};
 use crate::RenderError;
+use crate::draw::{solid_fill, solid_stroke};
 use krilla::geom::{Point, Transform};
 use krilla::surface::Surface;
 use krilla::text::{Font, GlyphId, KrillaGlyph};
-use shojiku_layout::{shape_run, FontFace, PositionedGlyph, RunView, TextBlock};
+use shojiku_layout::{FontFace, PositionedGlyph, RunView, TextBlock, shape_run};
 use std::collections::HashMap;
 
 /// Draws one text block run by run: each run picks its own font chain,
@@ -153,11 +153,7 @@ pub(crate) fn map_glyphs(glyphs: &[PositionedGlyph], size: f64) -> Vec<KrillaGly
 /// font sizes), but guard the division rather than emit a non-finite
 /// advance from a hand-built tree.
 pub(crate) fn em_advance(advance_pt: f64, size: f64) -> f64 {
-    if size > 0.0 {
-        advance_pt / size
-    } else {
-        0.0
-    }
+    if size > 0.0 { advance_pt / size } else { 0.0 }
 }
 
 /// Skew transform for synthetic italic: leans glyph tops rightward by the

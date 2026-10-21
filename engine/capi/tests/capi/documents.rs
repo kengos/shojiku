@@ -29,12 +29,16 @@ fn engine_info_reports_what_this_build_can_do() {
 
     let json = String::from_utf8(buffer(shojiku_result_json, out)).expect("utf8 engine info");
     let info: serde_json::Value = serde_json::from_str(&json).expect("engine info parses");
-    assert!(info["capabilities"]
-        .as_array()
-        .is_some_and(|k| !k.is_empty()));
-    assert!(info["builtinLocales"]
-        .as_array()
-        .is_some_and(|l| !l.is_empty()));
+    assert!(
+        info["capabilities"]
+            .as_array()
+            .is_some_and(|k| !k.is_empty())
+    );
+    assert!(
+        info["builtinLocales"]
+            .as_array()
+            .is_some_and(|l| !l.is_empty())
+    );
 
     // The drift guard: this host must not grow a capability list of its own.
     // Compared as VALUES, so pretty-printing is not part of the contract.

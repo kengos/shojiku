@@ -126,11 +126,13 @@ fn a_parse_error_renders_no_pages_with_diagnostics() {
         Pages::Png(pages) => assert!(pages.is_empty()),
         Pages::Raw(_) => panic!("format preserved"),
     }
-    assert!(outcome
-        .diagnostics
-        .items
-        .iter()
-        .any(|d| d.code == "parse_error"));
+    assert!(
+        outcome
+            .diagnostics
+            .items
+            .iter()
+            .any(|d| d.code == "parse_error")
+    );
 }
 
 #[test]
@@ -156,11 +158,13 @@ sections:
         Pages::Raw(pages) => assert!(pages.is_empty()),
         Pages::Png(_) => panic!("format preserved"),
     }
-    assert!(outcome
-        .diagnostics
-        .items
-        .iter()
-        .any(|d| d.code == "image_source_missing"));
+    assert!(
+        outcome
+            .diagnostics
+            .items
+            .iter()
+            .any(|d| d.code == "image_source_missing")
+    );
 }
 
 #[test]
@@ -279,9 +283,11 @@ fn a_document_error_with_a_page_arg_still_returns_diagnostics() {
         Pages::Png(p) => assert!(p.is_empty()),
         Pages::Raw(_) => panic!("format preserved"),
     }
-    assert!(outcome
-        .diagnostics
-        .items
-        .iter()
-        .any(|d| d.code == "parse_error"));
+    assert!(
+        outcome
+            .diagnostics
+            .items
+            .iter()
+            .any(|d| d.code == "parse_error")
+    );
 }

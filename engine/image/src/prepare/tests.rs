@@ -11,12 +11,12 @@ mod static_assets;
 
 use super::*;
 use crate::policy::AssetMode;
-use crate::raster::test_support::tiny_png;
 use crate::raster::RasterFormat;
-use base64::engine::general_purpose::STANDARD;
+use crate::raster::test_support::tiny_png;
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
 use serde_json::json;
-use shojiku_core::{parse_template, Body};
+use shojiku_core::{Body, parse_template};
 use std::path::PathBuf;
 
 pub(super) const SVG: &str =

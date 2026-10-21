@@ -1,7 +1,7 @@
 //! The crate error type for parsing untrusted input artifacts.
 
 use crate::parse::locate::ItemFault;
-use crate::yaml::{YamlError, YamlErrorKind, MAX_INPUT_BYTES};
+use crate::yaml::{MAX_INPUT_BYTES, YamlError, YamlErrorKind};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode, Echo};
 use thiserror::Error;
 

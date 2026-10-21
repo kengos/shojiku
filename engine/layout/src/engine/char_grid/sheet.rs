@@ -9,10 +9,10 @@
 use shojiku_core::{CharGridItem, FontStyle, FontWeight, TextOrientation, TextSpacingTrim};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::super::{placed_box, with_vertical_margin, Atom, Ctx};
+use super::super::{Atom, Ctx, placed_box, with_vertical_margin};
+use super::GridPrep;
 use super::cells::CellChar;
 use super::glyph::{self, CellFrame};
-use super::GridPrep;
 use crate::tree::{LayoutItem, RectShape, TextBlock, TextLine};
 
 /// Block-level paint shared by the main block and its ruby blocks.

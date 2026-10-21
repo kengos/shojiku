@@ -20,7 +20,7 @@ mod wire;
 pub(crate) use wire::{clip, encode};
 
 use crate::result::ShojikuResult;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 
 /// The operation completed. Ask the result whether it *succeeded*.
 pub const SHOJIKU_OK: i32 = 0;

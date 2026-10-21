@@ -9,7 +9,7 @@ use super::{per_side_map, sub};
 use crate::{
     BorderColor, BorderStyle, BorderStyleKind, BorderWidth, TextCombineUpright, TextDecoration,
 };
-use schemars::{json_schema, JsonSchema, Schema, SchemaGenerator};
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use std::borrow::Cow;
 
 /// `borderWidth`: a non-negative pt number, or a per-side map of them.

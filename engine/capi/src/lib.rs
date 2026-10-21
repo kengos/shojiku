@@ -48,9 +48,9 @@ pub use api::{
     shojiku_sign_complete, shojiku_sign_prepare, shojiku_validate, shojiku_verify,
 };
 pub use result::{
-    shojiku_result_diagnostics_json, shojiku_result_error_json, shojiku_result_free,
+    ShojikuResult, shojiku_result_diagnostics_json, shojiku_result_error_json, shojiku_result_free,
     shojiku_result_json, shojiku_result_page_count, shojiku_result_page_png, shojiku_result_pdf,
-    shojiku_result_success, ShojikuResult,
+    shojiku_result_success,
 };
 pub use status::{
     SHOJIKU_ERR_INVALID_REQUEST, SHOJIKU_ERR_INVALID_UTF8, SHOJIKU_ERR_NULL_ARG,

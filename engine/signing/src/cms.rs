@@ -22,8 +22,8 @@ use cms::signed_data::{
 };
 use der::asn1::{OctetString, SetOfVec};
 use der::{Any, Decode, Encode};
-use x509_cert::spki::AlgorithmIdentifierOwned;
 use x509_cert::Certificate;
+use x509_cert::spki::AlgorithmIdentifierOwned;
 
 use crate::key::SignatureAlgorithm;
 use crate::oid;

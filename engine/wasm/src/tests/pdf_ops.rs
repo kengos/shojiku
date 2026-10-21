@@ -4,7 +4,7 @@
 //! and the hostile-input cases the in-app PDF viewer makes interesting.
 
 use super::*;
-use crate::render::{pdf_err, PdfOutcome};
+use crate::render::{PdfOutcome, pdf_err};
 use shojiku_diagnostics::DiagnosticCode;
 
 fn pdf(outcome: &PdfOutcome) -> &[u8] {
@@ -56,10 +56,12 @@ fn a_parse_error_renders_no_bytes_with_diagnostics() {
 
     assert!(outcome.pdf.is_empty());
     assert!(outcome.prepared.is_none());
-    assert!(outcome
-        .diagnostics
-        .iter()
-        .any(|d| d.code == DiagnosticCode::ParseError));
+    assert!(
+        outcome
+            .diagnostics
+            .iter()
+            .any(|d| d.code == DiagnosticCode::ParseError)
+    );
 }
 
 #[test]
@@ -135,10 +137,12 @@ fn a_hostile_link_scheme_never_reaches_the_written_pdf() {
         !contains(pdf(&outcome), b"javascript:"),
         "a rejected link scheme must not reach the PDF"
     );
-    assert!(outcome
-        .diagnostics
-        .iter()
-        .any(|d| d.code == DiagnosticCode::UnsupportedLinkScheme));
+    assert!(
+        outcome
+            .diagnostics
+            .iter()
+            .any(|d| d.code == DiagnosticCode::UnsupportedLinkScheme)
+    );
 }
 
 #[test]
@@ -192,10 +196,12 @@ fn a_zero_page_size_is_a_parse_diagnostic_with_no_bytes() {
 
     assert!(outcome.pdf.is_empty());
     assert!(outcome.prepared.is_none());
-    assert!(outcome
-        .diagnostics
-        .iter()
-        .any(|d| d.code == DiagnosticCode::ParseError));
+    assert!(
+        outcome
+            .diagnostics
+            .iter()
+            .any(|d| d.code == DiagnosticCode::ParseError)
+    );
 }
 
 /// Substring search over bytes (no dependency needed for one call site).

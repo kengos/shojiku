@@ -4,11 +4,11 @@
 //! TYPES and the entry point, this owns the enumeration.
 
 use super::exemplar;
-use super::{FormatOrigin, FormatTypeEntry, FormatVariant, CURRENCY_VARIANTS};
-use serde_json::{json, Value};
-use shojiku_core::{FieldType, NamedFormat, NamedFormatKind, Template, MAX_FORMATS};
-use shojiku_diagnostics::{sanitize, MAX_ECHO};
-use shojiku_formatter::{format_value, FormatContext, LangPack};
+use super::{CURRENCY_VARIANTS, FormatOrigin, FormatTypeEntry, FormatVariant};
+use serde_json::{Value, json};
+use shojiku_core::{FieldType, MAX_FORMATS, NamedFormat, NamedFormatKind, Template};
+use shojiku_diagnostics::{MAX_ECHO, sanitize};
+use shojiku_formatter::{FormatContext, LangPack, format_value};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub(super) fn type_entry(

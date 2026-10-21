@@ -5,8 +5,8 @@
 use shojiku_core::FlexBasis;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_layout_box::{
-    auto_share, clamp_size, cross_offset, main_spacing, resolve_edges, resolve_flex_lengths,
-    FlexItem,
+    FlexItem, auto_share, clamp_size, cross_offset, main_spacing, resolve_edges,
+    resolve_flex_lengths,
 };
 
 use super::super::{Atom, Basis, Ctx, H_OVERFLOW_EPS};

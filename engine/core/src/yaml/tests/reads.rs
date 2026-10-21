@@ -1,7 +1,7 @@
 //! Typed reads through the door — from a document's source and from a tree —
 //! and the tree's own accessors.
 
-use crate::yaml::{from_str, from_value, parse, Value, YamlErrorKind};
+use crate::yaml::{Value, YamlErrorKind, from_str, from_value, parse};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, PartialEq)]

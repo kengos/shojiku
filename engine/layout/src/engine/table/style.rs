@@ -8,12 +8,12 @@ mod conditional;
 use crate::style::ComputedStyle;
 use serde_json::Value;
 use shojiku_core::{
-    BorderStyleKind, BorderWidth, RowSpec, Style, TableItem, VerticalAlign, MAX_STYLE_NAMES,
+    BorderStyleKind, BorderWidth, MAX_STYLE_NAMES, RowSpec, Style, TableItem, VerticalAlign,
 };
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::super::decoration::SideBorders;
 use super::super::Ctx;
+use super::super::decoration::SideBorders;
 use super::{GridBorder, TABLE_BORDER_WIDTH};
 
 /// Folds one optional property over an item's style layers (named styles

@@ -14,8 +14,8 @@
 use super::{FontError, FontFace};
 use sha2::{Digest, Sha256};
 use shojiku_diagnostics::Echo;
-use skrifa::raw::TableProvider;
 use skrifa::FontRef;
+use skrifa::raw::TableProvider;
 
 /// OS/2 `fsType` bit 1 (0x0002) = Restricted License embedding: the face
 /// must not be embedded in a document.

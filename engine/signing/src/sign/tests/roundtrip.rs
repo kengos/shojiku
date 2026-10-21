@@ -3,8 +3,8 @@
 use cms::content_info::ContentInfo;
 use cms::signed_data::SignedData;
 use der::{Decode, SliceReader};
-use ring::digest::{digest, SHA256};
-use ring::signature::{VerificationAlgorithm, ECDSA_P256_SHA256_ASN1, RSA_PKCS1_2048_8192_SHA256};
+use ring::digest::{SHA256, digest};
+use ring::signature::{ECDSA_P256_SHA256_ASN1, RSA_PKCS1_2048_8192_SHA256, VerificationAlgorithm};
 
 use super::signer;
 use crate::key::SignatureAlgorithm;

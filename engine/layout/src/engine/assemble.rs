@@ -3,14 +3,14 @@
 //! sheet coordinates. The shared state it drives (`Ctx`, `PageBuild`,
 //! `Atom`) lives in the module root; this file is only the pass itself.
 
-use crate::boxes::{translate_boxes, BoxIndex};
+use crate::boxes::{BoxIndex, translate_boxes};
 use crate::style::ComputedStyle;
 use crate::tree::{LayoutDocument, LayoutPage};
 use shojiku_core::Body;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
 use super::visibility::{self, Visibility};
-use super::{translate, Basis, Ctx, LayoutInput, LayoutOutput, PageBuild};
+use super::{Basis, Ctx, LayoutInput, LayoutOutput, PageBuild, translate};
 
 /// Lays out the template into pages.
 pub fn layout(input: &LayoutInput) -> LayoutOutput {

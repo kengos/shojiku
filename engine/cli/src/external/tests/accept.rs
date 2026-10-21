@@ -1,12 +1,12 @@
 //! What the pair hands out, and the documents it produces.
 
-use base64::engine::general_purpose::STANDARD;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
 
-use super::{prepare_args, round_trip, Silent, EC, RSA};
+use super::{EC, RSA, Silent, prepare_args, round_trip};
+use crate::ReportArg;
 use crate::external::run_sign_prepare;
 use crate::tests::{example_pdf, key_dir};
-use crate::ReportArg;
 
 #[test]
 fn the_payload_carries_exactly_the_four_keys_the_c_abi_hands_out() {

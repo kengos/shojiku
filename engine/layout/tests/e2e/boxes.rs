@@ -162,9 +162,11 @@ sections:
     // on page 2, at the region top.
     assert_eq!(find(page_boxes(&out, 0), "pageno").border.y, 10.0);
     assert_eq!(find(page_boxes(&out, 1), "pageno").border.y, 10.0);
-    assert!(page_boxes(&out, 0)
-        .iter()
-        .all(|b| b.id.as_deref() != Some("tall")));
+    assert!(
+        page_boxes(&out, 0)
+            .iter()
+            .all(|b| b.id.as_deref() != Some("tall"))
+    );
     assert_eq!(find(page_boxes(&out, 1), "tall").border.y, 50.0);
 }
 

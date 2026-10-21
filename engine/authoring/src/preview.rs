@@ -6,7 +6,7 @@
 use crate::prepare::Prepared;
 use shojiku_layout::FontStore;
 use shojiku_render_png::{
-    render_png, render_png_page, render_raw, render_raw_page, PngOptions, RawPage, RenderPngError,
+    PngOptions, RawPage, RenderPngError, render_png, render_png_page, render_raw, render_raw_page,
 };
 
 /// Rasterizes every page of a prepared document to PNG bytes at `scale`

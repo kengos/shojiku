@@ -26,11 +26,11 @@ mod tables;
 mod tests;
 
 use bindings::{
-    check_cell_bindings, check_declarations, check_scalar_binding, walk_item, BindingCtx, CellScope,
+    BindingCtx, CellScope, check_cell_bindings, check_declarations, check_scalar_binding, walk_item,
 };
 use box_keys::{check_box_keys, check_table_pagination_keys};
 use collect::{check_container_depth, collect_images, collect_repeats, walk_sections};
-use deprecated::{check_deprecated, DeprecatedForm, DEPRECATED_FORMS};
+use deprecated::{DEPRECATED_FORMS, DeprecatedForm, check_deprecated};
 use document::check_document;
 use formats::check_formats;
 use presence::check_presence;

@@ -2,8 +2,8 @@
 //! [`TextCombine`] active-mode type (the layout/tree carrier) — split
 //! from [`super::writing_tests`] for the line budget.
 
-use super::writing::{TextCombine, TextCombineUpright};
 use super::Style;
+use super::writing::{TextCombine, TextCombineUpright};
 
 #[test]
 fn text_combine_upright_parses_and_round_trips_the_all_keyword() {

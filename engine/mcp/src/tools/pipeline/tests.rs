@@ -62,7 +62,9 @@ fn receipt_paths() -> Value {
 
 /// An inline template with one bundled image `src`.
 fn bundled_image_template(src: &str) -> String {
-    format!("page: {{ margin: 0 }}\nsections:\n  body:\n    type: flow\n    box: {{ x: 0, y: 0, w: 500, h: 700 }}\n    items:\n      - type: image\n        src: {src}\n        box: {{ x: 0, y: 0, w: 50, h: 50 }}\n")
+    format!(
+        "page: {{ margin: 0 }}\nsections:\n  body:\n    type: flow\n    box: {{ x: 0, y: 0, w: 500, h: 700 }}\n    items:\n      - type: image\n        src: {src}\n        box: {{ x: 0, y: 0, w: 50, h: 50 }}\n"
+    )
 }
 
 #[test]
@@ -158,11 +160,13 @@ fn missing_bundled_assets_are_a_diagnostics_failure() {
 
 #[test]
 fn prepare_succeeds_on_the_bundled_example() {
-    assert!(!prepare_ok(&receipt_paths())
-        .prepared
-        .document
-        .pages
-        .is_empty());
+    assert!(
+        !prepare_ok(&receipt_paths())
+            .prepared
+            .document
+            .pages
+            .is_empty()
+    );
 }
 
 #[test]

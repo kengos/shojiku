@@ -2,8 +2,8 @@
 //! locale-only call, a document's own registry entries, and the parse-only
 //! diagnostics that ride along.
 
-use super::{date_sample, descriptor, ok_call, spellings, REGISTRY_TEMPLATE};
-use serde_json::{json, Value};
+use super::{REGISTRY_TEMPLATE, date_sample, descriptor, ok_call, spellings};
+use serde_json::{Value, json};
 
 #[test]
 fn the_descriptor_takes_a_template_a_locale_and_probes() {

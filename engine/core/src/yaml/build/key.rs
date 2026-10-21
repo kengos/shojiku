@@ -1,7 +1,7 @@
 //! The visitor for a mapping key: a string is the key, anything else is
 //! refused as the key of the mapping that holds it.
 
-use super::{refuse, refuse_tag, State};
+use super::{State, refuse, refuse_tag};
 use crate::yaml::error::YamlErrorKind;
 use serde::de::{self, DeserializeSeed, Deserializer, EnumAccess, MapAccess, SeqAccess, Visitor};
 use std::fmt;

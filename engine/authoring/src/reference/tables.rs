@@ -47,12 +47,12 @@ mod render;
 mod spec;
 mod splice;
 
-pub use audit::{audit, node_schema, Problem};
-pub use generate::{page, pages, Error, Inputs};
+pub use audit::{Problem, audit, node_schema};
+pub use generate::{Error, Inputs, page, pages};
 pub use registry::registry;
-pub use render::{render, Missing, Registry};
-pub use spec::{parse, Cell, Column, Coverage, Row, Spec, Table};
-pub use splice::{splice, start_marker, SpliceError, CLOSE, OPEN};
+pub use render::{Missing, Registry, render};
+pub use spec::{Cell, Column, Coverage, Row, Spec, Table, parse};
+pub use splice::{CLOSE, OPEN, SpliceError, splice, start_marker};
 
 #[cfg(test)]
 mod tests;

@@ -13,18 +13,20 @@ fn container_children_are_walked_recursively() {
     assert!(codes.contains(&"unknown_data_key"));
     assert!(codes.contains(&"image_source_missing"));
     // Paths reflect the nesting.
-    assert!(diags.items[0]
-        .path
-        .as_deref()
-        .is_some_and(|p| p.contains(".items[0].items[0]")));
+    assert!(
+        diags.items[0]
+            .path
+            .as_deref()
+            .is_some_and(|p| p.contains(".items[0].items[0]"))
+    );
 }
 
 #[test]
 fn container_tables_are_binding_checked() {
     let template = nested_containers(
-            1,
-            "- type: table\n  data: { key: order.code }\n  columns:\n    - data: { key: name }\n      width: 100",
-        );
+        1,
+        "- type: table\n  data: { key: order.code }\n  columns:\n    - data: { key: name }\n      width: 100",
+    );
     let diags = validate(Some(&defs()), &template, None);
     assert!(diags.iter().any(|d| d.code == "not_an_array"));
 }

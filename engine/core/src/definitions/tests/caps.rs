@@ -91,7 +91,9 @@ fn the_first_too_deep_branch_is_the_first_in_key_order() {
     // The parsed map iterates in key order, and the refusal names the branch
     // that order reaches first — whatever order the document wrote them in.
     let deep = chained(MAX_SCHEMA_DEPTH, "items").replace("type: object\nproperties:\n  a: ", "");
-    let yaml = format!("type: object\nproperties:\n  b: {{ type: array, items: {deep} }}\n  a: {{ type: array, items: {deep} }}\n");
+    let yaml = format!(
+        "type: object\nproperties:\n  b: {{ type: array, items: {deep} }}\n  a: {{ type: array, items: {deep} }}\n"
+    );
     assert!(depth_refusal(&yaml).starts_with("properties.a."));
 }
 

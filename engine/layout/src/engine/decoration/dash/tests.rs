@@ -1,7 +1,7 @@
 //! Tests for `dash_pattern` — the keyword→interval table and the floor
 //! that keeps a hostile stroke width from exploding the dash walk.
 
-use super::{dash_pattern, DASH_MIN_PT};
+use super::{DASH_MIN_PT, dash_pattern};
 use shojiku_core::BorderStyleKind;
 
 #[test]

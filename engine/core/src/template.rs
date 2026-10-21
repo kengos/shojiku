@@ -37,17 +37,17 @@ mod visibility;
 
 pub use children::{ChildHolder, ChildList};
 pub use formats::{
-    FormatDefaults, FormatRef, InlineFormat, NamedFormat, NamedFormatKind, TemplateDefaults,
-    MAX_FORMATS,
+    FormatDefaults, FormatRef, InlineFormat, MAX_FORMATS, NamedFormat, NamedFormatKind,
+    TemplateDefaults,
 };
 pub use kind::ItemKind;
 
 pub use binding::{Binding, BindingScope, Bindings, MAX_BINDINGS};
-pub use char_grid::{CharGridItem, CharGridSpec, KinsokuMode, Markup, MAX_CHAR_GRID_CELLS};
+pub use char_grid::{CharGridItem, CharGridSpec, KinsokuMode, MAX_CHAR_GRID_CELLS, Markup};
 pub use document::{DocumentMeta, MAX_DOCUMENT_ENTRIES};
 pub use imposition::{
-    BreakBefore, ContainerItem, GridDirection, GridSpec, RepeatItem, MAX_CONTAINER_DEPTH,
-    MAX_IMPOSITION_PER_PAGE,
+    BreakBefore, ContainerItem, GridDirection, GridSpec, MAX_CONTAINER_DEPTH,
+    MAX_IMPOSITION_PER_PAGE, RepeatItem,
 };
 pub use items::{
     EcLevel, ImageFit, ImageItem, LineItem, ListItem, PageBreakItem, PageNumberItem, QrCodeItem,
@@ -56,11 +56,11 @@ pub use items::{
 pub use link::Link;
 pub use marks::{CheckboxItem, EllipseItem, EqualsValue, MarkBinding, TextMark};
 pub use repeat_flow::RepeatFlowItem;
-pub use ruby::{RubyPair, MAX_RUBY_ENTRIES};
-pub use spans::{Span, MAX_SPANS};
+pub use ruby::{MAX_RUBY_ENTRIES, RubyPair};
+pub use spans::{MAX_SPANS, Span};
 pub use table::{
-    Column, ColumnType, EmptyBehavior, HeaderGroup, RowConditionalStyle, RowSpec, TableHeaderSpec,
-    TableItem, MAX_ROW_CONDITIONAL_STYLES,
+    Column, ColumnType, EmptyBehavior, HeaderGroup, MAX_ROW_CONDITIONAL_STYLES,
+    RowConditionalStyle, RowSpec, TableHeaderSpec, TableItem,
 };
 pub use visibility::VisibleBinding;
 

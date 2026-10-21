@@ -15,7 +15,7 @@
 //! surface — and it sits behind the non-default `schema` feature, which no host
 //! builds.
 
-use shojiku_authoring::reference::run::{run, Job};
+use shojiku_authoring::reference::run::{Job, run};
 use shojiku_authoring::reference::{CATALOG_PATH, TABLES};
 use std::path::Path;
 use std::process::ExitCode;

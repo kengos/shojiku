@@ -49,10 +49,11 @@ fn embedding_attested_propagates_to_every_face() {
          faces:\n  - id: a\n    file: a.ttf\n    sha256: aa\n",
     )
     .expect("parse");
-    assert!(m
-        .face_specs("p", Path::new("/p"))
-        .iter()
-        .all(|f| f.embedding_attested));
+    assert!(
+        m.face_specs("p", Path::new("/p"))
+            .iter()
+            .all(|f| f.embedding_attested)
+    );
 }
 
 #[test]

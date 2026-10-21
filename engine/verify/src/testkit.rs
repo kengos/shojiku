@@ -10,7 +10,7 @@
 //! Key material lives in [`keys`], which GENERATES it — nothing here is
 //! committed.
 
-use shojiku_signing::{sign_document, PlaceholderOptions};
+use shojiku_signing::{PlaceholderOptions, sign_document};
 
 pub(crate) mod keys;
 
@@ -150,7 +150,7 @@ pub(crate) fn find(haystack: &[u8], needle: &[u8]) -> Option<usize> {
 /// computed over the shortened ranges. Every cryptographic check passes. The
 /// only thing wrong with the document is what it left out.
 pub(crate) fn interior_gap_forgery(stem: &str) -> Vec<u8> {
-    use ring::digest::{digest, SHA256};
+    use ring::digest::{SHA256, digest};
     use shojiku_signing::{SignatureContainer, Signer};
 
     let mut pdf = signed_pdf(stem);

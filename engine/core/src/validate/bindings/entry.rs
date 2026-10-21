@@ -14,11 +14,11 @@
 //! `{key}` against it is a real authoring mistake and is reported.
 
 use crate::catalog::ArrayElement;
-use crate::interpolate::{parse_segments, Segment};
+use crate::interpolate::{Segment, parse_segments};
 use crate::template::{BindingScope, ListItem};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
-use super::cell::{check_cell_field, CellScope};
+use super::cell::{CellScope, check_cell_field};
 use super::decl::DeclCtx;
 
 /// Checks the ARRAY a list binds, in the scope it actually reads: a

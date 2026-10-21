@@ -19,7 +19,7 @@ fn path_data_kitchen_sink() {
     assert_eq!(cmds[3], PathCmd::LineTo(10.0, 20.0)); // H
     assert_eq!(cmds[4], PathCmd::LineTo(10.0, 10.0)); // V
     assert!(matches!(cmds[5], PathCmd::CurveTo(..))); // C
-                                                      // S reflects the previous cubic control point (20,5) -> (20,15).
+    // S reflects the previous cubic control point (20,5) -> (20,15).
     let PathCmd::CurveTo(x1, y1, ..) = cmds[6] else { panic!("S") };
     assert_eq!((x1, y1), (20.0, 15.0));
     assert!(matches!(cmds[7], PathCmd::CurveTo(..))); // Q as cubic
@@ -56,10 +56,11 @@ fn zero_radius_arc_becomes_a_line() {
 fn invalid_path_data_truncates_with_warning() {
     let tree = parse(r#"<svg viewBox="0 0 10 10"><path d="M 1 1 L 2 2 X 9"/></svg>"#);
     assert_eq!(tree.paths[0].cmds.len(), 2);
-    assert!(tree
-        .warnings
-        .iter()
-        .any(|w| w.contains("invalid path data")));
+    assert!(
+        tree.warnings
+            .iter()
+            .any(|w| w.contains("invalid path data"))
+    );
 }
 
 #[test]
@@ -90,10 +91,11 @@ fn unsupported_features_warn_once() {
         .count();
     assert_eq!(text_warnings, 1, "warnings: {:?}", tree.warnings);
     // An undefined gradient reference warns (author-facing), like a typo'd id.
-    assert!(tree
-        .warnings
-        .iter()
-        .any(|w| w.contains("unknown gradient") && w.contains("grad")));
+    assert!(
+        tree.warnings
+            .iter()
+            .any(|w| w.contains("unknown gradient") && w.contains("grad"))
+    );
     assert!(tree.warnings.iter().any(|w| w.contains("opacity")));
     assert!(tree.warnings.iter().any(|w| w.contains("square")));
     assert!(tree.warnings.iter().any(|w| w.contains("stroke-width")));

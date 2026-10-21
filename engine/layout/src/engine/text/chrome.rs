@@ -12,8 +12,8 @@
 use crate::style::ComputedStyle;
 use crate::tree::{Corners, LayoutItem};
 
-use super::super::decoration::DecorationPaint;
 use super::super::Ctx;
+use super::super::decoration::DecorationPaint;
 
 /// What a paginating fragment needs to rebuild its slice of a text block's
 /// box. `Default` (no decoration, no slack) is the resting state of the

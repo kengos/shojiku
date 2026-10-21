@@ -2,7 +2,7 @@
 //! (heights measured, then shared) and the per-item main/cross offsets.
 //! Distribution math comes from `shojiku-layout-box`.
 
-use shojiku_layout_box::{auto_share, cross_offset, main_spacing, resolve_flex_lengths, FlexItem};
+use shojiku_layout_box::{FlexItem, auto_share, cross_offset, main_spacing, resolve_flex_lengths};
 
 use super::super::{Atom, Basis, Ctx};
 use super::{FlexKind, FlexSpec};

@@ -20,18 +20,22 @@ fn span_conflicts_and_empty_span_warn() {
         .collect();
     // Item-level (`text` beside `spans`) and span-level (`text`+`data`).
     assert_eq!(conflicts.len(), 2);
-    assert!(conflicts[0]
-        .path
-        .as_deref()
-        .is_some_and(|p| p.ends_with("items[0]")));
-    assert!(conflicts[1]
-        .path
-        .as_deref()
-        .is_some_and(|p| p.ends_with(".spans[0]")));
-    assert!(diags
-        .iter()
-        .any(|d| d.code == "empty_span"
-            && d.path.as_deref().is_some_and(|p| p.ends_with(".spans[1]"))));
+    assert!(
+        conflicts[0]
+            .path
+            .as_deref()
+            .is_some_and(|p| p.ends_with("items[0]"))
+    );
+    assert!(
+        conflicts[1]
+            .path
+            .as_deref()
+            .is_some_and(|p| p.ends_with(".spans[0]"))
+    );
+    assert!(
+        diags.iter().any(|d| d.code == "empty_span"
+            && d.path.as_deref().is_some_and(|p| p.ends_with(".spans[1]")))
+    );
     assert!(!diags.has_errors());
 }
 
@@ -87,10 +91,12 @@ fn span_bindings_are_checked_scalar_and_params() {
         .filter(|d| d.code == "unknown_data_key")
         .collect();
     assert_eq!(keys.len(), 2);
-    assert!(keys[0]
-        .path
-        .as_deref()
-        .is_some_and(|p| p.ends_with(".spans[0]")));
+    assert!(
+        keys[0]
+            .path
+            .as_deref()
+            .is_some_and(|p| p.ends_with(".spans[0]"))
+    );
     // Params-side: a declared key missing from params warns.
     let ok = tpl(r#"
       - type: text
@@ -120,10 +126,12 @@ fn span_bindings_are_element_scoped_in_repeat_cells() {
         .filter(|d| d.code == "unknown_data_key")
         .collect();
     assert_eq!(bad.len(), 1);
-    assert!(bad[0]
-        .path
-        .as_deref()
-        .is_some_and(|p| p.contains(".cell.items[0].spans[1]")));
+    assert!(
+        bad[0]
+            .path
+            .as_deref()
+            .is_some_and(|p| p.contains(".cell.items[0].spans[1]"))
+    );
 }
 
 #[test]
@@ -151,8 +159,10 @@ sections:
         .filter(|d| d.code == "undefined_style_name")
         .collect();
     assert_eq!(undefined.len(), 1);
-    assert!(undefined[0]
-        .path
-        .as_deref()
-        .is_some_and(|p| p.ends_with(".spans[1]")));
+    assert!(
+        undefined[0]
+            .path
+            .as_deref()
+            .is_some_and(|p| p.ends_with(".spans[1]"))
+    );
 }

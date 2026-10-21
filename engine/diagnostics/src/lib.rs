@@ -25,7 +25,7 @@ pub use arg::ArgValue;
 pub use category::Category;
 pub use code::DiagnosticCode;
 pub use deprecation::Deprecation;
-pub use echo::{sanitize, sanitize_marked, Echo, MAX_ECHO, MAX_INLINE_ECHO, MAX_MESSAGE};
+pub use echo::{Echo, MAX_ECHO, MAX_INLINE_ECHO, MAX_MESSAGE, sanitize, sanitize_marked};
 
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;

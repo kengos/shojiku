@@ -3,9 +3,9 @@
 //! classified, and a sample of the written values is what the tables say.
 
 use super::*;
-use crate::reference::annotations::nodes;
-use crate::reference::CATALOG;
 use crate::CAPABILITIES;
+use crate::reference::CATALOG;
+use crate::reference::annotations::nodes;
 use std::collections::BTreeSet;
 
 fn catalog() -> Value {
@@ -95,12 +95,16 @@ fn each_styled_surface_lists_the_keys_it_takes() {
         def(&catalog, "ContainerItem")["x-shojiku-style-keys"],
         container["x-shojiku-style-keys"]
     );
-    assert!(branch(&catalog, "line")
-        .get("x-shojiku-style-keys")
-        .is_none());
-    assert!(branch(&catalog, "text")
-        .get("x-shojiku-holds-content")
-        .is_none());
+    assert!(
+        branch(&catalog, "line")
+            .get("x-shojiku-style-keys")
+            .is_none()
+    );
+    assert!(
+        branch(&catalog, "text")
+            .get("x-shojiku-holds-content")
+            .is_none()
+    );
     assert!(def(&catalog, "Span")["x-shojiku-style-keys"].is_array());
     assert!(def(&catalog, "TextMark")["x-shojiku-style-keys"].is_array());
 }
@@ -207,9 +211,11 @@ fn every_gated_node_names_a_declared_capability() {
         json!("item.visible")
     );
     // `style.fontSize` is not a key: the size predates the registry.
-    assert!(def(&merged, "Style")["properties"]["fontSize"]
-        .get("x-shojiku-capability")
-        .is_none());
+    assert!(
+        def(&merged, "Style")["properties"]["fontSize"]
+            .get("x-shojiku-capability")
+            .is_none()
+    );
 }
 
 /// Every declared capability is either gated on a node or listed as having
@@ -269,9 +275,11 @@ fn surfaces_that_start_a_key_elsewhere_say_so() {
         branch(&catalog, "table")["x-shojiku-initial-overrides"],
         json!({ "borderWidth": 0.5, "verticalAlign": "middle" })
     );
-    assert!(branch(&catalog, "text")
-        .get("x-shojiku-initial-overrides")
-        .is_none());
+    assert!(
+        branch(&catalog, "text")
+            .get("x-shojiku-initial-overrides")
+            .is_none()
+    );
     let root = &def(&catalog, "TemplateDefaults")["properties"]["style"];
     assert_eq!(root["x-shojiku-holds-content"], json!(true));
     assert_eq!(

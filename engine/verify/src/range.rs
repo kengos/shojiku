@@ -14,7 +14,7 @@
 
 use core::ops::Range;
 
-use shojiku_signing::{array_elements, parse_uint, Dict};
+use shojiku_signing::{Dict, array_elements, parse_uint};
 
 use crate::error::{Result, VerifyError};
 use crate::report::CheckOutcome;

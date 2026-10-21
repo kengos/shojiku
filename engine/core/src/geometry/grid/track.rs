@@ -8,7 +8,7 @@
 //! negative weights are rejected at parse (string forms bypass the YAML
 //! finiteness guard, so they are re-checked here).
 
-use crate::length::{finite, parse_length_text, snippet, Length};
+use crate::length::{Length, finite, parse_length_text, snippet};
 use serde::{Deserialize, Serialize, Serializer};
 
 /// A grid track size: an absolute/relative [`Length`], an `fr` weight

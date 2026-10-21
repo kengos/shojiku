@@ -52,8 +52,8 @@ pub(super) fn prepared(pdf: &[u8], certificate: &[u8], algorithm: &[u8]) -> Prep
 }
 
 fn decode(payload: &serde_json::Value, key: &str) -> Vec<u8> {
-    use base64::engine::general_purpose::STANDARD;
     use base64::Engine as _;
+    use base64::engine::general_purpose::STANDARD;
     STANDARD
         .decode(payload[key].as_str().expect("a base64 string"))
         .expect("valid base64")

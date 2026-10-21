@@ -53,17 +53,21 @@ fn a_document_scope_lists_source_is_checked_like_a_cells() {
     assert!(codes(&ok, "unknown_data_key").is_empty() && codes(&ok, "not_an_array").is_empty());
 
     let unknown = validate(Some(&ldefs()), &list_over("nope", "x"), None);
-    assert!(unknown
-        .iter()
-        .any(|d| d.code == "unknown_data_key" && d.message.contains("nope")));
+    assert!(
+        unknown
+            .iter()
+            .any(|d| d.code == "unknown_data_key" && d.message.contains("nope"))
+    );
 
     let scalar = validate(Some(&ldefs()), &list_over("venue", "x"), None);
     assert!(scalar.iter().any(|d| d.code == "not_an_array"));
 
     // And still silent with no definitions to check against.
-    assert!(validate(None, &list_over("nope", "x"), None)
-        .iter()
-        .all(|d| d.code != "unknown_data_key" && d.code != "not_an_array"));
+    assert!(
+        validate(None, &list_over("nope", "x"), None)
+            .iter()
+            .all(|d| d.code != "unknown_data_key" && d.code != "not_an_array")
+    );
 }
 
 #[test]

@@ -12,7 +12,7 @@ mod span;
 mod style;
 
 use serde_json::Value;
-use shojiku_core::{resolve_path, AlignItems, Bindings, EmptyBehavior, TableItem, VerticalAlign};
+use shojiku_core::{AlignItems, Bindings, EmptyBehavior, TableItem, VerticalAlign, resolve_path};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_layout_box::cross_offset;
 

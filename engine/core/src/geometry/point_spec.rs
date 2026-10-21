@@ -14,7 +14,7 @@
 //! two errors serde could not phrase (`{ x: 0, item: a }` and `{}`).
 
 use serde::ser::SerializeStruct;
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
 use crate::length::Length;
 

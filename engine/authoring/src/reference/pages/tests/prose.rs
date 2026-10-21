@@ -4,8 +4,8 @@
 //! These fixtures deliberately put their tokens where the other two rules
 //! cannot see them, so a pass here is about this rule alone.
 
-use super::{messages, Words};
-use crate::reference::pages::{audit, Problem};
+use super::{Words, messages};
+use crate::reference::pages::{Problem, audit};
 
 /// Audits a whole page under `name`, so a test can choose whether the page is
 /// in the third rule's scope.
@@ -23,7 +23,9 @@ fn a_code_shaped_unknown_in_the_prose_is_reported() {
 
     assert_eq!(
         messages(&problems),
-        vec!["p.md: `no_such_code` is spelled like a diagnostic code and the engine defines no such code, capability key or wire word — reword it, or add it to the excused list with its reason"]
+        vec![
+            "p.md: `no_such_code` is spelled like a diagnostic code and the engine defines no such code, capability key or wire word — reword it, or add it to the excused list with its reason"
+        ]
     );
 }
 

@@ -1,9 +1,9 @@
 //! Measuring a modulus, including the shapes no key generator produces.
 
-use der::asn1::UintRef;
 use der::Encode;
+use der::asn1::UintRef;
 
-use super::{bit_length, check_rsa_modulus, MAX_RSA_MODULUS_BITS, MIN_RSA_MODULUS_BITS};
+use super::{MAX_RSA_MODULUS_BITS, MIN_RSA_MODULUS_BITS, bit_length, check_rsa_modulus};
 use crate::key::KeyError;
 
 /// Just enough of a PKCS#1 `RSAPrivateKey` to be measured: the two fields the

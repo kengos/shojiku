@@ -201,9 +201,5 @@ fn unfrozen_sizes(sizes: &[f64], frozen: &[bool]) -> Vec<f64> {
 
 /// Collapses a non-finite or negative main size to a usable one.
 fn sane(v: f64) -> f64 {
-    if v.is_finite() {
-        v.max(0.0)
-    } else {
-        0.0
-    }
+    if v.is_finite() { v.max(0.0) } else { 0.0 }
 }

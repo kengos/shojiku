@@ -1,10 +1,10 @@
 //! Text-arm tests: the `enum` display labels and the picks that select
 //! between the declared words and the raw value.
 
-use crate::format::tests::{fmt, fmt_warn, ja_pack, spec};
 use crate::FormatWarning;
-use serde_json::json;
+use crate::format::tests::{fmt, fmt_warn, ja_pack, spec};
 use serde_json::Value;
+use serde_json::json;
 use shojiku_core::{FieldSpec, FieldType};
 
 /// A text field declaring the 引取票 status labels: one labeled member

@@ -9,10 +9,12 @@ fn inspects_example_layout() {
     let json = run_inspect(&example_render_args().common).expect("inspect");
     let value: serde_json::Value = serde_json::from_str(&json).expect("json");
     // The envelope: engine info for gating, the tree, and the box sidecar.
-    assert!(value["document"]["pages"]
-        .as_array()
-        .map(|p| !p.is_empty())
-        .unwrap_or(false));
+    assert!(
+        value["document"]["pages"]
+            .as_array()
+            .map(|p| !p.is_empty())
+            .unwrap_or(false)
+    );
     assert_eq!(
         value["engine"]["version"].as_str(),
         Some(env!("CARGO_PKG_VERSION"))

@@ -125,9 +125,11 @@ fn border_radius_round_trips_its_authored_form() {
     let out = serde_yaml::to_string(&pt).expect("yaml");
     assert!(out.contains("borderRadius: 6"), "{out}");
     // Unset never serializes.
-    assert!(!serde_yaml::to_string(&crate::style::Style::default())
-        .expect("yaml")
-        .contains("borderRadius"));
+    assert!(
+        !serde_yaml::to_string(&crate::style::Style::default())
+            .expect("yaml")
+            .contains("borderRadius")
+    );
 }
 
 #[test]
@@ -139,7 +141,9 @@ fn line_style_keyword_round_trips_and_defaults_solid() {
     // Unset keeps the accessor default and never serializes.
     let bare: crate::LineStyle = serde_yaml::from_str("{ width: 1 }").expect("line");
     assert_eq!(bare.style(), BorderStyleKind::Solid);
-    assert!(!serde_yaml::to_string(&bare)
-        .expect("yaml")
-        .contains("style:"));
+    assert!(
+        !serde_yaml::to_string(&bare)
+            .expect("yaml")
+            .contains("style:")
+    );
 }

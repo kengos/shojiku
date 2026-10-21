@@ -8,7 +8,7 @@
 
 use super::*;
 use serde_json::json;
-use shojiku_core::{parse_template, FormatDefaults, FormatRef, InlineFormat};
+use shojiku_core::{FormatDefaults, FormatRef, InlineFormat, parse_template};
 use shojiku_formatter::{FormatContext, LangPack};
 
 fn ja() -> LangPack {

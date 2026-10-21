@@ -4,8 +4,8 @@
 //! name two keys at once.
 
 use super::prose;
-use crate::reference::annotations::{audit, nodes, Problem};
-use serde_json::{json, Value};
+use crate::reference::annotations::{Problem, audit, nodes};
+use serde_json::{Value, json};
 use std::collections::BTreeMap;
 
 /// A tagged union with one discriminated branch, and a value shape whose

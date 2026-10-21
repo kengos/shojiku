@@ -89,9 +89,11 @@ fn auto_still_truncates_at_the_page_cap() {
         .count();
     assert_eq!(overflows, 1, "one page_overflow, not one per element");
     // The pages that DID fill still carry the item's fragments.
-    assert!(out.boxes.pages[0]
-        .iter()
-        .any(|b| b.id.as_deref() == Some("sheet")));
+    assert!(
+        out.boxes.pages[0]
+            .iter()
+            .any(|b| b.id.as_deref() == Some("sheet"))
+    );
 }
 
 /// The per-page cell cap clamps `auto` grids exactly like default ones —

@@ -24,9 +24,9 @@
 
 pub(crate) mod reference;
 
-use crate::examples::{self, uri, CatalogEntry, SourceFile};
-use crate::rpc::{clip, RpcError, INVALID_PARAMS, RESOURCE_NOT_FOUND};
-use serde_json::{json, Value};
+use crate::examples::{self, CatalogEntry, SourceFile, uri};
+use crate::rpc::{INVALID_PARAMS, RESOURCE_NOT_FOUND, RpcError, clip};
+use serde_json::{Value, json};
 
 /// Largest bundle `resources/read` will assemble for a whole entry.
 /// Comfortably above every product example; the syntax showcase is the one

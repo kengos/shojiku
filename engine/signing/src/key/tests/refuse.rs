@@ -1,7 +1,7 @@
 //! Every way a key file is refused, and what the refusal tells the caller.
 
 use super::{ec_pem_with_body, load, load_with, relabel};
-use crate::key::{KeyError, PrivateKey, MAX_RSA_MODULUS_BITS, MIN_RSA_MODULUS_BITS};
+use crate::key::{KeyError, MAX_RSA_MODULUS_BITS, MIN_RSA_MODULUS_BITS, PrivateKey};
 use crate::testkit::keys::keys;
 
 /// A legacy OpenSSL encrypted key, in the form `openssl` wrote before PKCS#8

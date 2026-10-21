@@ -3,7 +3,7 @@
 //! `Sections::item_lists`, so all of them cover the header and footer
 //! bands as well as the body.
 
-use crate::template::{ChildHolder, Item, Template, MAX_CONTAINER_DEPTH};
+use crate::template::{ChildHolder, Item, MAX_CONTAINER_DEPTH, Template};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
 /// A data-driven repeat construct found in any section — the n-up `repeat`

@@ -90,7 +90,7 @@ fn scan_array(buf: &[u8], start: usize, depth: usize) -> Result<usize> {
                 return Err(SigningError::Malformed {
                     offset: cursor,
                     what: "the end of an array",
-                })
+                });
             }
             Some(_) => cursor = scan_value(buf, cursor, depth + 1)?.1,
         }

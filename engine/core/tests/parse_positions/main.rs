@@ -15,7 +15,7 @@
 //! mismatch the test prints the whole actual record, which replaces the file
 //! as it stands, and the review reads the file's diff.
 
-use shojiku_core::{parse_definitions, parse_params, parse_template, CoreError};
+use shojiku_core::{CoreError, parse_definitions, parse_params, parse_template};
 use std::path::{Path, PathBuf};
 
 fn suite_dir() -> PathBuf {
@@ -79,7 +79,11 @@ fn record(name: &str, result: &Result<Option<String>, CoreError>) -> String {
             key.as_ref().map_or("-", |key| key.as_str()),
             // An empty path would end the line in a space, which an editor
             // trims and the comparison then reads as a change.
-            path = if path.is_empty() { "(empty)" } else { path.as_str() },
+            path = if path.is_empty() {
+                "(empty)"
+            } else {
+                path.as_str()
+            },
             message = message.as_str(),
         ),
         CoreError::Parse(message) => format!("parse\nmessage: {}", message.as_str()),

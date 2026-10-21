@@ -247,9 +247,11 @@ sections:
     );
     // …and the placement is still reported, so a Designer can show where
     // the mark would sit.
-    assert!(out.boxes.pages[0]
-        .iter()
-        .any(|b| b.id.as_deref() == Some("ring")));
+    assert!(
+        out.boxes.pages[0]
+            .iter()
+            .any(|b| b.id.as_deref() == Some("ring"))
+    );
 }
 
 #[test]

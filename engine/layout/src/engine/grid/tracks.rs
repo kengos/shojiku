@@ -9,7 +9,7 @@
 //! `flexGrow` does. `fr` rows need a definite container height like a
 //! `Count` split; an auto-height container degrades them to auto rows.
 
-use shojiku_core::{GridTrack, TrackSpec, MAX_GRID_TRACKS};
+use shojiku_core::{GridTrack, MAX_GRID_TRACKS, TrackSpec};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_layout_box::{equal_track, grow_shares};
 

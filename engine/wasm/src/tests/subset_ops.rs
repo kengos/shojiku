@@ -78,11 +78,12 @@ fn reload_after_fetching_the_fallback_clears_missing_glyph() {
     let out = session
         .render(PageFormat::Png, RARE_KANJI, "{}", None, 2.0, None)
         .unwrap();
-    assert!(out
-        .diagnostics
-        .items
-        .iter()
-        .any(|d| d.code == "missing_glyph"));
+    assert!(
+        out.diagnostics
+            .items
+            .iter()
+            .any(|d| d.code == "missing_glyph")
+    );
 
     // The host fetches the missing packs, re-injects the FULL set (it holds
     // the bytes JS-side), and reloads: nothing missing, glyph now covered.
@@ -94,9 +95,10 @@ fn reload_after_fetching_the_fallback_clears_missing_glyph() {
     let out = session
         .render(PageFormat::Png, RARE_KANJI, "{}", None, 2.0, None)
         .unwrap();
-    assert!(!out
-        .diagnostics
-        .items
-        .iter()
-        .any(|d| d.code == "missing_glyph"));
+    assert!(
+        !out.diagnostics
+            .items
+            .iter()
+            .any(|d| d.code == "missing_glyph")
+    );
 }

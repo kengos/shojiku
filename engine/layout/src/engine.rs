@@ -41,7 +41,7 @@ mod visibility;
 
 pub use assemble::layout;
 
-use crate::boxes::{translate_boxes, BoxIndex, PlacedBox};
+use crate::boxes::{BoxIndex, PlacedBox, translate_boxes};
 use crate::font::FontStore;
 use crate::style::ComputedStyle;
 use crate::tree::{LayoutDocument, LayoutItem};

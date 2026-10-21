@@ -20,7 +20,7 @@
 //! and the `get_reference` descriptor.
 
 use super::Page;
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 use std::sync::OnceLock;
 
 /// Where a `#/$defs/<Name>` pointer resolves. Rides every schema fragment

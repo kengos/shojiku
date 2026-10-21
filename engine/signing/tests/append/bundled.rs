@@ -2,7 +2,7 @@
 //! rest on, checked over the bundled examples' bytes.
 
 use shojiku_signing::{
-    append_signature_placeholder, PdfDocument, PlaceholderOptions, RevisionBuilder,
+    PdfDocument, PlaceholderOptions, RevisionBuilder, append_signature_placeholder,
 };
 
 use crate::common::{bundled_examples, check_newest_section, example, last_startxref};

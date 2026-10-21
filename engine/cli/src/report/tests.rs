@@ -70,10 +70,12 @@ fn a_failure_names_its_class_step_kind_and_message() {
     assert_eq!(value["failure"]["class"], serde_json::json!("usage"));
     assert_eq!(value["failure"]["step"], serde_json::json!("render"));
     assert_eq!(value["failure"]["kind"], serde_json::json!("out_of_range"));
-    assert!(value["failure"]["message"]
-        .as_str()
-        .expect("message")
-        .contains("out of range"));
+    assert!(
+        value["failure"]["message"]
+            .as_str()
+            .expect("message")
+            .contains("out of range")
+    );
 }
 
 #[test]
@@ -173,8 +175,10 @@ fn a_prepare_report_carries_the_payload_under_prepared() {
     assert_eq!(keys, ["byteRange", "capacity", "digest", "toBeSigned"]);
     // Absent on every other operation, so a caller cannot mistake one report
     // for another.
-    assert!(serde_json::to_value(Report::success(&empty))
-        .expect("serializes")
-        .get("prepared")
-        .is_none());
+    assert!(
+        serde_json::to_value(Report::success(&empty))
+            .expect("serializes")
+            .get("prepared")
+            .is_none()
+    );
 }

@@ -13,8 +13,8 @@
 use crate::error::WasmError;
 use crate::session::Session;
 use shojiku_authoring::{
-    load_sources, prepare, preview_page, preview_page_raw, preview_pages, preview_raw, AssetsInput,
-    PrepareCtx, Prepared, RawPage,
+    AssetsInput, PrepareCtx, Prepared, RawPage, load_sources, prepare, preview_page,
+    preview_page_raw, preview_pages, preview_raw,
 };
 use shojiku_diagnostics::Diagnostics;
 use shojiku_formatter::LangPack;
@@ -159,7 +159,7 @@ impl Session {
                     pdf: Vec::new(),
                     prepared: None,
                     diagnostics,
-                })
+                });
             }
         };
         let pdf = shojiku_render_pdf::render_pdf(&prepared.document, fonts, &prepared.assets)
@@ -232,10 +232,10 @@ fn rasterize(
         }
         return Ok(match format {
             PageFormat::Png => Pages::Png(vec![
-                preview_page(prepared, fonts, scale, index).map_err(render_err)?
+                preview_page(prepared, fonts, scale, index).map_err(render_err)?,
             ]),
             PageFormat::Raw => Pages::Raw(vec![
-                preview_page_raw(prepared, fonts, scale, index).map_err(render_err)?
+                preview_page_raw(prepared, fonts, scale, index).map_err(render_err)?,
             ]),
         });
     }

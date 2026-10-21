@@ -24,14 +24,20 @@ fn messages_carry_context() {
     };
     assert!(err.to_string().contains("9x9"));
 
-    assert!(ImageError::Missing("logo.png".to_string())
-        .to_string()
-        .contains("logo.png"));
+    assert!(
+        ImageError::Missing("logo.png".to_string())
+            .to_string()
+            .contains("logo.png")
+    );
 
-    assert!(ImageError::Bad("nope".to_string())
-        .to_string()
-        .contains("nope"));
-    assert!(ImageError::Svg("bad".to_string())
-        .to_string()
-        .contains("bad"));
+    assert!(
+        ImageError::Bad("nope".to_string())
+            .to_string()
+            .contains("nope")
+    );
+    assert!(
+        ImageError::Svg("bad".to_string())
+            .to_string()
+            .contains("bad")
+    );
 }

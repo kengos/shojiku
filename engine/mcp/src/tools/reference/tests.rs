@@ -24,10 +24,12 @@ fn list_reference_advertises_every_page_with_its_address() {
     let pages = payload["pages"].as_array().expect("pages");
     assert_eq!(pages.len(), 33);
     for page in pages {
-        assert!(page["uri"]
-            .as_str()
-            .expect("uri")
-            .starts_with("shojiku://reference/"));
+        assert!(
+            page["uri"]
+                .as_str()
+                .expect("uri")
+                .starts_with("shojiku://reference/")
+        );
         assert!(!page["title"].as_str().expect("title").is_empty());
         assert!(!page["summary"].as_str().expect("summary").is_empty());
         assert!(!page["group"].as_str().expect("group").is_empty());
@@ -140,10 +142,12 @@ fn a_uri_naming_nothing_comes_back_in_band_as_an_error() {
 fn a_malformed_uri_also_comes_back_in_band() {
     let result = fetched("shojiku://reference/../../etc/passwd");
     assert_eq!(result["isError"], true);
-    assert!(content(&result)[0]["text"]
-        .as_str()
-        .expect("text")
-        .contains("not a Shojiku reference URI"));
+    assert!(
+        content(&result)[0]["text"]
+            .as_str()
+            .expect("text")
+            .contains("not a Shojiku reference URI")
+    );
 }
 
 #[test]
@@ -166,10 +170,12 @@ fn get_reference_reads_a_page_through_the_tool_surface() {
     let payload = resource_contents(&result);
     let parts = payload["contents"].as_array().expect("contents");
     assert_eq!(parts.len(), 2);
-    assert!(parts[0]["text"]
-        .as_str()
-        .expect("text")
-        .starts_with("# `box`"));
+    assert!(
+        parts[0]["text"]
+            .as_str()
+            .expect("text")
+            .starts_with("# `box`")
+    );
 }
 
 #[test]

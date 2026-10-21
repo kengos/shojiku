@@ -10,7 +10,7 @@ use shojiku_core::{FontStyle, FontWeight};
 use std::path::PathBuf;
 
 mod pack_id;
-pub use pack_id::{valid_pack_id, MAX_PACK_ID};
+pub use pack_id::{MAX_PACK_ID, valid_pack_id};
 
 /// A font pack's `manifest.yml`: the faces it provides plus one license and
 /// the integrity metadata (`version` is the schema version, forward-compat

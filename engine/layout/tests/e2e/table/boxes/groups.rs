@@ -131,9 +131,11 @@ fn the_trailing_region_no_group_covers_emits_no_placement() {
     );
     // The filler is drawn all the same: the group row's band still paints
     // across the full table width.
-    assert!(rect_shapes(&out.document.pages[0])
-        .iter()
-        .any(|r| r.w == 300.0 && r.fill.is_some()));
+    assert!(
+        rect_shapes(&out.document.pages[0])
+            .iter()
+            .any(|r| r.w == 300.0 && r.fill.is_some())
+    );
     // Everything on the page: the table fragment, the one group, and the
     // 6 label + 6 body cells. The filler is the only cell drawn without one.
     assert_eq!(paths(&out, 0).len(), 1 + 1 + 12);
@@ -166,10 +168,11 @@ fn clamped_and_dropped_groups_keep_their_authored_indices() {
             .collect::<Vec<_>>(),
         vec![(0.0, 50.0), (50.0, 250.0)]
     );
-    assert!(out
-        .diagnostics
-        .iter()
-        .any(|d| d.code == "header_group_span_clamped"));
+    assert!(
+        out.diagnostics
+            .iter()
+            .any(|d| d.code == "header_group_span_clamped")
+    );
 }
 
 #[test]
@@ -198,8 +201,9 @@ fn a_span_at_the_integer_maximum_clamps_instead_of_wrapping() {
         ],
         "the hostile span clamps to the remaining columns"
     );
-    assert!(out
-        .diagnostics
-        .iter()
-        .any(|d| d.code == "header_group_span_clamped"));
+    assert!(
+        out.diagnostics
+            .iter()
+            .any(|d| d.code == "header_group_span_clamped")
+    );
 }

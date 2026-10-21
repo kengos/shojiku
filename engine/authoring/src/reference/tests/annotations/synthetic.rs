@@ -12,8 +12,8 @@
 //! What stays here is the shared fixture pair, the
 //! positive control over it, and the two claims about the rule's own surface.
 
-use crate::reference::annotations::{audit, Problem};
-use serde_json::{json, Value};
+use crate::reference::annotations::{Problem, audit};
+use serde_json::{Value, json};
 use std::collections::BTreeMap;
 
 mod closed;

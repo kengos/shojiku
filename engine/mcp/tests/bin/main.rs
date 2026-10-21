@@ -50,10 +50,12 @@ fn initialize_list_and_capabilities_over_stdio() {
     assert_eq!(lines[0]["result"]["serverInfo"]["name"], "shojiku-mcp");
     // The guidance a client feeds the model, and the resources capability,
     // both ride the real handshake.
-    assert!(lines[0]["result"]["instructions"]
-        .as_str()
-        .expect("instructions")
-        .contains("templates.yml"));
+    assert!(
+        lines[0]["result"]["instructions"]
+            .as_str()
+            .expect("instructions")
+            .contains("templates.yml")
+    );
     assert!(lines[0]["result"]["capabilities"]["resources"].is_object());
     assert_eq!(
         lines[1]["result"]["tools"].as_array().expect("tools").len(),

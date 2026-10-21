@@ -19,13 +19,13 @@ pub(crate) mod schema;
 pub(crate) mod sources;
 pub(crate) mod validate;
 
-use crate::rpc::{clip, INVALID_PARAMS};
 use crate::ServerArgs;
-use base64::engine::general_purpose::STANDARD;
+use crate::rpc::{INVALID_PARAMS, clip};
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
 use pipeline::ToolFailure;
 use serde::Serialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// A tool call's outcome: a result value (which may carry `isError`), or a
 /// protocol-level `(code, message)` error for a malformed request.

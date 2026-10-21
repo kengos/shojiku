@@ -70,12 +70,12 @@ pub use args::{
     ValidateArgs, VerifyArgs,
 };
 pub use commands::{
-    report_diagnostics, resolve_preview_output, run_inspect, run_preview, run_render, run_validate,
-    write_output, Rendered,
+    Rendered, report_diagnostics, resolve_preview_output, run_inspect, run_preview, run_render,
+    run_validate, write_output,
 };
 pub use error::{CliError, FailureClass};
-pub use external::{run_sign_complete, run_sign_prepare, Prepared};
-pub use font::{run_font_add, AddedFace, FontPackError};
+pub use external::{Prepared, run_sign_complete, run_sign_prepare};
+pub use font::{AddedFace, FontPackError, run_font_add};
 pub use formats::run_formats;
 pub use report::Report;
 pub use sign::run_sign;
@@ -83,4 +83,4 @@ pub use verify::run_verify;
 // The capability list + `capabilities` command live in the shared authoring
 // layer, so every surface (CLI / WASM / MCP) advertises one key set.
 // Re-exported here so `main.rs` and downstream callers are unchanged.
-pub use shojiku_authoring::{run_capabilities, CAPABILITIES};
+pub use shojiku_authoring::{CAPABILITIES, run_capabilities};

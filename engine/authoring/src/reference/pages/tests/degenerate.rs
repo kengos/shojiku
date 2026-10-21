@@ -2,7 +2,7 @@
 //! a malformed page must produce problems or nothing, and the census must
 //! still say what was read.
 
-use super::{audit, messages, run, Census, Problem, Words};
+use super::{Census, Problem, Words, audit, messages, run};
 
 #[test]
 fn an_empty_page_and_an_empty_section_are_both_silent() {

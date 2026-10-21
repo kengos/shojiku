@@ -7,7 +7,7 @@ use super::super::{cell_asset_key, prepare_assets};
 use super::png_data_uri;
 use crate::policy::AssetPolicy;
 use serde_json::json;
-use shojiku_core::{parse_template, Template};
+use shojiku_core::{Template, parse_template};
 
 /// A flow body holding `items_yaml` (already indented to the item level).
 fn body(items_yaml: &str) -> Template {

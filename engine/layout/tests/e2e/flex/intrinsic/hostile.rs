@@ -20,7 +20,10 @@ fn deep_row(depth: usize) -> (Vec<f64>, bool) {
     let yaml = format!(
         "page: {{ margin: 0 }}\ndefaults: {{ style: {{ fontFamily: biz-ud-gothic, fontSize: 10 }} }}\n\
          sections:\n  body:\n    type: absolute\n    items:\n      - type: container\n        box: {{ x: 0, y: 0, w: 200, h: 60, direction: row }}\n        items:\n{}",
-        inner.lines().map(|l| format!("          {l}\n")).collect::<String>()
+        inner
+            .lines()
+            .map(|l| format!("          {l}\n"))
+            .collect::<String>()
     );
     // Unguarded: the callers nest past the cap, which the parse refuses.
     let (doc, diags) = run_unguarded(&yaml, json!({}));

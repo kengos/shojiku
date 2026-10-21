@@ -6,13 +6,13 @@
 mod surfaces;
 mod walks;
 
-use crate::interpolate::{is_valid_interpolation_name, parse_segments, scan_suspect_keys, Segment};
+use crate::interpolate::{Segment, is_valid_interpolation_name, parse_segments, scan_suspect_keys};
 use crate::template::{Binding, BindingScope, Bindings, Item, MAX_BINDINGS};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 use std::collections::BTreeSet;
 
-use super::cell::{check_cell_field, CellScope};
-use super::{check_scalar_binding, BindingCtx};
+use super::cell::{CellScope, check_cell_field};
+use super::{BindingCtx, check_scalar_binding};
 use surfaces::{declarations, interpolated_strings, is_entry_scoped};
 
 pub(in crate::validate) use walks::check_declarations;

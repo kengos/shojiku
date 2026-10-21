@@ -123,9 +123,11 @@ properties:
     let catalog = Catalog::from_definitions(&defs);
     assert!(catalog.is_array("order.lines"));
     // Row-relative keys flatten dotted through nested row objects.
-    assert!(catalog
-        .array_field("order.lines", "shipping.weight")
-        .is_some());
+    assert!(
+        catalog
+            .array_field("order.lines", "shipping.weight")
+            .is_some()
+    );
 }
 
 #[test]

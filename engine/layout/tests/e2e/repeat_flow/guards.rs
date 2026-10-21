@@ -146,9 +146,11 @@ sections:
 "#,
         json!({ "cards": [{}] }),
     );
-    assert!(diags
-        .iter()
-        .any(|d| d.code == "repeat_flow_in_absolute_body"));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "repeat_flow_in_absolute_body")
+    );
     assert!(doc.pages[0].items.is_empty());
 }
 

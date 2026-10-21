@@ -14,7 +14,7 @@ use shojiku_core::facts::{
 };
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::super::{Ctx, BLACK};
+use super::super::{BLACK, Ctx};
 
 // The bounds and fallbacks are `shojiku_core::facts`'s range table, which
 // the key catalog publishes too, so a bound is written once. Font size and

@@ -18,7 +18,7 @@ mod work;
 
 use crate::ops;
 use crate::result::ShojikuResult;
-use crate::status::{shield_result, SHOJIKU_ERR_NULL_ARG, SHOJIKU_OK};
+use crate::status::{SHOJIKU_ERR_NULL_ARG, SHOJIKU_OK, shield_result};
 use work::Work;
 
 /// The revision of this ABI.

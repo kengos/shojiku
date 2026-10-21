@@ -1,9 +1,9 @@
 //! What the container refuses, and what it never repeats back.
 
-use der::pem::LineEnding;
 use der::Document;
+use der::pem::LineEnding;
 
-use super::{certificate_pem, DIGEST};
+use super::{DIGEST, certificate_pem};
 use crate::cms::{CmsError, SignatureContainer};
 use crate::key::SignatureAlgorithm;
 use crate::testkit::keys::keys;

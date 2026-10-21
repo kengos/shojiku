@@ -16,7 +16,7 @@ mod sheet;
 #[cfg(test)]
 mod tests;
 
-use shojiku_core::{CharGridItem, RubySegment, Style, WritingMode, MAX_CHAR_GRID_CELLS};
+use shojiku_core::{CharGridItem, MAX_CHAR_GRID_CELLS, RubySegment, Style, WritingMode};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::flow::{FlowLayouter, MAX_PAGES};

@@ -60,10 +60,12 @@ fn oversized_lines_are_answered_and_the_loop_survives() {
     let responses = talk(&input);
     assert_eq!(responses.len(), 2);
     assert_eq!(responses[0]["error"]["code"], -32700);
-    assert!(responses[0]["error"]["message"]
-        .as_str()
-        .expect("message")
-        .contains("1 MiB"));
+    assert!(
+        responses[0]["error"]["message"]
+            .as_str()
+            .expect("message")
+            .contains("1 MiB")
+    );
     assert_eq!(responses[1]["id"], 9);
 }
 

@@ -5,7 +5,7 @@
 
 use shojiku_core::RubySegment;
 
-use super::{next_sheet_start, CellChar, Cursor, Sink};
+use super::{CellChar, Cursor, Sink, next_sheet_start};
 
 /// Places one span segment (`scale >= 2`, caller-clamped) as a run of
 /// n×n blocks. Each block's `CellChar` records the block's top-left cell;

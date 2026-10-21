@@ -5,7 +5,7 @@
 use shojiku_core::RubyPair;
 use shojiku_diagnostics::{DiagnosticCode as Code, Diagnostics};
 
-use super::{locate, match_entries, push_ruby_items, slice_extent, split_reading, Cell};
+use super::{Cell, locate, match_entries, push_ruby_items, slice_extent, split_reading};
 use crate::tree::{ClipShape, LayoutItem, RectShape};
 
 fn cell(at: f64, advance: f64, source: std::ops::Range<usize>) -> Cell {

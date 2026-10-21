@@ -6,8 +6,8 @@ use crate::tree::{ClipShape, ImageShape, LayoutItem};
 use shojiku_core::{EcLevel, ImageFit};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::super::atoms::fit_size;
 use super::super::Ctx;
+use super::super::atoms::fit_size;
 use super::rows::Cell;
 
 impl<'a, 'b> Ctx<'a, 'b> {

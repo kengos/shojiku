@@ -4,12 +4,12 @@
 //! their bindings to the bound element, and clip on `overflow: hidden` —
 //! only the slot's origin and how its height is decided differ.
 
-use crate::boxes::{translate_boxes, PlacedBox};
+use crate::boxes::{PlacedBox, translate_boxes};
 use crate::tree::LayoutItem;
 use shojiku_core::{ContainerItem, Overflow};
 use shojiku_diagnostics::Diagnostics;
 
-use super::{container, placed_box, translate, Basis, Ctx, Scope};
+use super::{Basis, Ctx, Scope, container, placed_box, translate};
 
 /// The rectangle a cell fills, relative to the caller's own origin (a
 /// page for `repeat`, the row band's top-left for a table column).

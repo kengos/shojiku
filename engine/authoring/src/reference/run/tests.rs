@@ -8,8 +8,8 @@
 //!
 //! The fixtures live here; the claims are split by what they are about.
 
-use super::{run, Job, Outcome, Refusal};
-use crate::reference::tables::{start_marker, CLOSE};
+use super::{Job, Outcome, Refusal, run};
+use crate::reference::tables::{CLOSE, start_marker};
 use std::path::PathBuf;
 
 mod ordering;

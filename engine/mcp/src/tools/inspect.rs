@@ -3,8 +3,8 @@
 //! the diagnostics JSON — the machine-readable half of the
 //! preview/tree/diagnostics bundle.
 
-use super::pipeline::{prepare_from, CallArgs, ToolFailure};
-use super::{failure_result, json_text, text_part, tool_result, ToolOutcome};
+use super::pipeline::{CallArgs, ToolFailure, prepare_from};
+use super::{ToolOutcome, failure_result, json_text, text_part, tool_result};
 use crate::ServerArgs;
 use serde_json::Value;
 use shojiku_authoring::inspect_json;

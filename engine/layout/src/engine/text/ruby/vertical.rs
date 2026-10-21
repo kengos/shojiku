@@ -10,7 +10,7 @@ use shojiku_core::{TextItem, TextOrientation};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::super::super::{Atom, Basis, Ctx};
-use super::{fit, match_entries, push_ruby_items, slice_extent, Cell, MIN_RUBY_PT};
+use super::{Cell, MIN_RUBY_PT, fit, match_entries, push_ruby_items, slice_extent};
 use crate::font::RunOptions;
 use crate::style::ComputedStyle;
 use crate::tree::{LayoutItem, TextBlock, TextLine};

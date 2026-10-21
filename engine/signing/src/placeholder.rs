@@ -14,10 +14,10 @@
 
 use core::ops::Range;
 
-use crate::document::{first_page, PdfDocument};
+use crate::document::{PdfDocument, first_page};
 use crate::error::{Result, SigningError};
 use crate::limits::{DEFAULT_CONTENTS_CAPACITY, MAX_CONTENTS_CAPACITY, MIN_CONTENTS_CAPACITY};
-use crate::revision::{fixed_offset, RevisionBuilder};
+use crate::revision::{RevisionBuilder, fixed_offset};
 
 mod objects;
 #[cfg(test)]

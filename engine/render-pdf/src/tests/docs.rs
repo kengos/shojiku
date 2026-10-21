@@ -39,9 +39,9 @@ fn renders_text_with_unmappable_char() {
     // still writes. Exercises the missing-glyph path in this backend's
     // linked copy of the layout engine so coverage holds across binaries.
     let bytes = render_template(
-            "sections:\n  body:\n    type: flow\n    box: { x: 25, y: 100, w: 500, h: 600 }\n    items:\n      - type: text\n        text: \"A\u{10FFFF}B\"\n",
-            json!({}),
-        );
+        "sections:\n  body:\n    type: flow\n    box: { x: 25, y: 100, w: 500, h: 600 }\n    items:\n      - type: text\n        text: \"A\u{10FFFF}B\"\n",
+        json!({}),
+    );
     assert!(bytes.starts_with(b"%PDF-"));
 }
 

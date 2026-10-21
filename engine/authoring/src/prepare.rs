@@ -7,8 +7,8 @@
 use crate::sources::Sources;
 use shojiku_diagnostics::Diagnostics;
 use shojiku_formatter::LangPack;
-use shojiku_image::{prepare_assets, prepare_assets_injected, AssetPolicy, AssetStore};
-use shojiku_layout::{layout, BoxIndex, FontStore, LayoutDocument, LayoutInput};
+use shojiku_image::{AssetPolicy, AssetStore, prepare_assets, prepare_assets_injected};
+use shojiku_layout::{BoxIndex, FontStore, LayoutDocument, LayoutInput, layout};
 use std::collections::BTreeMap;
 use std::path::Path;
 

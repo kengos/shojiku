@@ -6,7 +6,7 @@
 use super::sub;
 use crate::definitions::LabeledEnumValue;
 use crate::{EnumEntry, EqualsValue};
-use schemars::{json_schema, JsonSchema, Schema, SchemaGenerator};
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use std::borrow::Cow;
 
 /// A form mark's `equals` predicate: a scalar the params value is compared

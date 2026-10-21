@@ -1,7 +1,7 @@
 //! Line positioning for rich blocks: alignment from summed run widths,
 //! then runs laid left to right on the block's shared baseline grid.
 
-use crate::font::{run_width, RunOptions};
+use crate::font::{RunOptions, run_width};
 use crate::style::ComputedStyle;
 use crate::tree::{TextLine, TextRun};
 use crate::wrap::RichPiece;

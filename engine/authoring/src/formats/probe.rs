@@ -3,9 +3,9 @@
 //! Split from the module root for the line budget.
 
 use super::exemplar;
-use super::{PatternProbe, ProbeRefusal, ProbeResult, ProbeType, MAX_PROBES, MAX_PROBE_PATTERN};
+use super::{MAX_PROBE_PATTERN, MAX_PROBES, PatternProbe, ProbeRefusal, ProbeResult, ProbeType};
 use shojiku_core::{FieldType, FormatDefaults, FormatRef, InlineFormat};
-use shojiku_formatter::{format_value, FormatContext, LangPack};
+use shojiku_formatter::{FormatContext, LangPack, format_value};
 
 /// Runs one probe: an inline pattern rendered through the real dispatch.
 ///

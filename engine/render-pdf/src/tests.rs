@@ -21,8 +21,8 @@ use serde_json::json;
 use shojiku_core::parse_template;
 use shojiku_formatter::LangPack;
 use shojiku_image::RasterFormat;
-use shojiku_layout::{layout, LayoutInput};
 use shojiku_layout::{ImageShape, LayoutItem};
+use shojiku_layout::{LayoutInput, layout};
 use std::path::PathBuf;
 
 pub(super) fn font_dir() -> PathBuf {

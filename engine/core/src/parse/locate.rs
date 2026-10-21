@@ -25,7 +25,7 @@
 
 use super::trail::Trail;
 use crate::template::Item;
-use crate::yaml::{from_value, Value};
+use crate::yaml::{Value, from_value};
 
 /// Where an in-item failure really is: the item's path, and the item's own
 /// top-level key the failure rejects as unknown, when it is one.

@@ -2,9 +2,9 @@
 //! "initial" value every cascade starts from at the document root.
 
 use super::Surface;
-use crate::length::DEFAULT_FONT_SIZE_PT;
-use crate::style::{StyleKey, DEFAULT_LINE_HEIGHT, DEFAULT_STROKE_PT};
 use crate::ItemKind;
+use crate::length::DEFAULT_FONT_SIZE_PT;
+use crate::style::{DEFAULT_LINE_HEIGHT, DEFAULT_STROKE_PT, StyleKey};
 
 /// An initial value, in its wire form.
 #[derive(Debug, Clone, Copy, PartialEq)]

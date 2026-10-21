@@ -11,8 +11,8 @@
 //! row and its alternate, a conditional row style, the header and its groups
 //! — are not covered yet.
 
-use crate::style::StyleKey;
 use crate::ItemKind;
+use crate::style::StyleKey;
 
 /// Somewhere a [`crate::Style`] is authored: an item's `style:`, a
 /// rich-text span's, a text mark's, or the template's `defaults.style`.

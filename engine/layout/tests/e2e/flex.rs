@@ -30,5 +30,4 @@ fn rect_ys(yaml: &str) -> Vec<f64> {
     rect_shapes(&doc.pages[0]).iter().map(|r| r.y).collect()
 }
 
-const TWO_RECTS: &str =
-    "- type: rect\n  style: { borderWidth: 1 }\n  box: { w: 200, h: 20 }\n- type: rect\n  style: { borderWidth: 1 }\n  box: { w: 200, h: 20 }";
+const TWO_RECTS: &str = "- type: rect\n  style: { borderWidth: 1 }\n  box: { w: 200, h: 20 }\n- type: rect\n  style: { borderWidth: 1 }\n  box: { w: 200, h: 20 }";

@@ -7,7 +7,7 @@ use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::super::{Atom, Ctx};
 use super::rows::{Cell, CellContent, CellPath};
-use super::{TableFrame, TABLE_HEADER_FILL};
+use super::{TABLE_HEADER_FILL, TableFrame};
 
 impl<'a, 'b> Ctx<'a, 'b> {
     /// The header-group row, when `headerGroups` is authored: each group

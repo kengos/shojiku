@@ -28,18 +28,26 @@ fn mismatch_actual_covers_the_json_type_words() {
         .map(|d| d.message.as_str())
         .collect();
     assert_eq!(messages.len(), 4, "{diags:?}");
-    assert!(messages
-        .iter()
-        .any(|m| m.contains("expects object, got number")));
-    assert!(messages
-        .iter()
-        .any(|m| m.contains("expects number, got string")));
-    assert!(messages
-        .iter()
-        .any(|m| m.contains("expects boolean, got array")));
-    assert!(messages
-        .iter()
-        .any(|m| m.contains("expects integer, got object")));
+    assert!(
+        messages
+            .iter()
+            .any(|m| m.contains("expects object, got number"))
+    );
+    assert!(
+        messages
+            .iter()
+            .any(|m| m.contains("expects number, got string"))
+    );
+    assert!(
+        messages
+            .iter()
+            .any(|m| m.contains("expects boolean, got array"))
+    );
+    assert!(
+        messages
+            .iter()
+            .any(|m| m.contains("expects integer, got object"))
+    );
 }
 
 #[test]

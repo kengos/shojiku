@@ -4,8 +4,8 @@
 
 use super::assets::MAX_ASSET_IDS;
 use super::sources::MAX_INLINE_BYTES;
-use serde_json::{json, Value};
-use shojiku_authoring::{MAX_PROBES, MAX_PROBE_PATTERN};
+use serde_json::{Value, json};
+use shojiku_authoring::{MAX_PROBE_PATTERN, MAX_PROBES};
 
 /// The `tools/list` descriptor array.
 pub(crate) fn descriptors() -> Value {

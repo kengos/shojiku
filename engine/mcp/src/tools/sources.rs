@@ -4,8 +4,8 @@
 //! both for one source is a client bug, so it is a protocol error — and
 //! reading resolves the chosen form to text.
 
-use super::pipeline::{opt_string, ToolFailure};
-use crate::rpc::{clip, INVALID_PARAMS};
+use super::pipeline::{ToolFailure, opt_string};
+use crate::rpc::{INVALID_PARAMS, clip};
 use serde_json::Value;
 use shojiku_formatter::read_pack_file;
 use std::path::{Path, PathBuf};

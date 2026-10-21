@@ -20,10 +20,12 @@ fn list_examples_returns_the_whole_catalog() {
     let entries = body["examples"].as_array().expect("examples");
     assert_eq!(entries.len(), 34);
     for entry in entries {
-        assert!(entry["uri"]
-            .as_str()
-            .expect("uri")
-            .starts_with("shojiku://example/"));
+        assert!(
+            entry["uri"]
+                .as_str()
+                .expect("uri")
+                .starts_with("shojiku://example/")
+        );
         assert!(!entry["title"].as_str().expect("title").is_empty());
         assert!(!entry["exercises"].as_str().expect("exercises").is_empty());
         assert!(!entry["files"].as_array().expect("files").is_empty());

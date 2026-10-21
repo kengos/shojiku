@@ -8,7 +8,7 @@ use shojiku_core::{BindingScope, ColumnType, Style, TableItem};
 use std::rc::Rc;
 
 use super::super::super::{Atom, Ctx, Scope};
-use super::super::{TableFrame, TABLE_HEADER_FILL};
+use super::super::{TABLE_HEADER_FILL, TableFrame};
 use super::{Cell, CellContent, CellPath};
 
 impl<'a, 'b> Ctx<'a, 'b> {

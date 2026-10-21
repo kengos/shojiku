@@ -4,12 +4,12 @@
 //! WASM bindings compose it — `shojiku-authoring` stays PDF-free — so the
 //! bytes an SDK writes are the bytes `shojiku render` writes.
 
-use crate::ops::{lay_out, Laid};
+use crate::ops::{Laid, lay_out};
 use crate::request::Request;
 use crate::result::ShojikuResult;
-use crate::status::{encode, Failure};
+use crate::status::{Failure, encode};
 use serde_json::json;
-use shojiku_render_pdf::{render_pdf, RenderError};
+use shojiku_render_pdf::{RenderError, render_pdf};
 
 /// The backend's refusal, as a failure.
 ///

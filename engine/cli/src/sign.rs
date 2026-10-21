@@ -14,7 +14,7 @@
 
 use std::path::{Path, PathBuf};
 
-use shojiku_signing::{sign_document, KeyError, LocalPemSigner, PlaceholderOptions};
+use shojiku_signing::{KeyError, LocalPemSigner, PlaceholderOptions, sign_document};
 use zeroize::Zeroizing;
 
 use crate::{CliError, SignArgs};

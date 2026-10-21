@@ -6,7 +6,7 @@
 //! everywhere except where it is not.
 
 use shojiku_signing::{
-    append_signature_placeholder, PdfDocument, PlaceholderOptions, SigningError,
+    PdfDocument, PlaceholderOptions, SigningError, append_signature_placeholder,
 };
 
 use crate::common::{

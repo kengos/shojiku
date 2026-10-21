@@ -2,7 +2,7 @@
 //! what the catalog claims when the schema declares no element at all.
 
 use super::super::*;
-use crate::definitions::{parse_definitions, MAX_SCHEMA_DEPTH};
+use crate::definitions::{MAX_SCHEMA_DEPTH, parse_definitions};
 
 pub(super) fn catalog(source: &str) -> Catalog {
     Catalog::from_definitions(&parse_definitions(source).expect("defs"))

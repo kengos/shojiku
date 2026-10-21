@@ -6,8 +6,8 @@
 //! remote URL).
 
 use crate::error::ImageError;
-use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
 use shojiku_diagnostics::Echo;
 
 /// Where an image's bytes come from.

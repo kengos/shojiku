@@ -1,7 +1,7 @@
 //! Unit tests for the metadata gate: what a hostile value does to the
 //! `/Info` dictionary and — the sharper edge — to the XMP packet.
 
-use super::{check_meta_language, check_meta_text, MetaReject, MAX_META_LANGUAGE, MAX_META_TEXT};
+use super::{MAX_META_LANGUAGE, MAX_META_TEXT, MetaReject, check_meta_language, check_meta_text};
 use shojiku_diagnostics::DiagnosticCode as Code;
 
 #[test]

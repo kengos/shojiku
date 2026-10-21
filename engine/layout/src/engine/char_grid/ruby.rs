@@ -3,12 +3,12 @@
 //! right (vertical, as a real vertical column the renderers shape with
 //! GSUB `vert`) — shrunk to fit the run's extent with a 4pt floor.
 
-use crate::font::{run_width, vertical_extent, FontFace, RunOptions};
+use crate::font::{FontFace, RunOptions, run_width, vertical_extent};
 use crate::tree::{LayoutItem, TextLine};
 use shojiku_core::TextOrientation;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::sheet::{text_block, vertical_block, BlockPaint};
+use super::sheet::{BlockPaint, text_block, vertical_block};
 use super::{Ctx, GridPrep};
 
 /// Readings smaller than this are unreadable in print; the shrink stops

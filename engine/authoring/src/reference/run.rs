@@ -35,7 +35,7 @@
 
 use super::generate;
 use super::pages::{self, Known};
-use super::tables::{self, page as render_page, pages as spec_pages, parse as parse_spec, Inputs};
+use super::tables::{self, Inputs, page as render_page, pages as spec_pages, parse as parse_spec};
 use std::fmt;
 use std::path::{Path, PathBuf};
 

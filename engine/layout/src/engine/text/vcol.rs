@@ -6,7 +6,7 @@
 
 use std::ops::Range;
 
-use crate::font::{down_advance_over, vertical_extent, FontFace, RunOptions};
+use crate::font::{FontFace, RunOptions, down_advance_over, vertical_extent};
 use crate::tree::DecorationSpec;
 use crate::wrap::no_line_end;
 use shojiku_core::{TextAlign, TextCombine, TextDecoration, TextOrientation, VerticalAlign};

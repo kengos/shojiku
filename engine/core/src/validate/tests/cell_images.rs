@@ -16,9 +16,11 @@ fn cell_image_data_key_unknown_in_group_is_error() {
               data: { key: ghost }
 "#);
     let diags = validate(Some(&defs()), &template, None);
-    assert!(diags
-        .iter()
-        .any(|d| d.code == "unknown_data_key" && d.message.contains("ghost")));
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "unknown_data_key" && d.message.contains("ghost"))
+    );
 }
 
 #[test]

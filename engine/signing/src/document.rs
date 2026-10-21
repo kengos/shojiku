@@ -16,7 +16,7 @@ use std::collections::BTreeMap;
 use crate::error::{Result, SigningError};
 use crate::lexer::{expect_keyword, offset_within, read_uint};
 use crate::limits::{MAX_XREF_CHAIN, MAX_XREF_ENTRIES, TAIL_SCAN_WINDOW};
-use crate::object::{object_number, Dict, ObjRef};
+use crate::object::{Dict, ObjRef, object_number};
 use crate::xref;
 
 mod pages;
@@ -220,8 +220,7 @@ fn reject_unsupported(trailer: &Dict<'_>) -> Result<()> {
     }
     if trailer.has(b"XRefStm") {
         return Err(SigningError::Unsupported {
-            what:
-                "a hybrid-reference file (/XRefStm), whose object streams this release cannot read",
+            what: "a hybrid-reference file (/XRefStm), whose object streams this release cannot read",
         });
     }
     Ok(())

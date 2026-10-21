@@ -12,13 +12,13 @@
 use crate::style::ComputedStyle;
 use serde_json::Value;
 use shojiku_core::{
-    resolve_path, RowConditionalStyle, RowSpec, VerticalAlign, MAX_ROW_CONDITIONAL_STYLES,
-    MAX_STYLE_NAMES,
+    MAX_ROW_CONDITIONAL_STYLES, MAX_STYLE_NAMES, RowConditionalStyle, RowSpec, VerticalAlign,
+    resolve_path,
 };
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::super::super::predicate::{eval_predicate, PredicateEval};
 use super::super::super::Ctx;
+use super::super::super::predicate::{PredicateEval, eval_predicate};
 
 impl Ctx<'_, '_> {
     /// Overlays every matching conditional entry onto `computed`, in

@@ -60,11 +60,7 @@ impl Visibility {
 /// were deferred instead of riding it, so a walk hides a child through
 /// [`Ctx::blank_child`], which stamps those too, never through this alone.
 fn blank_if(atom: Atom, hidden: bool) -> Atom {
-    if hidden {
-        blank(atom)
-    } else {
-        atom
-    }
+    if hidden { blank(atom) } else { atom }
 }
 
 fn blank(atom: Atom) -> Atom {

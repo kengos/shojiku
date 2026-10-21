@@ -11,7 +11,7 @@
 
 use super::render::Registry;
 use super::spec::Spec;
-use super::{render, splice, Missing, SpliceError};
+use super::{Missing, SpliceError, render, splice};
 use std::collections::BTreeSet;
 use std::fmt;
 

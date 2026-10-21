@@ -2,11 +2,11 @@
 
 use clap::Parser;
 use shojiku_cli::{
-    report_diagnostics, run_capabilities, run_font_add, run_inspect, run_preview, run_render,
-    run_sign, run_sign_complete, run_sign_prepare, run_validate, run_verify, write_output, Cli,
-    CliError, Command, FontCommand, Report, ReportArg,
+    Cli, CliError, Command, FontCommand, Report, ReportArg, report_diagnostics, run_capabilities,
+    run_font_add, run_inspect, run_preview, run_render, run_sign, run_sign_complete,
+    run_sign_prepare, run_validate, run_verify, write_output,
 };
-use shojiku_diagnostics::{sanitize, Diagnostics, MAX_MESSAGE};
+use shojiku_diagnostics::{Diagnostics, MAX_MESSAGE, sanitize};
 use std::process::ExitCode;
 
 fn main() -> ExitCode {

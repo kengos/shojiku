@@ -10,7 +10,7 @@
 //! panel once demoed digit grouping with `1,234.5`, which groups
 //! identically under every rule the packs declare.
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use shojiku_core::{FieldSpec, FieldType};
 
 /// The dated exemplar, `2026-11-03T14:05:00+09:00`.

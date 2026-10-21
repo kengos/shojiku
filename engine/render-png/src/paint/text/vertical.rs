@@ -6,11 +6,11 @@
 //! backend's placement exactly.
 
 use shojiku_layout::{
-    arrange_vertical, FontFace, FontStore, RunOptions, TextBlock, TextOrientation, VGlyph,
+    FontFace, FontStore, RunOptions, TextBlock, TextOrientation, VGlyph, arrange_vertical,
 };
 use tiny_skia::{FillRule, Mask, Paint, Pixmap, Transform};
 
-use super::super::{build_path, rect_path, rgba, Painter};
+use super::super::{Painter, build_path, rect_path, rgba};
 use crate::RenderPngError;
 
 /// One column's draw inputs: the face chain (with ids for the glyph cache),

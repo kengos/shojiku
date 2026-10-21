@@ -17,7 +17,7 @@ use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use super::super::{Atom, Ctx};
 use super::height::content_avail;
 use super::vcol::{along_offset, column_left, stack_shift, vertical_decoration_specs};
-use super::voverflow::{ellipsize_column, fit_columns_size, measure_columns, VColumn, VWrap};
+use super::voverflow::{VColumn, VWrap, ellipsize_column, fit_columns_size, measure_columns};
 
 impl Ctx<'_, '_> {
     /// Builds a vertical text block from a resolved style. `x`/`w` are the

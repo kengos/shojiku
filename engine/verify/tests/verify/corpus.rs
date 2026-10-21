@@ -10,7 +10,7 @@
 //! fuzzer finds becomes a regression test: drop the input in the directory.
 
 use shojiku_signing::PdfDocument;
-use shojiku_verify::{verify_document, TrustAnchors};
+use shojiku_verify::{TrustAnchors, verify_document};
 
 use crate::common::anchors;
 

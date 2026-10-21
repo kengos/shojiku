@@ -2,7 +2,7 @@
 //! `defaults.formats` (inline patterns only make sense on date/datetime).
 
 use crate::definitions::FieldType;
-use crate::template::{FormatRef, Template, MAX_FORMATS};
+use crate::template::{FormatRef, MAX_FORMATS, Template};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 
 pub(super) fn check_formats(template: &Template, diags: &mut Diagnostics) {

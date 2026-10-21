@@ -33,10 +33,12 @@ fn list_returns_every_catalog_entry() {
     for resource in resources {
         assert!(!resource["name"].as_str().expect("name").is_empty());
         assert!(!resource["title"].as_str().expect("title").is_empty());
-        assert!(!resource["description"]
-            .as_str()
-            .expect("description")
-            .is_empty());
+        assert!(
+            !resource["description"]
+                .as_str()
+                .expect("description")
+                .is_empty()
+        );
         assert!(resource["size"].as_u64().expect("size") > 0);
     }
 }
@@ -138,12 +140,16 @@ fn an_oversized_bundle_is_refused_with_its_per_file_uris() {
     assert!(error.message.contains("over the"));
     assert!(error.message.contains(&MAX_ENTRY_BYTES.to_string()));
     // The refusal must be ACTIONABLE — it names what to read instead.
-    assert!(error
-        .message
-        .contains("shojiku://example/dev/layout-showcase/templates.yml"));
-    assert!(error
-        .message
-        .contains("shojiku://example/dev/layout-showcase/params.json"));
+    assert!(
+        error
+            .message
+            .contains("shojiku://example/dev/layout-showcase/templates.yml")
+    );
+    assert!(
+        error
+            .message
+            .contains("shojiku://example/dev/layout-showcase/params.json")
+    );
 }
 
 #[test]

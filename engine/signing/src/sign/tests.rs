@@ -1,8 +1,8 @@
 //! Preparing, completing, and signing a document end to end.
 
-use ring::digest::{digest, SHA256};
+use ring::digest::{SHA256, digest};
 
-use super::{complete_sign, hex_pair, prepare_sign, sign_document, PreparedSign};
+use super::{PreparedSign, complete_sign, hex_pair, prepare_sign, sign_document};
 use crate::cms::SignatureContainer;
 use crate::error::SigningError;
 use crate::placeholder::PlaceholderOptions;
@@ -245,9 +245,11 @@ fn an_empty_container_writes_nothing_into_the_window() {
     let (_, prepared) = prepared();
     let window = prepared.prepared.contents_span();
     let signed = complete_sign(prepared, &[]).expect("an empty container is written");
-    assert!(signed[window.start + 1..window.end - 1]
-        .iter()
-        .all(|byte| *byte == b'0'));
+    assert!(
+        signed[window.start + 1..window.end - 1]
+            .iter()
+            .all(|byte| *byte == b'0')
+    );
 }
 
 #[test]

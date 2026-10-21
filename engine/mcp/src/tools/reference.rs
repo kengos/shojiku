@@ -14,7 +14,7 @@
 
 use super::{json_text, text_part, tool_result};
 use crate::reference::{self, uri};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// `list_reference`: every page, with what it covers and what it documents.
 pub(crate) fn list(_arguments: &Value) -> super::ToolOutcome {

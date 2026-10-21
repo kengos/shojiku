@@ -13,7 +13,7 @@
 //! threading `line_start` here would couple the probe loop to line
 //! identity it does not have.
 
-use crate::font::{run_width, FontFace, RunOptions};
+use crate::font::{FontFace, RunOptions, run_width};
 use crate::wrap::{no_line_end, wrap_text_chain};
 use shojiku_core::LineBreak;
 

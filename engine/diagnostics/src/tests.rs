@@ -196,9 +196,11 @@ fn set_missing_paths_from_zero_stamps_every_pathless_diagnostic() {
     diags.push(Diagnostic::new(DiagnosticCode::TextOverflow));
     diags.push(Diagnostic::new(DiagnosticCode::SectionOverflow));
     diags.set_missing_paths(0, "sections.header.items[0]");
-    assert!(diags
-        .iter()
-        .all(|d| d.path.as_deref() == Some("sections.header.items[0]")));
+    assert!(
+        diags
+            .iter()
+            .all(|d| d.path.as_deref() == Some("sections.header.items[0]"))
+    );
 }
 
 #[test]

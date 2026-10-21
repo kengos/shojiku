@@ -9,8 +9,8 @@
 //! elsewhere.
 
 use super::{Style, StyleKey};
-use crate::facts::{painted_by, Surface};
 use crate::ItemKind;
+use crate::facts::{Surface, painted_by};
 
 impl Style {
     /// Wire names of the set properties `surface` does not paint with, in

@@ -6,7 +6,7 @@ use crate::template::{ChildHolder, Item};
 use shojiku_diagnostics::Diagnostics;
 
 use super::super::BindingCtx;
-use super::{check_item_keys, check_item_structure, DeclCtx};
+use super::{DeclCtx, check_item_keys, check_item_structure};
 
 /// Entry point from [`crate::validate`]: two walks over the section's
 /// items.

@@ -3,15 +3,15 @@
 //! row `conditionalStyles` predicates (and the `scope` they ignore), and
 //! the array-scoped bindings inside a `cell:` column's sub-template.
 
-use super::equals::{equals_fault, reads_as_boolean, resolve_target, EqualsFault};
+use super::equals::{EqualsFault, equals_fault, reads_as_boolean, resolve_target};
 use crate::catalog::Catalog;
 use crate::template::{
-    BindingScope, Column, ColumnType, RowSpec, Template, MAX_ROW_CONDITIONAL_STYLES,
+    BindingScope, Column, ColumnType, MAX_ROW_CONDITIONAL_STYLES, RowSpec, Template,
 };
 use serde_json::Value;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 
-use super::bindings::{check_cell_bindings, check_scalar_binding, BindingCtx, CellScope};
+use super::bindings::{BindingCtx, CellScope, check_cell_bindings, check_scalar_binding};
 use super::check_array_params;
 use super::collect::collect_tables;
 

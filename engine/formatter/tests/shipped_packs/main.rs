@@ -6,9 +6,9 @@
 //! document renders under it. A regenerated pack that drifts from the wire — or
 //! silently loses a currency/date table — reds here.
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use shojiku_core::{FieldSpec, FieldType};
-use shojiku_formatter::{format_value, FormatContext, LangPack};
+use shojiku_formatter::{FormatContext, LangPack, format_value};
 use std::path::PathBuf;
 
 mod th;

@@ -58,7 +58,9 @@ impl fmt::Display for SpliceError {
 /// next reader of the file needs.
 #[must_use]
 pub fn start_marker(id: &str) -> String {
-    format!("{OPEN}{id} (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->")
+    format!(
+        "{OPEN}{id} (generated — edit the catalog or reference/tables.yml, then `make reference:generate`) -->"
+    )
 }
 
 /// Replaces the block between `id`'s markers with `body`.

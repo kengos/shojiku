@@ -46,7 +46,7 @@ pub use enums::{
     TextOverflow, TextSpacingTrim, VerticalAlign,
 };
 pub use key::StyleKey;
-pub use shapes::{LineStyle, DEFAULT_STROKE_PT};
+pub use shapes::{DEFAULT_STROKE_PT, LineStyle};
 pub use writing::{TextCombine, TextCombineUpright, TextOrientation, WritingMode};
 
 /// A bag of optional appearance properties. Every field unset (`None`)

@@ -7,11 +7,11 @@
 
 use std::collections::{HashMap, HashSet};
 
+use super::Warnings;
 use super::paint::{
-    normalize_stops, GradientStop, LinearGradient, RadialGradient, SpreadMode, SvgPaint,
+    GradientStop, LinearGradient, RadialGradient, SpreadMode, SvgPaint, normalize_stops,
 };
 use super::style::Affine;
-use super::Warnings;
 
 mod parse;
 

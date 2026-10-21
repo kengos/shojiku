@@ -13,7 +13,7 @@ use ring::digest::{Context, SHA256};
 
 use crate::cms::SignatureContainer;
 use crate::error::{Result, SigningError};
-use crate::placeholder::{append_signature_placeholder, PlaceholderOptions, PreparedPdf};
+use crate::placeholder::{PlaceholderOptions, PreparedPdf, append_signature_placeholder};
 use crate::signer::Signer;
 
 #[cfg(test)]

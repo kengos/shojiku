@@ -1,8 +1,8 @@
 //! Sign a real document, then verify it — every algorithm, every shape.
 
-use shojiku_verify::{verify_document, CheckOutcome, NotChecked};
+use shojiku_verify::{CheckOutcome, NotChecked, verify_document};
 
-use crate::common::{anchors, bundled_examples, sign, ALGORITHMS};
+use crate::common::{ALGORITHMS, anchors, bundled_examples, sign};
 
 #[test]
 fn every_bundled_example_verifies_after_being_signed_with_every_algorithm() {
@@ -44,8 +44,10 @@ fn verification_does_not_depend_on_which_document_was_signed_first() {
     let (_, pdf) = bundled_examples().remove(1);
     let signed = sign(&pdf, "ec256");
     for _ in 0..3 {
-        assert!(verify_document(&signed, &anchors("ec256"))
-            .expect("evaluates")
-            .is_valid());
+        assert!(
+            verify_document(&signed, &anchors("ec256"))
+                .expect("evaluates")
+                .is_valid()
+        );
     }
 }

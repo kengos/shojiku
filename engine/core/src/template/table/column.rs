@@ -5,9 +5,9 @@ use crate::length::Length;
 use crate::style::Style;
 use serde::{Deserialize, Serialize};
 
+use super::super::Binding;
 use super::super::imposition::ContainerItem;
 use super::super::items::ImageFit;
-use super::super::Binding;
 
 /// One table column. Width omitted means "an equal share of the region
 /// width left over after the sized columns" (the row-flex `flex: 1`

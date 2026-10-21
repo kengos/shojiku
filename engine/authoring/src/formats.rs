@@ -21,8 +21,8 @@ mod probe;
 mod tests;
 mod variants;
 
-pub use facts::{locale_facts, LocaleFacts};
-pub use pattern::{check_probe_count, PatternProbe, ProbeError, ProbeType};
+pub use facts::{LocaleFacts, locale_facts};
+pub use pattern::{PatternProbe, ProbeError, ProbeType, check_probe_count};
 
 use serde::Serialize;
 use shojiku_core::{FieldType, Template};

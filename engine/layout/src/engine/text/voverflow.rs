@@ -5,8 +5,8 @@
 //! [`super::overflow`] with the axes swapped; the caller
 //! ([`super::vblock`]) owns diagnostics and the final block assembly.
 
-use crate::font::{down_advance_over, FontFace, RunOptions};
-use crate::wrap::{wrap_vertical, WrappedLine};
+use crate::font::{FontFace, RunOptions, down_advance_over};
+use crate::wrap::{WrappedLine, wrap_vertical};
 use shojiku_core::{HangingPunctuation, LineBreak, TextOrientation, TextSpacingTrim};
 
 use super::overflow::MIN_SHRINK_FONT_PT;

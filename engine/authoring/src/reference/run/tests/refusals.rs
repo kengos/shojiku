@@ -1,7 +1,7 @@
 //! The other ways a run stops, and what it says when it does.
 
-use super::{with_code, Tree};
-use crate::reference::run::{run, Job, Refusal};
+use super::{Tree, with_code};
+use crate::reference::run::{Job, Refusal, run};
 
 /// A spec that does not parse is a refusal like any other, and writes nothing.
 #[test]

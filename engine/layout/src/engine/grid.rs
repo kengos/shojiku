@@ -20,7 +20,7 @@ use crate::boxes::PlacedBox;
 use crate::tree::LayoutItem;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::flex::{emit_slots, h_auto_margin, FlexKind, Slot};
+use super::flex::{FlexKind, Slot, emit_slots, h_auto_margin};
 use super::visibility::Visibility;
 use super::{Atom, Basis, Ctx};
 

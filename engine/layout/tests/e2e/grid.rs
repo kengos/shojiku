@@ -126,8 +126,7 @@ fn explicit_row_list_sizes_first_rows_and_implicit_rows_are_auto() {
 
 #[test]
 fn align_items_and_auto_margins_act_within_rows_and_cells() {
-    let two =
-        "- type: rect\n  style: { borderWidth: 1 }\n  box: { w: \"100%\", h: 20 }\n- type: rect\n  style: { borderWidth: 1 }\n  box: { w: \"100%\", h: 40 }";
+    let two = "- type: rect\n  style: { borderWidth: 1 }\n  box: { w: \"100%\", h: 20 }\n- type: rect\n  style: { borderWidth: 1 }\n  box: { w: \"100%\", h: 40 }";
     let yaml = container_body(
         "{ x: 0, y: 0, w: 200, type: grid, columns: 2, alignItems: center }",
         two,

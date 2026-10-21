@@ -5,12 +5,12 @@
 mod cell;
 mod decl;
 mod entry;
-pub(super) use cell::{check_cell_bindings, CellScope};
+pub(super) use cell::{CellScope, check_cell_bindings};
 pub(super) use decl::check_declarations;
 
 use crate::catalog::Catalog;
 use crate::definitions::FieldType;
-use crate::interpolate::{parse_segments, Segment};
+use crate::interpolate::{Segment, parse_segments};
 use crate::params::resolve_path;
 use crate::template::{Bindings, ChildHolder, Item, Link, NamedFormat};
 use serde_json::Value;

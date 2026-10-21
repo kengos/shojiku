@@ -240,21 +240,23 @@ fn no_command_takes_a_passphrase_on_the_command_line() {
         );
     }
     // The variable NAME is a flag, and it carries no secret.
-    assert!(Cli::try_parse_from([
-        "shojiku",
-        "sign",
-        "--input",
-        "in.pdf",
-        "--key",
-        "k.pem",
-        "--cert",
-        "c.pem",
-        "--output",
-        "-",
-        "--passphrase-env",
-        "SHOJIKU_PASSPHRASE",
-    ])
-    .is_ok());
+    assert!(
+        Cli::try_parse_from([
+            "shojiku",
+            "sign",
+            "--input",
+            "in.pdf",
+            "--key",
+            "k.pem",
+            "--cert",
+            "c.pem",
+            "--output",
+            "-",
+            "--passphrase-env",
+            "SHOJIKU_PASSPHRASE",
+        ])
+        .is_ok()
+    );
 }
 
 #[test]

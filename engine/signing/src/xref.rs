@@ -11,7 +11,7 @@
 use crate::error::{Result, SigningError};
 use crate::lexer::{expect_keyword, offset_within, read_token, read_uint, skip_ws};
 use crate::limits::MAX_XREF_ENTRIES;
-use crate::object::{object_number, Dict};
+use crate::object::{Dict, object_number};
 
 #[cfg(test)]
 mod tests;
@@ -106,7 +106,7 @@ fn parse_subsection(
                 return Err(SigningError::Malformed {
                     offset: kind_at,
                     what: "an entry keyword (n or f)",
-                })
+                });
             }
         }
         *budget -= 1;

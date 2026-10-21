@@ -57,17 +57,23 @@ fn every_cut_position_gets_a_tick_at_both_ends() {
 fn ticks_reach_outward_on_all_four_sides() {
     let (lines, _) = cut_marks(&grid_2x2());
     // Left ticks start at the grid's left edge and reach further left.
-    assert!(lines
-        .iter()
-        .any(|l| l.x1 == 25.0 && l.x2 == 25.0 - CUT_MARK_LEN && l.y1 == l.y2));
+    assert!(
+        lines
+            .iter()
+            .any(|l| l.x1 == 25.0 && l.x2 == 25.0 - CUT_MARK_LEN && l.y1 == l.y2)
+    );
     // Right ticks start at the grid's right edge (25 + 100 + 20 + 100).
-    assert!(lines
-        .iter()
-        .any(|l| l.x1 == 245.0 && l.x2 == 245.0 + CUT_MARK_LEN && l.y1 == l.y2));
+    assert!(
+        lines
+            .iter()
+            .any(|l| l.x1 == 245.0 && l.x2 == 245.0 + CUT_MARK_LEN && l.y1 == l.y2)
+    );
     // Bottom ticks hang below the last row (0 + 100 + 20 + 100).
-    assert!(lines
-        .iter()
-        .any(|l| l.y1 == 220.0 && l.y2 == 220.0 + CUT_MARK_LEN && l.x1 == l.x2));
+    assert!(
+        lines
+            .iter()
+            .any(|l| l.y1 == 220.0 && l.y2 == 220.0 + CUT_MARK_LEN && l.x1 == l.x2)
+    );
 }
 
 #[test]

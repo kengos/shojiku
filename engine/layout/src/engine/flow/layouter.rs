@@ -4,7 +4,7 @@
 use crate::boxes::translate_boxes;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
-use super::super::{translate, Atom, Basis, PageBuild, H_OVERFLOW_EPS};
+use super::super::{Atom, Basis, H_OVERFLOW_EPS, PageBuild, translate};
 
 /// Hard cap to keep a runaway template from looping forever. Shared with
 /// `char_grid`, whose cell-assignment cap derives from it.

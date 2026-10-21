@@ -3,7 +3,7 @@
 //! tool-call helper.
 
 use crate::ServerArgs;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::path::PathBuf;
 
 pub(crate) fn examples_dir() -> PathBuf {

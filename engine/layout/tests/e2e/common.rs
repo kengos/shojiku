@@ -7,16 +7,16 @@ use std::path::PathBuf;
 mod diag;
 pub use diag::{arg_num, args_all_numeric};
 
-pub use serde_json::{json, Value};
+pub use serde_json::{Value, json};
 pub use shojiku_core::{
-    parse_definitions, parse_template, Catalog, Template, MAX_CONTAINER_DEPTH, MAX_GRID_TRACKS,
-    MAX_SPANS,
+    Catalog, MAX_CONTAINER_DEPTH, MAX_GRID_TRACKS, MAX_SPANS, Template, parse_definitions,
+    parse_template,
 };
 pub use shojiku_diagnostics::{Diagnostic, Diagnostics};
 pub use shojiku_formatter::LangPack;
 pub use shojiku_layout::{
-    layout, FontStore, ImageShape, LayoutDocument, LayoutInput, LayoutItem, LayoutOutput,
-    LayoutPage, LineShape, PathShape, RectShape, TextBlock,
+    FontStore, ImageShape, LayoutDocument, LayoutInput, LayoutItem, LayoutOutput, LayoutPage,
+    LineShape, PathShape, RectShape, TextBlock, layout,
 };
 
 /// Pinned copy of the engine's page cap (`engine::flow::MAX_PAGES`): the
@@ -195,7 +195,7 @@ fn layout_template(
 /// A store with one 10x10 raster under `src:logo.png` and one 20x10
 /// SVG under `dyn:qr`.
 pub fn test_assets() -> shojiku_image::AssetStore {
-    use shojiku_image::{parse_svg, Asset, AssetKind, AssetStore, RasterFormat, SvgLimits};
+    use shojiku_image::{Asset, AssetKind, AssetStore, RasterFormat, SvgLimits, parse_svg};
     let mut store = AssetStore::empty();
     store.insert(Asset {
         id: "src:logo.png".to_string(),

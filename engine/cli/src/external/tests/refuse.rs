@@ -2,11 +2,11 @@
 
 use std::path::PathBuf;
 
-use super::{complete_args, prepare_args, sign_elsewhere, RSA};
+use super::{RSA, complete_args, prepare_args, sign_elsewhere};
+use crate::CliError;
 use crate::args::{SignCompleteArgs, SignPrepareArgs};
 use crate::external::{run_sign_complete, run_sign_prepare};
 use crate::tests::{example_pdf, key_dir};
-use crate::CliError;
 
 #[test]
 fn an_algorithm_no_release_writes_is_refused_without_echoing_it() {

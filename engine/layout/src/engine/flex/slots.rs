@@ -4,10 +4,10 @@
 use shojiku_core::AlignItems;
 use shojiku_layout_box::cross_offset;
 
-use crate::boxes::{translate_boxes, translate_boxes_x, PlacedBox};
+use crate::boxes::{PlacedBox, translate_boxes, translate_boxes_x};
 use crate::tree::LayoutItem;
 
-use super::super::{translate, translate_x, Atom, Basis};
+use super::super::{Atom, Basis, translate, translate_x};
 
 /// One laid-out child, in document order (paint order is preserved).
 pub(in crate::engine) enum Slot {

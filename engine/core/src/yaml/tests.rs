@@ -3,7 +3,7 @@
 mod checks;
 mod reads;
 
-use super::{parse, YamlError, YamlErrorKind};
+use super::{YamlError, YamlErrorKind, parse};
 
 /// The refusal `input` gets, asserting it is one of `kind`.
 fn refused(input: &str, kind: YamlErrorKind) -> YamlError {

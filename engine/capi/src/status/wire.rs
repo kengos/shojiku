@@ -16,7 +16,7 @@
 
 use super::Failure;
 use serde::Serialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// Longest message echoed back through `error_json` — the workspace's
 /// host-boundary cap, so this surface and the CLI report cannot drift apart.

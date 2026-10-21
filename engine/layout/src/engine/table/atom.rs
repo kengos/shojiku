@@ -9,7 +9,7 @@ use shojiku_core::TableItem;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::super::decoration::push_side_borders;
-use super::super::{placed_box, translate, with_vertical_margin, Atom, Basis, Ctx};
+use super::super::{Atom, Basis, Ctx, placed_box, translate, with_vertical_margin};
 use super::TableFrame;
 
 impl<'a, 'b> Ctx<'a, 'b> {

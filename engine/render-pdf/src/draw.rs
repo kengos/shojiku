@@ -1,8 +1,8 @@
 //! krilla draw calls: layout items, images (raster + SVG playback),
 //! glyph mapping, and geometry/paint conversions at the f32 boundary.
 
-use crate::text::draw_text;
 use crate::RenderError;
+use crate::text::draw_text;
 use krilla::color::rgb;
 use krilla::geom::{Path, PathBuilder, Size, Transform};
 use krilla::image::Image;
@@ -12,7 +12,7 @@ use krilla::surface::Surface;
 use krilla::text::Font;
 use shojiku_image::{AssetKind, AssetStore, PathCmd, RasterFormat, SvgTree};
 use shojiku_layout::{
-    rounded_rect_cmds, Corners, Dash, FontFace, ImageShape, LayoutItem, MAX_CLIP_DEPTH,
+    Corners, Dash, FontFace, ImageShape, LayoutItem, MAX_CLIP_DEPTH, rounded_rect_cmds,
 };
 use std::collections::HashMap;
 

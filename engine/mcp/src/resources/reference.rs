@@ -22,9 +22,9 @@
 //! schema document and does not claim to be one.
 
 use super::{contents, not_found};
-use crate::reference::{self, nodes, uri, Page};
-use crate::rpc::{clip, RpcError, INVALID_PARAMS};
-use serde_json::{json, Value};
+use crate::reference::{self, Page, nodes, uri};
+use crate::rpc::{INVALID_PARAMS, RpcError, clip};
+use serde_json::{Value, json};
 
 /// The `resources/list` entries for every reference page.
 pub(crate) fn list_entries() -> Vec<Value> {

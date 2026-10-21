@@ -20,7 +20,7 @@ use thiserror::Error;
 mod ids;
 mod write;
 
-use ids::{check_id, default_face_id, IdKind};
+use ids::{IdKind, check_id, default_face_id};
 
 /// Largest font file `font add` will read. Well past any real face
 /// (the ~47 MB IPAmj Mincho is the biggest bundled one) and far short of
@@ -38,7 +38,9 @@ pub enum FontPackError {
         "`{flag} {id}` is not a valid id (allowed: letters, digits, `-`, `_`; 1-64 characters)"
     )]
     InvalidId { flag: &'static str, id: Echo },
-    #[error("`{path}` is not a usable font file name (allowed: letters, digits, `-`, `_`, `.`; no leading dot)")]
+    #[error(
+        "`{path}` is not a usable font file name (allowed: letters, digits, `-`, `_`, `.`; no leading dot)"
+    )]
     UnusableFileName { path: Echo },
     #[error("failed to read {path}: {source}")]
     Read { path: Echo, source: std::io::Error },
@@ -60,7 +62,9 @@ pub enum FontPackError {
     FileExists { pack: Echo, file: Echo },
     #[error("failed to parse the existing font pack manifest {path}: {detail}")]
     ParseExisting { path: Echo, detail: Echo },
-    #[error("font pack `{pack}` already declares licence `{existing}`, not `{added}` (one licence per pack — put a differently-licensed face in its own pack)")]
+    #[error(
+        "font pack `{pack}` already declares licence `{existing}`, not `{added}` (one licence per pack — put a differently-licensed face in its own pack)"
+    )]
     LicenseMismatch {
         pack: Echo,
         existing: Echo,

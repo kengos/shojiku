@@ -5,7 +5,7 @@
 //! filesystem containment check (symlinks resolved) live here.
 
 use super::PackError;
-use crate::lang::{valid_pack_id, MAX_PACK_ID};
+use crate::lang::{MAX_PACK_ID, valid_pack_id};
 use shojiku_diagnostics::Echo;
 use std::path::{Component, Path};
 
