@@ -466,7 +466,10 @@ both subprocess SDKs script.
   injected binary is the CLI (`/opt/shojiku/bin/shojiku`, `SHOJIKU_BIN`), and
   the gate toolchain (php-cs-fixer, phpstan, phpunit) is pinned as a global
   composer install rather than as `require-dev` — which is why the package has
-  no `composer.lock` for the SBOM script to find.
+  no `composer.lock` for the SBOM script to find. The PCOV coverage driver
+  is built from the upstream release-tag archive pinned by version + sha256
+  (`PCOV_VERSION` / `PCOV_SHA256`), never `pecl install`, so a PECL outage
+  cannot fail the gate.
 - `LICENSE-MIT` / `LICENSE-APACHE` / `LICENSE-BSD` — copies of the root set,
   and the only SDK directory that carries any, because this is the one whose
   directory becomes a repository ROOT when it is published (below).

@@ -40,8 +40,24 @@ RUN apt-get update \
 # either, and pcov costs a fraction of the run time. PHPUnit has no
 # fail-under flag, so the 100% bar is asserted from the clover report by
 # tools/coverage-gate.php.
-RUN pecl install pcov \
-  && docker-php-ext-enable pcov \
+#
+# Built from the upstream release tag, pinned by version AND checksum, rather
+# than through `pecl install`: PECL resolves "latest" on every build and its
+# REST endpoint going down took the gate down with it, whatever the change
+# under test was. A mismatched checksum fails the build instead of installing
+# something else. To bump: change the version, then take the sha256 of
+# https://github.com/krakjoe/pcov/archive/refs/tags/v<version>.tar.gz.
+# GitHub generates that archive on demand; if the checksum ever fails with no
+# version change, re-hash it and compare the extracted tree before updating.
+ARG PCOV_VERSION=1.0.12
+ARG PCOV_SHA256=fdd07cad8e2ff42f0c9f095d84aeef11dab0fde7a008805f61883cbcb1b3f12b
+RUN curl -fsSL -o /tmp/pcov.tar.gz \
+      "https://github.com/krakjoe/pcov/archive/refs/tags/v${PCOV_VERSION}.tar.gz" \
+  && echo "${PCOV_SHA256}  /tmp/pcov.tar.gz" | sha256sum -c - \
+  && mkdir -p /usr/src/php/ext/pcov \
+  && tar -xzf /tmp/pcov.tar.gz -C /usr/src/php/ext/pcov --strip-components=1 \
+  && rm /tmp/pcov.tar.gz \
+  && docker-php-ext-install pcov \
   && echo "pcov.enabled=1" > /usr/local/etc/php/conf.d/pcov.ini
 
 # The gate toolchain, PINNED so a gate run never resolves a different linter
