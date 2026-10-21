@@ -561,6 +561,10 @@ not a string.
   authentication) and RUSTSEC-2026-0349 (an unauthenticated ServerHello
   downgrading later connections to classical key exchange). Rendering,
   signing and verifying open no connection.
+- **rustls-webpki 0.103.16** under that same download. It clears
+  RUSTSEC-2026-0382, a certificate chain that could be accepted through a
+  distrusted intermediate. Rendering, signing and verifying open no
+  connection.
 - **libssl is gone from the Docker image** (see Changed), which clears six
   OpenSSL advisories; a later advisory against libssl cannot apply to the
   image.

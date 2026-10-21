@@ -24,7 +24,7 @@ description: "セキュリティ方針、ライセンス、Rust製エンジン�
 
 - [cargo-deny](https://github.com/kengos/shojiku/blob/main/engine/deny.toml)でアドバイザリとライセンスを検査しています。**脆弱性のアドバイザリは、1件も除外していません**。除外設定（ignore）に入っているのは、serde_yamlが内部で使うYAMLパーサ（unsafe-libyaml）のメンテナンスが終了したことを知らせるアドバイザリ1件だけで、脆弱性の報告ではありません。除外の理由はdeny.tomlに書いてあり、serde_yamlから移行するときに削除します。新しく除外が必要になる依存は採用しません
 <!-- sbom:generated:start (regenerate with `make site:data`) -->
-- **CycloneDX SBOMをリポジトリにコミット**しています（[sbom/](https://github.com/kengos/shojiku/tree/main/sbom)）。engine 256 / gui 236 / sdk-js 127コンポーネントです。ロックファイル自体をスキャンして生成し、そのロックファイルのsha256を記録しているので、どの解決結果を写したものかが後から確かめられます。更新はリリースごとなので、リリース間の依存の動きはまだ入っていないことがあります
+- **CycloneDX SBOMをリポジトリにコミット**しています（[sbom/](https://github.com/kengos/shojiku/tree/main/sbom)）。engine 257 / gui 236 / sdk-js 127コンポーネントです。ロックファイル自体をスキャンして生成し、そのロックファイルのsha256を記録しているので、どの解決結果を写したものかが後から確かめられます。更新はリリースごとなので、リリース間の依存の動きはまだ入っていないことがあります
 <!-- sbom:generated:end -->
 - npm側は、pnpmの`minimumReleaseAge`を**7日**に設定しています。公開から7日未満のパッケージはインストール自体が失敗するので、不正なリリースが公開されても、取り下げられる前にインストールしてしまうことを防げます。postinstallスクリプトは明示的な許可リスト制です
 
