@@ -158,6 +158,15 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   cannot see the checkout. Every entry carries a reason and an `expired_at`;
   past that date trivy reports the finding again and the gate reds, so an
   acceptance cannot become permanent by being forgotten.
+  `docker/toolchain.Dockerfile` is a different image: the toolchain the
+  engine gates are meant to run in (rust + rustfmt/clippy/llvm-tools-preview
+  + cargo-llvm-cov, no workspace crate built in), published to
+  `ghcr.io/<owner>/shojiku-toolchain` for amd64+arm64 by
+  `.github/workflows/toolchain-image.yml` on a main push touching its inputs
+  or by hand; the job summary prints the multi-arch digest. No gate runs in
+  it yet. Its `ARG` defaults must equal the Makefile's `RUST_VERSION` /
+  `LLVM_COV_VERSION`; `scripts/check-toolchain-pins.sh` compares them and
+  the workflow refuses to publish on a mismatch.
 - `site/` — the public site (Cloudflare Pages): a STANDALONE pnpm project
   (not a gui/ workspace member), VitePress, eleven nav pages + the index
   ×2 locales (en canonical, `/ja` twin; copy is written JAPANESE-FIRST per
@@ -554,6 +563,10 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   the reason; the fuzz corpus, other WORK_TAGs' images, base images and the
   build cache are only listed. The image/volume names come in from make, so
   none is re-derived in the script.
+  `check-toolchain-pins.sh` — the toolchain image's `ARG` defaults vs the
+  Makefile's `RUST_VERSION` / `LLVM_COV_VERSION` (exit 1 on a mismatch or a
+  pin it cannot read; `--github` appends `rust=` / `llvm_cov=` to
+  `$GITHUB_OUTPUT`). Only `toolchain-image.yml` runs it so far.
   `check-make-namespace.sh` — `make make:check`, the invariant over the
   target surface itself (CI job `versions`, no Docker): a target defined in
   `mk/<x>.mk` belongs to scope `<x>`, a public target is colon-named or
