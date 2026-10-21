@@ -47,13 +47,16 @@
 #
 #   Housekeeping (removes things, proves nothing)
 #     make docker:clean:all     stopped gate containers, the free target slot
-#                               volumes, the cargo/rustup/pnpm caches and this
-#                               WORK_TAG's built images (caches and images are
-#                               kept while an engine gate holds a slot). Every
-#                               resource prints as removed or kept with the
-#                               reason; base images and the build cache are
-#                               listed with the command that drops them. The
-#                               next gate rebuilds what it needs
+#                               volumes, the cargo/pnpm caches (and the
+#                               cargo/rustup volumes of the layout before the
+#                               toolchain image), this WORK_TAG's built images
+#                               and every pin of the toolchain image (caches
+#                               and images are kept while an engine gate holds
+#                               a slot). Every resource prints as removed or
+#                               kept with the reason; base images and the build
+#                               cache are listed with the command that drops
+#                               them. The next gate pulls and rebuilds what it
+#                               needs
 #     make clean:target         this tree's host engine/target
 #
 #   Where did it break?
@@ -66,9 +69,10 @@
 #       (comments here, docs/agents/**). Re-run the scope, not the mirror.
 #
 # The host has no Rust toolchain (see shojiku-rust-professional): every gate
-# runs inside Docker. Named volumes persist CARGO_HOME/RUSTUP_HOME so the
-# toolchain components and cargo subcommands (llvm-cov, deny) install once and
-# are cached across runs.
+# runs inside Docker, the engine's in a pinned toolchain image that already
+# holds rustfmt, clippy and cargo-llvm-cov (RUST_IMAGE below). A named volume
+# keeps cargo's download cache and the cargo subcommands the image does not
+# hold (deny) between runs.
 #
 # GNU Make 4 or newer, because make itself is the one tool that does NOT run
 # in a container and so is the one place local and CI can silently disagree.
@@ -251,13 +255,33 @@ endif
 # gui/designer-app/), .github/workflows/release-artifacts.yml (RUST_VERSION),
 # scripts/install-proof/published-crates.sh, and the toolchain image's ARG
 # defaults (docker/toolchain.Dockerfile, with LLVM_COV_VERSION below).
-RUST_VERSION := 1.99.0
-# The toolchain image (docker/toolchain.Dockerfile) installs this cargo-llvm-cov.
-# No gate reads it yet: engine:coverage still installs the latest on first use.
-# scripts/check-toolchain-pins.sh compares both pins with the Dockerfile before
-# the image is published.
+#
+# Every engine container runs the toolchain image: docker/toolchain.Dockerfile
+# (rust + rustfmt, clippy, llvm-tools-preview and cargo-llvm-cov), published by
+# .github/workflows/toolchain-image.yml and pinned here by DIGEST, which a
+# rebuild cannot move the way it moves a tag.
+#
+#   RUST_VERSION, LLVM_COV_VERSION  the pins the workflow builds with.
+#                     engine:budget fails when the Dockerfile's ARG defaults
+#                     say otherwise (scripts/check-toolchain-pins.sh)
+#   TOOLCHAIN_TAG     the tag TOOLCHAIN_DIGEST was published under,
+#                     <rust>-llvmcov<cargo-llvm-cov>. engine:lint fails when
+#                     the pinned image does not hold those versions
+#   TOOLCHAIN_DIGEST  that build's multi-arch index (amd64 + arm64)
+#
+# Bumping takes two pull requests, because the image is published from main:
+#   1. Change RUST_VERSION / LLVM_COV_VERSION here and the ARG defaults in the
+#      Dockerfile, and merge. The workflow pushes the new image.
+#   2. Copy the digest from that run's job summary into TOOLCHAIN_DIGEST, set
+#      TOOLCHAIN_TAG to the new pins, and merge.
+# Until step 2 the gates still run the previous image. Nothing fails when step
+# 2 is forgotten: the pins above would then name an image nobody runs.
+# Afterwards `make docker:clean:images` drops the previous image locally.
+RUST_VERSION     := 1.99.0
 LLVM_COV_VERSION := 0.9.1
-RUST_IMAGE   := rust:$(RUST_VERSION)-slim-bookworm
+TOOLCHAIN_TAG    := 1.99.0-llvmcov0.9.1
+TOOLCHAIN_DIGEST := sha256:512c06e92e8c1a0526dc42f7852672a68a1652ad446a7e4a620c0e08072c27a0
+RUST_IMAGE   := ghcr.io/kengos/shojiku-toolchain@$(TOOLCHAIN_DIGEST)
 TRIVY_IMAGE  := aquasec/trivy:latest
 # Pinned to a DIGEST, and the pin is load-bearing: `make sbom:check` compares
 # the committed inventories against a fresh scan byte-for-byte, so a floating
@@ -444,17 +468,31 @@ WASM_OPT_SHA256_aarch64 := 4b6bd61ba6cd3b18c993b4657d93426c782f9b91b74be0d38018c
 WASM_MAX_RAW  := 8388608
 WASM_MAX_GZIP := 3145728
 
-# Run a cargo/rustup command in the pinned toolchain image with persistent
-# cargo + rustup homes. Named volumes are pre-populated from the image on first
-# use, so the cargo/rustc shims survive while installs accumulate.
+# Run a cargo command in the pinned toolchain image (RUST_IMAGE above), with
+# CARGO_HOME moved onto a volume that keeps cargo's download cache (registry/,
+# git/) between runs. The image's own /usr/local/cargo and /usr/local/rustup
+# are left unmounted: a named volume over them is filled from the image only
+# while EMPTY, so after a digest bump it would keep serving the previous
+# image's toolchain and cargo-llvm-cov, and a bind mount would hide them
+# outright. /usr/local/cargo/bin stays on PATH, which is where cargo finds
+# rustc, the rustfmt and clippy proxies and cargo-llvm-cov. Moving the whole
+# CARGO_HOME rather than mounting registry/ and git/ alone keeps cargo's
+# package-cache lock on the volume too, so gates of two working trees never
+# write the shared cache unlocked.
 #
-# Both homes are OVERRIDABLE, and docker takes either form in `-v src:dst`: a
-# bare name is a named volume, an absolute path is a host bind mount. CI passes
-# paths so a restored cache lands where the container will look, which is what
-# lets the pipeline run these very targets instead of a hand-copied set of
-# cargo flags that drifts from them. The target needs no such switch: under CI
-# the pool is off and `engine/target/` is inside the repository mount, so the
-# restored cache is already where cargo looks (TARGET_SLOTS above).
+# The tools the image does NOT hold (cargo-deny, wasm-bindgen, wasm-opt,
+# cargo-fuzz) are installed on first use into $CARGO_HOME/bin, on the volume;
+# the recipes that run them put that directory on PATH. The extra rustup
+# targets (wasm32, the dist cross targets, nightly for fuzz) are downloaded by
+# each run that needs them: nothing keeps RUSTUP_HOME between runs.
+#
+# Removing the volume costs the next gate a download and those installs, never
+# a toolchain. CARGO_VOLUME is OVERRIDABLE, and docker takes either form in
+# `-v src:dst`: a bare name is a named volume, an absolute path is a host bind
+# mount, so a pipeline can restore a cache into it. The target needs no such
+# switch: under CI the pool is off and `engine/target/` is inside the
+# repository mount, so a restored cache is already where cargo looks
+# (TARGET_SLOTS above).
 #
 # MOUNT DISCIPLINE — the single biggest time-sink in this repo, and the reason
 # this uses $(CURDIR) rather than $(pwd). For an ad-hoc cargo run, keep the
@@ -478,14 +516,21 @@ WASM_MAX_GZIP := 3145728
 #     `touch engine/layout/tests/e2e/main.rs` for one suite, or
 #     `make docker:clean:volumes SLOT=<k>` to start that target slot over (the
 #     poisoned binary lives in the target, not in the cargo volume).
-CARGO_VOLUME  ?= shojiku-cargo
+CARGO_VOLUME  ?= shojiku-cargo-cache
 PNPM_VOLUME   ?= shojiku-pnpm
-RUSTUP_VOLUME ?= shojiku-rustup
+# The volumes of the layout before the toolchain image: a whole CARGO_HOME and
+# a whole RUSTUP_HOME. Nothing mounts them any more; docker:clean:volumes
+# removes them.
+LEGACY_CACHE_VOLUMES := shojiku-cargo shojiku-rustup
+
+# The `docker run` flags every engine container shares; CARGO_IN_DOCKER below
+# and the recipes with their own `docker run` (wasm, the dist matrices, fuzz)
+# all use it, so the mounts are written once.
+ENGINE_MOUNTS = -v "$(CURDIR):/repo" \
+	-e CARGO_HOME=/cargo-cache -v "$(CARGO_VOLUME):/cargo-cache"
 
 CARGO_IN_DOCKER = $(GATE_LOCK) $(TARGET_DOCKER) run --rm \
-	-v "$(CURDIR):/repo" -w /repo/engine \
-	-v "$(CARGO_VOLUME):/usr/local/cargo" \
-	-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
+	$(ENGINE_MOUNTS) -w /repo/engine \
 	$(RUST_IMAGE) sh -euc
 
 .DEFAULT_GOAL := help
@@ -514,7 +559,7 @@ include mk/investigate.mk
 .PHONY: _docker-build _docker-render _docker-scan _docker-verify _engine-budget \
         _engine-capi-dist _engine-capi-lib _engine-cli-bin _engine-cli-dist \
         _engine-clippy _engine-coverage _engine-deny _engine-fmt _engine-fuzz \
-        _engine-lint _engine-map-check _engine-napi _engine-preview _engine-render _engine-test _engine-verify _engine-wasm \
+        _engine-lint _engine-map-check _engine-napi _engine-preview _engine-render _engine-test _engine-toolchain _engine-verify _engine-wasm \
         _engine-wasm-e2e _examples-check _gui-budget _gui-e2e _gui-lint _gui-test \
         _gui-verify _make-check _proof _proof-deploy _proof-dotnet _proof-go \
         _proof-java _proof-js _proof-php _proof-published _proof-published-crates \

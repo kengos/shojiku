@@ -1,13 +1,14 @@
-# The toolchain image the engine gates are meant to run in: rust with the
-# components and the cargo subcommand the gates add on first use, installed
+# The toolchain image the engine gates run in: rust with the components and the
+# cargo subcommand the gates would otherwise install on first use, installed
 # once here instead of into a cache volume on each machine.
 # .github/workflows/toolchain-image.yml publishes it as
-# ghcr.io/<owner>/shojiku-toolchain. Nothing runs in it yet; the Makefile still
-# uses the plain rust image.
+# ghcr.io/<owner>/shojiku-toolchain, and the Makefile pins it by digest
+# (TOOLCHAIN_DIGEST); a new image reaches the gates only when that pin moves.
 #
 # The defaults below MUST equal RUST_VERSION and LLVM_COV_VERSION in the
-# Makefile. The workflow passes the Makefile's values as build args and refuses
-# to publish when these defaults differ (scripts/check-toolchain-pins.sh), so a
+# Makefile. The workflow passes the Makefile's values as build args, and it and
+# engine:budget both fail when these defaults differ
+# (scripts/check-toolchain-pins.sh), so a
 # plain `docker build` of this file and the published image cannot quietly be
 # two different toolchains.
 #

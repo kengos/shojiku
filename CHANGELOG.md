@@ -149,6 +149,16 @@ platform binaries.
   replace `clean:cache` and `clean:images`; `clean:target` now removes only
   the tree's host `engine/target`, and the target slot volumes moved to
   `docker:clean:volumes` (`SLOT=<k>` still resets one).
+- The engine gates run in a toolchain image pinned by digest
+  (`ghcr.io/kengos/shojiku-toolchain`) that already holds rustfmt, clippy
+  and `cargo-llvm-cov`, so a first run installs none of them, and
+  `make docker:clean:all` is safe at any time: the next gate pulls the image
+  and downloads the crates again. The only cache left is the
+  `shojiku-cargo-cache` volume; the old `shojiku-cargo` and
+  `shojiku-rustup` volumes are no longer used, and `docker:clean:volumes`
+  removes them. `make engine:budget` now fails when the Makefile's toolchain
+  versions and `docker/toolchain.Dockerfile` disagree, and `make engine:lint`
+  when the pinned image does not hold the versions its tag names.
 
 ## [0.3.0] - 2026-10-14
 

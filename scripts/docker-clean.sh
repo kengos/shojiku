@@ -5,9 +5,12 @@
 #
 # The make targets pass what the Makefile knows, so no name is re-derived here:
 #
-#   SHOJIKU_BUILT_IMAGES   the images this tree's gates build (WORK_TAG-aware)
-#   SHOJIKU_PULLED_IMAGES  the base images the Makefile pins and pulls
-#   SHOJIKU_CACHE_VOLUMES  the cargo/rustup/pnpm cache volumes
+#   SHOJIKU_BUILT_IMAGES     the images this tree's gates build (WORK_TAG-aware)
+#   SHOJIKU_TOOLCHAIN_IMAGE  the pinned engine toolchain, <repository>@<digest>
+#   SHOJIKU_PULLED_IMAGES    the other base images the Makefile pins and pulls
+#   SHOJIKU_CACHE_VOLUMES    the cargo/pnpm cache volumes
+#   SHOJIKU_LEGACY_VOLUMES   the cargo/rustup volumes of the layout before the
+#                            toolchain image, which nothing mounts any more
 #   SLOT                   with `volumes`: reset that one target slot only
 #
 # It never stops at the first thing it cannot remove: every resource ends up on
@@ -20,13 +23,17 @@
 #               starting in another worktree, and a running one may be a gate
 #               (make investigate:gates tells it from an orphan).
 #   volumes     the pooled target volumes no gate is using (through
-#               scripts/target-slot.sh, which owns the lease) and the cache
-#               volumes; one still mounted is kept. The fuzz corpus is kept: it
-#               holds what the fuzzer found, which no rebuild gives back.
-#   images      this WORK_TAG's built images. The default `local` is shared by
-#               every tree that sets none. Other WORK_TAGs' `shojiku-*` images,
-#               the pulled base images and the build cache are listed, not
-#               removed: another session or repository may be using them.
+#               scripts/target-slot.sh, which owns the lease), the cache
+#               volumes and the legacy ones; one still mounted is kept. The fuzz
+#               corpus is kept: it holds what the fuzzer found, which no rebuild
+#               gives back.
+#   images      this WORK_TAG's built images, and every pin of the toolchain
+#               image's repository: the current one and those a bump left
+#               behind. Only this repository runs it, and the next engine gate
+#               pulls it again. The default `local` is shared by every tree that
+#               sets none. Other WORK_TAGs' `shojiku-*` images, the pulled base
+#               images and the build cache are listed, not removed: another
+#               session or repository may be using them.
 #
 # The caches and the built images are shared across worktrees, and a gate
 # between two of its containers mounts neither, so docker alone would let them
@@ -80,6 +87,18 @@ clean_containers() {
     done <"$tmp"
 }
 
+# $2 is a note for the `removed` line.
+remove_volume() {
+    docker volume inspect "$1" >/dev/null 2>&1 || return 0
+    if [ -n "$busy" ]; then
+        say_kept "volume $1" "a gate is running ($busy; make investigate:gates)"
+    elif err=$(docker volume rm "$1" 2>&1); then
+        say_removed "volume $1$2"
+    else
+        say_kept "volume $1" "$err"
+    fi
+}
+
 clean_volumes() {
     echo "== volumes =="
     out=$("$(dirname "$0")/gate-lock.sh" "$(dirname "$0")/target-slot.sh" clean ${SLOT:-} 2>&1)
@@ -100,18 +119,52 @@ clean_volumes() {
     # to refill.
     [ -z "${SLOT:-}" ] || return 0
     for v in ${SHOJIKU_CACHE_VOLUMES:-}; do
-        docker volume inspect "$v" >/dev/null 2>&1 || continue
-        if [ -n "$busy" ]; then
-            say_kept "volume $v" "a gate is running ($busy; make investigate:gates)"
-        elif err=$(docker volume rm "$v" 2>&1); then
-            say_removed "volume $v"
-        else
-            say_kept "volume $v" "$err"
-        fi
+        remove_volume "$v" ""
+    done
+    for v in ${SHOJIKU_LEGACY_VOLUMES:-}; do
+        remove_volume "$v" " (the layout before the toolchain image; nothing mounts it)"
     done
     if docker volume inspect shojiku-fuzz-corpus >/dev/null 2>&1; then
         say_kept "volume shojiku-fuzz-corpus" "what the fuzzer found does not rebuild (docker volume rm shojiku-fuzz-corpus)"
     fi
+}
+
+# Every pin of the toolchain image's repository. A digest pin is pulled
+# untagged, and `docker images` lists an untagged image only under -a. Removed
+# by its references in this repository rather than by ID: an ID with several
+# references refuses `docker rmi <id>`, and a name someone else gave the same
+# image stays.
+clean_toolchain() {
+    pin=${SHOJIKU_TOOLCHAIN_IMAGE:-}
+    repo=${pin%@*}
+    case $pin in
+    '') return 0 ;;
+    ?*@sha256:?*) ;;
+    # An empty repository would turn the listing below into every image on the
+    # host: refuse anything but a digest pin.
+    *)
+        say_kept "toolchain image $pin" "not <repository>@sha256:<digest>, so no repository to clean"
+        return 0
+        ;;
+    esac
+    for id in $(docker images -aq "$repo" | sort -u); do
+        all=$(docker image inspect -f '{{range .RepoDigests}}{{.}} {{end}}{{range .RepoTags}}{{.}} {{end}}' "$id" 2>/dev/null) || continue
+        refs=
+        for ref in $all; do
+            case $ref in
+            "$repo"@* | "$repo":*) refs="$refs${refs:+ }$ref" ;;
+            esac
+        done
+        [ -n "$refs" ] || continue
+        if [ -n "$busy" ]; then
+            say_kept "image $refs" "a gate is running ($busy; make investigate:gates)"
+        # shellcheck disable=SC2086 # one word per reference
+        elif err=$(docker rmi $refs 2>&1); then
+            say_removed "image $refs"
+        else
+            say_kept "image $refs" "$err"
+        fi
+    done
 }
 
 clean_images() {
@@ -126,6 +179,7 @@ clean_images() {
             say_kept "image $img" "$err"
         fi
     done
+    clean_toolchain
     for img in $(docker images --format '{{.Repository}}:{{.Tag}}' | grep '^shojiku-' | grep -v ':<none>$'); do
         case " ${SHOJIKU_BUILT_IMAGES:-} " in *" $img "*) continue ;; esac
         say_kept "image $img" "not this WORK_TAG's current build (another WORK_TAG, another SDK version, or an install-proof image): docker rmi $img"

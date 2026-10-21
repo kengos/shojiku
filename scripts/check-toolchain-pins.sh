@@ -16,9 +16,11 @@
 # `ARG NAME=x` in the Dockerfile); a pin that moved to another spelling reads
 # as missing, which fails rather than passing on an empty string.
 #
-# Only .github/workflows/toolchain-image.yml runs it so far. A Makefile-only
-# bump does not start that workflow, so until a gate runs it too, such a drift
-# is caught at the next image build rather than in the pull request.
+# .github/workflows/toolchain-image.yml runs it before publishing, and
+# engine:budget runs it too, so a half-done bump fails in the pull request
+# rather than in the publishing workflow after the merge (a Makefile-only bump
+# does not start that workflow at all). Whether the pinned digest holds these
+# versions is engine:lint's toolchain step, not this.
 #
 # Read-only POSIX sh + sed; no toolchain required. sed uses [[:blank:]], not
 # \t: BSD sed reads \t as a literal t.

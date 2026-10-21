@@ -43,17 +43,34 @@ engine\:verify: ## Verify engine/ — budget + lint + tests at 100% coverage, de
 _engine-verify: _engine-lint _engine-coverage _engine-deny _reference-check _examples-check _engine-wasm
 
 
-engine\:lint: ## engine/ line budget + //! headers + fmt --check + clippy -D warnings
+engine\:lint: ## engine/ line budget + //! headers + toolchain pins + fmt --check + clippy -D warnings
 	@$(call gate,_engine-lint,engine:lint)
 
-_engine-lint: _engine-budget _engine-map-check _engine-fmt _engine-clippy
+_engine-lint: _engine-budget _engine-toolchain _engine-map-check _engine-fmt _engine-clippy
 
-engine\:budget: ## .rs line budget + //! header check (scripts/check-line-budget.sh)
+engine\:budget: ## .rs line budget + //! header check + toolchain pins (no Docker)
 	@$(call gate,_engine-budget,engine:budget)
 
+# The toolchain pins ride here, with no Docker, so a bump that changed only the
+# Makefile or only docker/toolchain.Dockerfile fails in the pull request rather
+# than in the publishing workflow after the merge.
 _engine-budget:
 	@echo "== line budget =="
 	@scripts/check-line-budget.sh
+	@echo "== toolchain pins =="
+	@scripts/check-toolchain-pins.sh
+
+# The pinned digest holds the versions TOOLCHAIN_TAG names. A digest copied
+# from the wrong run, or a tag left behind when the digest moved, fails here
+# rather than passing every gate on a toolchain the Makefile does not name.
+# In engine:lint, not only engine:verify, because CI runs the lint job. A
+# plain `docker run`: reading two versions needs neither a target slot nor the
+# cargo volume.
+_engine-toolchain:
+	@echo "== toolchain image =="
+	$(GATE_LOCK) docker run --rm $(RUST_IMAGE) sh -euc 'have="$$(rustc --version | cut -d" " -f2)-llvmcov$$(cargo llvm-cov --version | cut -d" " -f2)"; \
+		[ "$$have" = "$(TOOLCHAIN_TAG)" ] \
+			|| { echo "toolchain: the pinned image holds $$have, but TOOLCHAIN_TAG says $(TOOLCHAIN_TAG)" >&2; exit 1; }'
 
 # The GENERATED structure map (docs/code-map/engine-structure.md): crate
 # layers, the per-file dispatch/walk index over the item-tree enums, and the
@@ -87,12 +104,10 @@ engine\:fmt: ## cargo fmt --check
 
 _engine-fmt:
 	@echo "== fmt =="
-	$(CARGO_IN_DOCKER) 'rustup component add rustfmt >/dev/null 2>&1; \
-		cargo fmt --all -- --check'
+	$(CARGO_IN_DOCKER) 'cargo fmt --all -- --check'
 
 engine\:format: ## cargo fmt (apply formatting)
-	$(CARGO_IN_DOCKER) 'rustup component add rustfmt >/dev/null 2>&1; \
-		cargo fmt --all'
+	$(CARGO_IN_DOCKER) 'cargo fmt --all'
 
 # The one place the workspace is resolved WITHOUT `--locked`, and the reason
 # it has to exist: every gate passes `--locked` (the committed lockfile is
@@ -117,8 +132,7 @@ engine\:clippy: ## cargo clippy -D warnings (matches CI flags; JOBS=N caps paral
 
 _engine-clippy:
 	@echo "== clippy =="
-	$(CARGO_IN_DOCKER) 'rustup component add clippy >/dev/null 2>&1; \
-		cargo clippy --workspace --all-targets --all-features --locked $(CARGO_JOBS) -- -D warnings'
+	$(CARGO_IN_DOCKER) 'cargo clippy --workspace --all-targets --all-features --locked $(CARGO_JOBS) -- -D warnings'
 
 # Judging a run by eye: count `test result: FAILED` rather than parsing the
 # result lines by field position (`FAILED. 553 passed; 1 failed` has been
@@ -165,8 +179,6 @@ engine\:coverage: ## cargo llvm-cov, blocking at 100% lines (names the offending
 _engine-coverage:
 	@echo "== coverage (100% lines) =="
 	@$(CARGO_IN_DOCKER) 'rm -f lcov.info; \
-		rustup component add llvm-tools-preview >/dev/null 2>&1; \
-		command -v cargo-llvm-cov >/dev/null 2>&1 || cargo install cargo-llvm-cov --locked; \
 		cargo llvm-cov --workspace --locked --fail-under-lines 100 $(CARGO_JOBS) \
 			--lcov --output-path lcov.info' \
 	|| { code=$$?; \
@@ -191,7 +203,8 @@ engine\:deny: ## cargo deny check advisories licenses bans sources (ALL features
 
 _engine-deny:
 	@echo "== cargo deny =="
-	$(CARGO_IN_DOCKER) 'command -v git >/dev/null 2>&1 || \
+	$(CARGO_IN_DOCKER) 'export PATH="$$PATH:$$CARGO_HOME/bin"; \
+		command -v git >/dev/null 2>&1 || \
 			{ apt-get update -qq && apt-get install -y -qq git >/dev/null; }; \
 		command -v cargo-deny >/dev/null 2>&1 || cargo install cargo-deny --locked; \
 		cargo deny --all-features check advisories licenses bans sources'
@@ -217,11 +230,10 @@ engine\:wasm: ## Build the browser WASM bindings (engine/wasm/pkg) + assert size
 _engine-wasm:
 	@echo "== wasm build (size-budgeted) =="
 	@$(GATE_LOCK) $(TARGET_DOCKER) run --rm \
-		-v "$(CURDIR):/repo" -w /repo/engine \
-		-v "$(CARGO_VOLUME):/usr/local/cargo" \
-		-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
+		$(ENGINE_MOUNTS) -w /repo/engine \
 		$(RUST_IMAGE) sh -euc '\
-		rustup target add wasm32-unknown-unknown >/dev/null 2>&1; \
+		export PATH="$$PATH:$$CARGO_HOME/bin"; \
+		rustup target add wasm32-unknown-unknown >/dev/null; \
 		command -v wasm-bindgen >/dev/null 2>&1 || \
 			cargo install wasm-bindgen-cli --version =$(WASM_BINDGEN_VERSION) --locked; \
 		command -v wasm-opt >/dev/null 2>&1 || { \
@@ -237,8 +249,9 @@ _engine-wasm:
 			curl -fsSL -o /tmp/$$rel.tar.gz \
 				"https://github.com/WebAssembly/binaryen/releases/download/version_$(WASM_OPT_VERSION)/$$rel-$$arch-linux.tar.gz" && \
 			echo "$$want  /tmp/$$rel.tar.gz" | sha256sum -c - && \
-			tar -xzf /tmp/$$rel.tar.gz -C /usr/local/cargo && \
-			ln -sf /usr/local/cargo/$$rel/bin/wasm-opt /usr/local/cargo/bin/wasm-opt; \
+			mkdir -p "$$CARGO_HOME/bin" && \
+			tar -xzf /tmp/$$rel.tar.gz -C "$$CARGO_HOME" && \
+			ln -sf "$$CARGO_HOME/$$rel/bin/wasm-opt" "$$CARGO_HOME/bin/wasm-opt"; \
 		}; \
 		cargo build -p shojiku-wasm --profile wasm-release \
 			--target wasm32-unknown-unknown --locked; \
@@ -293,9 +306,7 @@ _engine-capi-dist:
 	@echo "== capi dist ($(CAPI_TARGETS)) =="
 	@mkdir -p $(CAPI_DIST)
 	@$(GATE_LOCK) $(TARGET_DOCKER) run --rm \
-		-v "$(CURDIR):/repo" -w /repo/engine \
-		-v "$(CARGO_VOLUME):/usr/local/cargo" \
-		-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
+		$(ENGINE_MOUNTS) -w /repo/engine \
 		$(RUST_IMAGE) sh -euc '\
 		apt-get update -qq >/dev/null; \
 		case $$(dpkg --print-architecture) in \
@@ -307,7 +318,7 @@ _engine-capi-dist:
 		apt-get install -y -qq $$cross gcc-mingw-w64-x86-64 >/dev/null; \
 		for target in $(CAPI_TARGETS); do \
 			echo "== capi build $$target =="; \
-			rustup target add $$target >/dev/null 2>&1; \
+			rustup target add $$target >/dev/null; \
 			CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
 			CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
 			CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc \
@@ -355,9 +366,7 @@ _engine-cli-dist:
 	@echo "== cli dist ($(CLI_TARGETS)) =="
 	@mkdir -p $(CLI_DIST)
 	@$(GATE_LOCK) $(TARGET_DOCKER) run --rm \
-		-v "$(CURDIR):/repo" -w /repo/engine \
-		-v "$(CARGO_VOLUME):/usr/local/cargo" \
-		-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
+		$(ENGINE_MOUNTS) -w /repo/engine \
 		$(RUST_IMAGE) sh -euc '\
 		apt-get update -qq >/dev/null; \
 		case $$(dpkg --print-architecture) in \
@@ -369,7 +378,7 @@ _engine-cli-dist:
 		apt-get install -y -qq $$cross gcc-mingw-w64-x86-64 >/dev/null; \
 		for target in $(CLI_TARGETS); do \
 			echo "== cli build $$target =="; \
-			rustup target add $$target >/dev/null 2>&1; \
+			rustup target add $$target >/dev/null; \
 			CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
 			CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
 			CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc \
@@ -562,7 +571,7 @@ _engine-cli-bin:
 # is a performance decision rather than tidiness: libFuzzer writes a file per
 # NEW/REDUCE, which is thousands of small writes a minute, and on a bind mount
 # that turned a 20-second budget into a six-minute run that looked exactly
-# like a hang. It persists across runs like the cargo/rustup volumes do;
+# like a hang. It persists across runs like the cargo volume does;
 # `docker volume rm shojiku-fuzz-corpus` starts over.
 # Targets come in GROUPS, because the set has outgrown one run: at the
 # default 60s each, all of them is over ten minutes, which is a long time to
@@ -593,6 +602,11 @@ endif
 engine\:fuzz: ## Fuzz the untrusted-input parsers (nightly+libFuzzer; FUZZ_GROUP=sign|wire FUZZ_TARGET=<name>)
 	@$(call gate,_engine-fuzz,engine:fuzz)
 
+# `rustup toolchain install` runs with the image's own CARGO_HOME: it refuses
+# ("rustup is not installed at '/cargo-cache'") under the cache volume's,
+# where rustup itself does not live. `rustup target add` elsewhere does not
+# check, and cargo-fuzz still installs onto the volume.
+#
 # Plain `docker run`, not $(TARGET_DOCKER): the fuzz crate is outside the
 # workspace and builds into its OWN engine/fuzz/target, which the pooled
 # volume (mounted over engine/target) does not cover. On-demand and nightly-only,
@@ -600,15 +614,14 @@ engine\:fuzz: ## Fuzz the untrusted-input parsers (nightly+libFuzzer; FUZZ_GROUP
 _engine-fuzz:
 	@echo "== fuzz ($(FUZZ_SECS)s per target) =="
 	@$(GATE_LOCK) docker run --rm \
-		-v "$(CURDIR):/repo" -w /repo/engine/fuzz \
-		-v "$(CARGO_VOLUME):/usr/local/cargo" \
-		-v "$(RUSTUP_VOLUME):/usr/local/rustup" \
+		$(ENGINE_MOUNTS) -w /repo/engine/fuzz \
 		-v shojiku-fuzz-corpus:/fuzz-corpus \
 		$(RUST_IMAGE) sh -euc '\
+		export PATH="$$PATH:$$CARGO_HOME/bin"; \
 		command -v g++ >/dev/null 2>&1 || { \
 			apt-get update -qq >/dev/null && \
 			apt-get install -y -qq g++ >/dev/null; }; \
-		rustup toolchain install nightly --profile minimal >/dev/null 2>&1; \
+		CARGO_HOME=/usr/local/cargo rustup toolchain install nightly --profile minimal >/dev/null; \
 		command -v cargo-fuzz >/dev/null 2>&1 || cargo install cargo-fuzz --locked; \
 		cargo +nightly run --example seed; \
 		for target in $(if $(FUZZ_TARGET),$(FUZZ_TARGET),$(FUZZ_SELECTED)); do \

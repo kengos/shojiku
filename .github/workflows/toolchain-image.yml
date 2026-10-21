@@ -2,8 +2,9 @@ name: Publish toolchain image
 
 # Builds docker/toolchain.Dockerfile and pushes it to
 # ghcr.io/<owner>/shojiku-toolchain: rust plus the components and the
-# cargo-llvm-cov the engine gates install on first use. Nothing runs in it yet;
-# the Makefile will pin it by digest, which this run writes to its job summary.
+# cargo-llvm-cov the engine gates run. The gates run it pinned by digest
+# (TOOLCHAIN_DIGEST in the Makefile), which this run writes to its job summary;
+# a new image reaches the gates only when that pin is changed.
 #
 # Unlike publish-image.yml (the runtime image, manual only), this image is a
 # development tool rather than a release, so a push to main publishes it — but
@@ -99,7 +100,7 @@ jobs:
           cache-from: type=gha,scope=toolchain-image
           cache-to: type=gha,scope=toolchain-image,mode=max
 
-      # The digest of the multi-arch manifest: what the Makefile will pin,
+      # The digest of the multi-arch manifest: what the Makefile pins,
       # since a tag can be moved and a digest cannot.
       - name: Write the digest to the job summary
         env:
