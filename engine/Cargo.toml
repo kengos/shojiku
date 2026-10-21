@@ -28,7 +28,7 @@ members = [
 
 [workspace.package]
 version = "0.3.0"
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0 OR BSD-3-Clause"
 publish = true
 # Two different places, and crates.io links them separately: `homepage` is

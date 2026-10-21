@@ -34,15 +34,16 @@ pub(super) fn check_box_keys(template: &Template, diags: &mut Diagnostics) {
             Item::Checkbox(c) => (c.box_.as_ref(), None),
             Item::Line(_) | Item::Table(_) | Item::PageBreak(_) => (None, None),
         };
-        if let Some(b) = leaf_box {
-            if b.has_layout_keys() {
-                diags.push(Diagnostic::new(Code::LayoutKeyOnLeaf).with_path(path.to_string()));
-            }
+        if let Some(b) = leaf_box
+            && b.has_layout_keys()
+        {
+            diags.push(Diagnostic::new(Code::LayoutKeyOnLeaf).with_path(path.to_string()));
         }
-        if let Some(b) = layout_box {
-            if b.has_grid_keys() && b.type_ != Some(BoxType::Grid) {
-                diags.push(Diagnostic::new(Code::GridKeyIgnored).with_path(path.to_string()));
-            }
+        if let Some(b) = layout_box
+            && b.has_grid_keys()
+            && b.type_ != Some(BoxType::Grid)
+        {
+            diags.push(Diagnostic::new(Code::GridKeyIgnored).with_path(path.to_string()));
         }
     });
 }
@@ -58,16 +59,14 @@ pub(super) fn check_table_pagination_keys(template: &Template, diags: &mut Diagn
     fn walk(items: &[Item], flow_ok: bool, prefix: &str, diags: &mut Diagnostics) {
         for (i, item) in items.iter().enumerate() {
             let path = format!("{prefix}[{i}]");
-            if let Item::Table(t) = item {
-                if !flow_ok
-                    && (t.auto_page_break.is_some()
-                        || t.repeat_header.is_some()
-                        || t.keep_together.is_some())
-                {
-                    diags.push(
-                        Diagnostic::new(Code::TablePaginationKeyIgnored).with_path(path.clone()),
-                    );
-                }
+            if let Item::Table(t) = item
+                && !flow_ok
+                && (t.auto_page_break.is_some()
+                    || t.repeat_header.is_some()
+                    || t.keep_together.is_some())
+            {
+                diags
+                    .push(Diagnostic::new(Code::TablePaginationKeyIgnored).with_path(path.clone()));
             }
             for list in item.child_lists() {
                 if list.holder == ChildHolder::Container {

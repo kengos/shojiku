@@ -52,15 +52,15 @@ pub(super) fn element_cell_images(template: &Template) -> Vec<CellImage<'_>> {
                 // assets — mirroring `guarded_image_atom`. A
                 // `scope: document` binding is one shared asset, so it
                 // loads through the shared walk instead.
-                if super::super::is_element_scoped(image) {
-                    if let Some(binding) = &image.data {
-                        out.push(CellImage {
-                            array_key,
-                            binding_key: &binding.key,
-                            ident: image.id.as_deref(),
-                            path: path.clone(),
-                        });
-                    }
+                if super::super::is_element_scoped(image)
+                    && let Some(binding) = &image.data
+                {
+                    out.push(CellImage {
+                        array_key,
+                        binding_key: &binding.key,
+                        ident: image.id.as_deref(),
+                        path: path.clone(),
+                    });
                 }
             }
             for list in item.child_lists() {

@@ -207,8 +207,7 @@ fn fr_rows_subtract_the_measured_height_of_an_auto_row() {
             &children,
         );
         let (_, diags) = run(&yaml, json!({}));
-        let hit = diags.iter().any(|d| d.code == "grid_row_overflow");
-        hit
+        diags.iter().any(|d| d.code == "grid_row_overflow")
     };
     assert!(
         !overflows(70.0),

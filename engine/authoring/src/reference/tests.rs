@@ -24,10 +24,10 @@ fn refs(node: &Value, out: &mut Vec<String>) {
     match node {
         Value::Object(map) => {
             for (key, value) in map {
-                if key == "$ref" {
-                    if let Some(target) = value.as_str() {
-                        out.push(target.to_string());
-                    }
+                if key == "$ref"
+                    && let Some(target) = value.as_str()
+                {
+                    out.push(target.to_string());
                 }
                 refs(value, out);
             }

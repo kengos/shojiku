@@ -129,10 +129,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
             ),
         };
 
-        if is_blank(value) {
-            if let Some(text) = placeholder.or(spec.and_then(|s| s.placeholder.as_deref())) {
-                return text.to_string();
-            }
+        if is_blank(value)
+            && let Some(text) = placeholder.or(spec.and_then(|s| s.placeholder.as_deref()))
+        {
+            return text.to_string();
         }
 
         let Some(value) = value else {

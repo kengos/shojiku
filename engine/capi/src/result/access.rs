@@ -25,7 +25,7 @@ use crate::status::{shield_status, SHOJIKU_ERR_NULL_ARG, SHOJIKU_ERR_OUT_OF_RANG
 /// # Safety
 ///
 /// See the module-level contract.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_result_success(
     result: *const ShojikuResult,
     out: *mut i32,
@@ -48,7 +48,7 @@ pub unsafe extern "C" fn shojiku_result_success(
 /// # Safety
 ///
 /// See the module-level contract.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_result_pdf(
     result: *const ShojikuResult,
     out_ptr: *mut *const u8,
@@ -63,7 +63,7 @@ pub unsafe extern "C" fn shojiku_result_pdf(
 /// # Safety
 ///
 /// See the module-level contract.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_result_json(
     result: *const ShojikuResult,
     out_ptr: *mut *const u8,
@@ -79,7 +79,7 @@ pub unsafe extern "C" fn shojiku_result_json(
 /// # Safety
 ///
 /// See the module-level contract.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_result_diagnostics_json(
     result: *const ShojikuResult,
     out_ptr: *mut *const u8,
@@ -95,7 +95,7 @@ pub unsafe extern "C" fn shojiku_result_diagnostics_json(
 /// # Safety
 ///
 /// See the module-level contract.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_result_error_json(
     result: *const ShojikuResult,
     out_ptr: *mut *const u8,
@@ -110,7 +110,7 @@ pub unsafe extern "C" fn shojiku_result_error_json(
 /// # Safety
 ///
 /// See the module-level contract.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_result_page_count(
     result: *const ShojikuResult,
     out: *mut usize,
@@ -132,7 +132,7 @@ pub unsafe extern "C" fn shojiku_result_page_count(
 /// # Safety
 ///
 /// See the module-level contract.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_result_page_png(
     result: *const ShojikuResult,
     index: usize,
@@ -159,7 +159,7 @@ pub unsafe extern "C" fn shojiku_result_page_png(
 ///
 /// See the module-level contract. Freeing the same handle twice is undefined
 /// behaviour, as it is for any C allocator.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_result_free(result: *mut ShojikuResult) {
     // Shielded like every other entry point that runs code. Dropping our own
     // buffers has no panic in it today, but "the destructor cannot panic" is

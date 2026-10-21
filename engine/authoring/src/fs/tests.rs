@@ -6,8 +6,14 @@ use super::*;
 fn font_and_locale_search_lists_are_additive() {
     // Single test so the env-var mutation cannot race a parallel reader.
     let flag = PathBuf::from("/flag");
-    std::env::set_var("SHOJIKU_FONT_DIR", "/env/fonts");
-    std::env::set_var("SHOJIKU_LOCALE_DIR", "/env/locale");
+    // SAFETY: test-only. The write can race only a read that bypasses
+    // std's environment lock, i.e. C code calling `getenv` on another test
+    // thread; every read this crate's own code makes goes through
+    // `std::env`, which takes that lock.
+    unsafe {
+        std::env::set_var("SHOJIKU_FONT_DIR", "/env/fonts");
+        std::env::set_var("SHOJIKU_LOCALE_DIR", "/env/locale");
+    }
     // Flag first (priority), then env, then the repo default.
     assert_eq!(
         resolve_font_dirs(std::slice::from_ref(&flag)),
@@ -29,8 +35,11 @@ fn font_and_locale_search_lists_are_additive() {
         resolve_font_dirs(std::slice::from_ref(&flag))[0]
     );
     assert_eq!(primary_font_dir(&[]), resolve_font_dirs(&[])[0]);
-    std::env::remove_var("SHOJIKU_FONT_DIR");
-    std::env::remove_var("SHOJIKU_LOCALE_DIR");
+    // SAFETY: as for the writes above.
+    unsafe {
+        std::env::remove_var("SHOJIKU_FONT_DIR");
+        std::env::remove_var("SHOJIKU_LOCALE_DIR");
+    }
     // No flag, no env → just the default.
     assert_eq!(resolve_font_dirs(&[]), vec![PathBuf::from("packs/fonts")]);
     assert_eq!(primary_font_dir(&[]), resolve_font_dirs(&[])[0]);

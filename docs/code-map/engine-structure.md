@@ -180,7 +180,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 93 files / 11759 lines; tests 108 files / 15369 lines
+### `core` (L1) — 93 files / 11758 lines; tests 108 files / 15369 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -209,7 +209,7 @@ first sentence of its `//!` header.
 - `src/parse/locate.rs` 124 — Re-locates a template parse failure that the tagged-enum buffering cut short.
 - `src/parse/nesting.rs` 116 — The template nesting bound, checked on the pass-1 tree before the typed parse reads the document.
 - `src/parse/trail.rs` 68 — The path a walk over the pass-1 tree is at, kept as segments borrowed from the tree and spelled out only when a walk reports it.
-- `src/ruby.rs` 283 ▲ — Aozora-bunko markup (`|base《reading》` ruby + `［＃…］` notes) — the `markup: aozora` grammar for `char_grid` content.
+- `src/ruby.rs` 284 ▲ — Aozora-bunko markup (`|base《reading》` ruby + `［＃…］` notes) — the `markup: aozora` grammar for `char_grid` content.
 - `src/ruby/grammar.rs` 121 — `［＃…］` note-body grammars beyond the sheet break: the large-writing span notes and the per-line placement notes.
 - `src/ruby/note.rs` 42 — `［＃…］` aozora notes inside `markup: aozora` content: the scan that finds a note's body and recognizes the sheet break.
 - `src/ruby/placement.rs` 21 — Per-line placement asked for by an aozora `［＃…］` note: where the source line's characters sit along their line.
@@ -256,13 +256,13 @@ first sentence of its `//!` header.
 - `src/validate/bindings/decl/surfaces.rs` 65 — Which strings an item interpolates and which declaration map serves them — the item-shape half of the declaration checks, kept pure so adding a carrier is one arm in one place.
 - `src/validate/bindings/decl/walks.rs` 63 — The two walks over a section's items that drive the declaration checks — kept beside them rather than inside, so the checks and the traversal that feeds them stay separately readable.
 - `src/validate/bindings/entry.rs` 115 — A `list`'s per-ENTRY scope: its `text:` template and its own `bindings:` declarations resolve against ONE ELEMENT of the array it binds, not against the ambient scope.
-- `src/validate/box_keys.rs` 89 — Context-inert authoring-key checks: keys that lay out nothing where they are written.
+- `src/validate/box_keys.rs` 88 — Context-inert authoring-key checks: keys that lay out nothing where they are written.
 - `src/validate/collect.rs` 178 — Template walks that gather items for cross-checks (tables, images, repeats) and enforce the container depth cap.
 - `src/validate/deprecated.rs` 55 — Wire forms that still parse and render but are marked for removal, each reported as `deprecated_syntax` so an author sees it a release before the form stops parsing.
 - `src/validate/document.rs` 66 — `document:` metadata checks: the interpolation keys each metadata string references, the charset scan that catches a `{品名}` mistake, and the two list caps.
 - `src/validate/equals.rs` 108 — What a declarative `{ key, equals?
 - `src/validate/formats.rs` 56 — Presentation-defaults checks: the `formats:` registry (reserved names, size cap) and `defaults.formats` (inline patterns only make sense on date/datetime).
-- `src/validate/presence.rs` 224 — Presence-binding validation, for both surfaces that carry one: a form mark's `data:` and any item's `visible:`.
+- `src/validate/presence.rs` 223 — Presence-binding validation, for both surfaces that carry one: a form mark's `data:` and any item's `visible:`.
 - `src/validate/ruby.rs` 54 — Structural checks for text-item `ruby` readings: empty entries, the MAX_RUBY_ENTRIES cap, and the per-entry length cap.
 - `src/validate/schema.rs` 237 — Definitions-schema checks: params-vs-schema validation (required keys, value types, ranges, enum membership, unknown keys) and the format/base-type coherence warning.
 - `src/validate/shapes.rs` 45 — Shape-style checks: inert style keys on the inline style of `rect`/ `ellipse`/`checkbox`/text `mark` items (`shape_style_ignored`) — each shape paints with only part of the box-decoration subset of [`Style`] (`crate::facts::painted_by`).
@@ -346,7 +346,7 @@ first sentence of its `//!` header.
 - `src/resolve.rs` 85 — Guarded length/edge resolution: `%` -> absolute pt against a [`Basis`], with the range caps untrusted templates require.
 - `src/resolved.rs` 164 — [`ResolvedBox`]: one item box (`OptBox`) resolved against its parent — margins, padding, and the border-box position/size, with the content-box helpers every item kind shares.
 
-### `fetch` (L3) — 7 files / 701 lines; tests 7 files / 1151 lines
+### `fetch` (L3) — 7 files / 701 lines; tests 7 files / 1161 lines
 
 - `src/cache.rs` 140 — The local font cache: content-addressed blobs keyed by the manifest sha256, so a cached face is self-describing — the file name IS the expectation, and a blob whose bytes stop matching it is simply a miss.
 - `src/ensure.rs` 184 — Making every resolved face present on disk before the font store loads it.
@@ -372,7 +372,7 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 132 files / 19574 lines; tests 270 files / 37968 lines
+### `layout` (L3) — 132 files / 19576 lines; tests 270 files / 37967 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -435,7 +435,7 @@ first sentence of its `//!` header.
 - `src/engine/repeat/marks.rs` 250 — Cut marks for an imposition grid: short ticks just outside the grid's bounding box at every cut position, so the imposed sheet can be cut without measuring.
 - `src/engine/repeat/pages.rs` 126 — Pure imposition page math: how many grid rows fit on the first page, and which page/slot each bound element lands in.
 - `src/engine/repeat_flow.rs` 78 — Flow repeat (`type: repeat_flow`): one auto-height card per array element, stacked in flow with `gap` and paginating card-by-card.
-- `src/engine/resolve.rs` 135 — Resolve-pass primitives: thin `Ctx` bridges to the box-model math in `shojiku-layout-box` (length/edge resolution, `ResolvedBox`), the page margin resolution, and the layered style resolver (engine default <- inherited <- named styles <- inline).
+- `src/engine/resolve.rs` 136 — Resolve-pass primitives: thin `Ctx` bridges to the box-model math in `shojiku-layout-box` (length/edge resolution, `ResolvedBox`), the page margin resolution, and the layered style resolver (engine default <- inherited <- named styles <- inline).
 - `src/engine/resolve/sane.rs` 157 — Sanity guards over the style scalars a template can set to anything: color, font size, line height, letter spacing, and the two stroke widths.
 - `src/engine/sheet.rs` 21 — Sheet-level placement: the one emit tail every band and absolute-body item goes through, and the page-edge overflow check it carries.
 - `src/engine/table.rs` 239 — Tables: row-by-row pagination, repeating headers, keep-together, and the id-addressable table fragments.
@@ -454,7 +454,7 @@ first sentence of its `//!` header.
 - `src/engine/text/block/glyphs.rs` 70 — Missing-glyph (tofu) diagnostics: the capped distinct-offender scan shared by plain blocks and rich spans.
 - `src/engine/text/block/lines.rs` 115 — Plain-text line placement for [`super`]'s `text_block`: wrapping with the block's settings, then measuring and aligning each wrapped line (including the hanging-punctuation exclusion) into placed [`TextLine`]s.
 - `src/engine/text/chrome.rs` 84 — The assembly tail every text-block builder shares — decoration under the block, the `textOverflow: clip` wrapper around it — and the split channel it fills.
-- `src/engine/text/height.rs` 55 — Definite-height overflow bookkeeping shared by the plain ([`super::block`]) and rich ([`super::rich`]) block builders: available content height, the final reserved height under an overflow policy, and the post-policy overflow warning.
+- `src/engine/text/height.rs` 56 — Definite-height overflow bookkeeping shared by the plain ([`super::block`]) and rich ([`super::rich`]) block builders: available content height, the final reserved height under an overflow policy, and the post-policy overflow warning.
 - `src/engine/text/mark.rs` 168 — Text-anchored circled-text overlay: an oval auto-centered on a text item's glyph band, computed from the finished block's line geometry and the primary face's cap/ascent/descent metrics.
 - `src/engine/text/metrics.rs` 108 — Inspect text-metrics builder: per-line baseline + cap/em band for an id-carrying horizontal text item, per-column axis + em band for a vertical one — so the Designer (and an AI patch loop) can snap overlays to the glyph band instead of pixel-measuring a preview.
 - `src/engine/text/overflow.rs` 131 — Text overflow policies: `shrink` (fit-to-box font scaling) and `ellipsis` (line clamp + `…`) for definite-height boxes.
@@ -525,7 +525,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 42 files / 5159 lines; tests 44 files / 6001 lines
+### `authoring` (L5) — 42 files / 5159 lines; tests 44 files / 6010 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -590,7 +590,7 @@ first sentence of its `//!` header.
 - `src/status.rs` 171 — Status codes, the panic shield, and the failure type every operation funnels into.
 - `src/status/wire.rs` 93 — How a [`Failure`] renders for the caller, and the JSON encoder the whole crate shares.
 
-### `cli` (L6) — 15 files / 2105 lines; tests 33 files / 5072 lines
+### `cli` (L6) — 15 files / 2105 lines; tests 33 files / 5077 lines
 
 - `src/args.rs` 204 — The flags each command takes, as clap types.
 - `src/args/font.rs` 108 — Flags for the `font` command — creating a user font pack on disk.

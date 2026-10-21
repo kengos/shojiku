@@ -212,18 +212,28 @@ fn temp_envs<F: FnOnce()>(vars: &[(&str, Option<&str>)], f: F) {
     apply(vars);
     f();
     for (k, v) in old {
-        match v {
-            Some(v) => std::env::set_var(k, v),
-            None => std::env::remove_var(k),
-        }
+        set_or_clear(k, v);
     }
 }
 
 fn apply(vars: &[(&str, Option<&str>)]) {
     for (k, v) in vars {
-        match v {
-            Some(v) => std::env::set_var(k, v),
-            None => std::env::remove_var(k),
+        set_or_clear(k, v.map(std::ffi::OsString::from));
+    }
+}
+
+/// The one place these tests write the process environment.
+fn set_or_clear(key: &str, value: Option<std::ffi::OsString>) {
+    // SAFETY: test-only. The write can race only a read that bypasses
+    // std's environment lock, i.e. C code calling `getenv` on another test
+    // thread; every read this crate's own code makes goes through
+    // `std::env`, which takes that lock. (`temp_envs`'s own lock keeps
+    // these tests from seeing each other's values; it is not what makes
+    // the write sound.)
+    unsafe {
+        match value {
+            Some(v) => std::env::set_var(key, v),
+            None => std::env::remove_var(key),
         }
     }
 }

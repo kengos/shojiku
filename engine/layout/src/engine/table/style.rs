@@ -29,10 +29,10 @@ fn authored<T: Clone>(
 ) -> Option<T> {
     let mut value = None;
     for name in names.iter().take(MAX_STYLE_NAMES) {
-        if let Some(style) = ctx.input.template.styles.get(name) {
-            if let Some(v) = pick(style) {
-                value = Some(v);
-            }
+        if let Some(style) = ctx.input.template.styles.get(name)
+            && let Some(v) = pick(style)
+        {
+            value = Some(v);
         }
     }
     pick(inline).or(value)

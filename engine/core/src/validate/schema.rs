@@ -208,10 +208,10 @@ fn check_range(key: &str, value: Option<f64>, schema: &Schema, diags: &mut Diagn
 /// participates). The expected list is never echoed — only the key names
 /// the field.
 fn check_enum(key: &str, schema: &Schema, value: &Value, diags: &mut Diagnostics) {
-    if let Some(values) = &schema.enum_values {
-        if !values.iter().any(|entry| entry.value() == value) {
-            diags.push(Diagnostic::new(Code::ParamsEnumMismatch).arg("key", key));
-        }
+    if let Some(values) = &schema.enum_values
+        && !values.iter().any(|entry| entry.value() == value)
+    {
+        diags.push(Diagnostic::new(Code::ParamsEnumMismatch).arg("key", key));
     }
 }
 

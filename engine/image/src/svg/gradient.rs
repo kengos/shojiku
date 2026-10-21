@@ -71,10 +71,10 @@ pub(super) struct GradientDef {
 pub(super) fn collect(doc: &roxmltree::Document, warnings: &mut Warnings) -> GradientMap {
     let mut map = GradientMap::new();
     for node in doc.descendants().filter(roxmltree::Node::is_element) {
-        if matches!(node.tag_name().name(), "linearGradient" | "radialGradient") {
-            if let Some((id, def)) = parse::parse_def(&node, warnings) {
-                map.insert(id, def);
-            }
+        if matches!(node.tag_name().name(), "linearGradient" | "radialGradient")
+            && let Some((id, def)) = parse::parse_def(&node, warnings)
+        {
+            map.insert(id, def);
         }
     }
     map

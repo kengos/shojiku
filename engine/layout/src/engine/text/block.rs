@@ -66,65 +66,65 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // the policy).
         let avail = box_h.map(|h| content_avail(h, padding));
         let mut clip = false;
-        if let Some(avail) = avail {
-            if content_h > avail + 0.01 {
-                match computed.text_overflow {
-                    TextOverflow::Visible => {}
-                    // `clip` keeps every line; the block reserves the
-                    // authored height and the renderers cut at its edge
-                    // (a partially visible line is clipped, not clamped).
-                    TextOverflow::Clip => clip = true,
-                    // Shrink probes and the ellipsis clamp measure
-                    // untrimmed on purpose — the safe-upper-bound rule
-                    // lives on `super::overflow`'s module header.
-                    TextOverflow::Shrink => {
-                        size = fit_font_size(
-                            &resolved.faces,
-                            content,
-                            size,
-                            lh_mult,
-                            content_w,
-                            avail,
-                            computed.line_break,
-                            letter_spacing,
+        if let Some(avail) = avail
+            && content_h > avail + 0.01
+        {
+            match computed.text_overflow {
+                TextOverflow::Visible => {}
+                // `clip` keeps every line; the block reserves the
+                // authored height and the renderers cut at its edge
+                // (a partially visible line is clipped, not clamped).
+                TextOverflow::Clip => clip = true,
+                // Shrink probes and the ellipsis clamp measure
+                // untrimmed on purpose — the safe-upper-bound rule
+                // lives on `super::overflow`'s module header.
+                TextOverflow::Shrink => {
+                    size = fit_font_size(
+                        &resolved.faces,
+                        content,
+                        size,
+                        lh_mult,
+                        content_w,
+                        avail,
+                        computed.line_break,
+                        letter_spacing,
+                    );
+                    line_height = size * lh_mult;
+                    wrapped = wrap_plain(
+                        computed,
+                        &resolved.faces,
+                        content,
+                        size,
+                        content_w,
+                        letter_spacing,
+                    );
+                    content_h = wrapped.len() as f64 * line_height;
+                }
+                TextOverflow::Ellipsis => {
+                    // `line_height > 0` (both factors sanity-guarded),
+                    // and `avail` is capped by MAX_RESOLVED_PT, so the
+                    // cast is finite and bounded.
+                    let max_lines = (avail / line_height).floor() as usize;
+                    if max_lines == 0 {
+                        self.diags.push(
+                            Diagnostic::new(Code::TextOverflow)
+                                .arg("content", line_height)
+                                .arg("avail", avail),
                         );
-                        line_height = size * lh_mult;
-                        wrapped = wrap_plain(
-                            computed,
-                            &resolved.faces,
-                            content,
-                            size,
-                            content_w,
-                            letter_spacing,
-                        );
-                        content_h = wrapped.len() as f64 * line_height;
                     }
-                    TextOverflow::Ellipsis => {
-                        // `line_height > 0` (both factors sanity-guarded),
-                        // and `avail` is capped by MAX_RESOLVED_PT, so the
-                        // cast is finite and bounded.
-                        let max_lines = (avail / line_height).floor() as usize;
-                        if max_lines == 0 {
-                            self.diags.push(
-                                Diagnostic::new(Code::TextOverflow)
-                                    .arg("content", line_height)
-                                    .arg("avail", avail),
-                            );
-                        }
-                        let texts = wrapped.iter().map(WrappedLine::text).collect();
-                        let clamped = clamp_with_ellipsis(
-                            &resolved.faces,
-                            texts,
-                            size,
-                            letter_spacing,
-                            content_w,
-                            max_lines,
-                        );
-                        // Clamped lines re-enter as plain non-hung lines
-                        // (the `…` is the tail now, not a hung comma).
-                        wrapped = clamped.into_iter().map(WrappedLine::plain).collect();
-                        content_h = wrapped.len() as f64 * line_height;
-                    }
+                    let texts = wrapped.iter().map(WrappedLine::text).collect();
+                    let clamped = clamp_with_ellipsis(
+                        &resolved.faces,
+                        texts,
+                        size,
+                        letter_spacing,
+                        content_w,
+                        max_lines,
+                    );
+                    // Clamped lines re-enter as plain non-hung lines
+                    // (the `…` is the tail now, not a hung comma).
+                    wrapped = clamped.into_iter().map(WrappedLine::plain).collect();
+                    content_h = wrapped.len() as f64 * line_height;
                 }
             }
         }
