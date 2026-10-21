@@ -180,29 +180,18 @@ fn push_images<'a>(
 ) {
     for (index, item) in items.iter().enumerate() {
         let path = format!("{prefix}[{index}]");
-        match item {
-            Item::Image(image) if !in_cell || !is_element_scoped(image) => out.push((path, image)),
-            Item::Container(container) => {
-                push_images(&container.items, &format!("{path}.items"), in_cell, out);
+        if let Item::Image(image) = item {
+            if !in_cell || !is_element_scoped(image) {
+                out.push((path.clone(), image));
             }
-            Item::Repeat(repeat) => {
-                push_images(&repeat.cell.items, &format!("{path}.cell.items"), true, out);
-            }
-            Item::RepeatFlow(rf) => {
-                push_images(&rf.item.items, &format!("{path}.item.items"), true, out);
-            }
-            // A table column's `cell:` is a per-element cell too — its
-            // shared images (`src:`, `scope: document`) load here, its
-            // element-scoped ones through the cell walk.
-            Item::Table(table) => {
-                for (ci, column) in table.columns.iter().enumerate() {
-                    if let Some(cell) = &column.cell {
-                        let prefix = format!("{path}.columns[{ci}].cell.items");
-                        push_images(&cell.items, &prefix, true, out);
-                    }
-                }
-            }
-            _ => {}
+        }
+        // Every box but a container is a per-element cell — a `repeat`
+        // cell, a `repeat_flow` card, a table column's `cell:` — whose
+        // shared images (`src:`, `scope: document`) load here, its
+        // element-scoped ones through the cell walk.
+        for list in item.child_lists() {
+            let in_cell = in_cell || list.array_key.is_some();
+            push_images(&list.container.items, &list.items_path(&path), in_cell, out);
         }
     }
 }

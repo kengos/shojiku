@@ -7,7 +7,7 @@
 //! act on a flow-body table (`table_pagination_key_ignored`).
 
 use crate::geometry::{BoxType, OptBox};
-use crate::template::{Body, Item, Template};
+use crate::template::{Body, ChildHolder, Item, Template};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
 use super::walk_sections;
@@ -58,18 +58,21 @@ pub(super) fn check_table_pagination_keys(template: &Template, diags: &mut Diagn
     fn walk(items: &[Item], flow_ok: bool, prefix: &str, diags: &mut Diagnostics) {
         for (i, item) in items.iter().enumerate() {
             let path = format!("{prefix}[{i}]");
-            match item {
-                Item::Table(t) if !flow_ok => {
-                    if t.auto_page_break.is_some()
+            if let Item::Table(t) = item {
+                if !flow_ok
+                    && (t.auto_page_break.is_some()
                         || t.repeat_header.is_some()
-                        || t.keep_together.is_some()
-                    {
-                        diags
-                            .push(Diagnostic::new(Code::TablePaginationKeyIgnored).with_path(path));
-                    }
+                        || t.keep_together.is_some())
+                {
+                    diags.push(
+                        Diagnostic::new(Code::TablePaginationKeyIgnored).with_path(path.clone()),
+                    );
                 }
-                Item::Container(c) => walk(&c.items, false, &format!("{path}.items"), diags),
-                _ => {}
+            }
+            for list in item.child_lists() {
+                if list.holder == ChildHolder::Container {
+                    walk(&list.container.items, false, &list.items_path(&path), diags);
+                }
             }
         }
     }

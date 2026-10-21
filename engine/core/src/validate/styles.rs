@@ -3,7 +3,7 @@
 
 use crate::length::snippet;
 use crate::style::{Style, MAX_STYLES, MAX_STYLE_NAMES};
-use crate::template::{Item, Template};
+use crate::template::{ChildHolder, ChildList, Item, Template};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 use std::collections::BTreeMap;
 
@@ -49,20 +49,10 @@ fn walk_style_names(
                 }
             }
             Item::PageNumber(p) => check_names(&p.style_names, &path, known, diags),
-            Item::Container(c) => {
-                check_names(&c.style_names, &path, known, diags);
-                walk_style_names(&c.items, &format!("{path}.items"), known, diags);
-            }
-            Item::Repeat(r) => {
-                // The cell is a container: check its own styleNames, then walk
-                // its children.
-                check_names(&r.cell.style_names, &format!("{path}.cell"), known, diags);
-                walk_style_names(&r.cell.items, &format!("{path}.cell.items"), known, diags);
-            }
-            Item::RepeatFlow(rf) => {
-                // The card is a container, like a repeat cell.
-                check_names(&rf.item.style_names, &format!("{path}.item"), known, diags);
-                walk_style_names(&rf.item.items, &format!("{path}.item.items"), known, diags);
+            Item::Container(_) | Item::Repeat(_) | Item::RepeatFlow(_) => {
+                for list in item.child_lists() {
+                    walk_box(&list, &path, known, diags);
+                }
             }
             Item::Table(t) => {
                 check_names(&t.style_names, &path, known, diags);
@@ -84,19 +74,21 @@ fn walk_style_names(
                 if let Some(header) = &t.header {
                     check_names(&header.style_names, &format!("{path}.header"), known, diags);
                 }
+                // Each column's own styleNames come before its `cell:` box,
+                // so the boxes are taken in step with the columns (a table
+                // holds no other box).
+                let mut cells = item.child_lists().into_iter().peekable();
                 for (ci, column) in t.columns.iter().enumerate() {
-                    let col_path = format!("{path}.columns[{ci}]");
-                    check_names(&column.style_names, &col_path, known, diags);
-                    // A `cell:` column's sub-template is a container, like
-                    // a repeat cell: its own styleNames, then its children.
-                    if let Some(cell) = &column.cell {
-                        check_names(&cell.style_names, &format!("{col_path}.cell"), known, diags);
-                        walk_style_names(
-                            &cell.items,
-                            &format!("{col_path}.cell.items"),
-                            known,
-                            diags,
-                        );
+                    check_names(
+                        &column.style_names,
+                        &format!("{path}.columns[{ci}]"),
+                        known,
+                        diags,
+                    );
+                    if let Some(cell) =
+                        cells.next_if(|list| list.holder == ChildHolder::ColumnCell { column: ci })
+                    {
+                        walk_box(&cell, &path, known, diags);
                     }
                 }
             }
@@ -112,6 +104,29 @@ fn walk_style_names(
             Item::Line(_) | Item::PageBreak(_) => {}
         }
     }
+}
+
+/// A box of nested items — a container, a `repeat` cell, a `repeat_flow`
+/// card or a `cell:` column — is styled like a container: its own
+/// styleNames, then its children.
+fn walk_box(
+    list: &ChildList<'_>,
+    item_path: &str,
+    known: &BTreeMap<String, Style>,
+    diags: &mut Diagnostics,
+) {
+    check_names(
+        &list.container.style_names,
+        &list.box_path(item_path),
+        known,
+        diags,
+    );
+    walk_style_names(
+        &list.container.items,
+        &list.items_path(item_path),
+        known,
+        diags,
+    );
 }
 
 fn check_names(

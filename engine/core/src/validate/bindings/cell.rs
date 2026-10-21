@@ -6,7 +6,7 @@
 
 use crate::catalog::Catalog;
 use crate::interpolate::{parse_segments, Segment};
-use crate::template::{Binding, BindingScope, Bindings, Item, Link};
+use crate::template::{Binding, BindingScope, Bindings, ChildHolder, Item, Link};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics, Echo};
 
 use super::decl::{check_item_keys, DeclCtx};
@@ -162,10 +162,12 @@ pub(in crate::validate) fn check_cell_bindings(
                 super::entry::check_list_source(list, &decl_ctx, &path, diags);
                 super::entry::check_list_entries(list, &decl_ctx, &path, diags);
             }
-            Item::Container(container) => {
-                check_cell_bindings(&container.items, cell, &format!("{path}.items"), diags);
-            }
             _ => {}
+        }
+        for list in item.child_lists() {
+            if list.holder == ChildHolder::Container {
+                check_cell_bindings(&list.container.items, cell, &list.items_path(&path), diags);
+            }
         }
     }
 }

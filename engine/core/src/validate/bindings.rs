@@ -12,7 +12,7 @@ use crate::catalog::Catalog;
 use crate::definitions::FieldType;
 use crate::interpolate::{parse_segments, Segment};
 use crate::params::resolve_path;
-use crate::template::{Bindings, Item, Link, NamedFormat};
+use crate::template::{Bindings, ChildHolder, Item, Link, NamedFormat};
 use serde_json::Value;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 use std::collections::BTreeMap;
@@ -184,11 +184,8 @@ pub(super) fn walk_item<F: FnMut(&str, Option<&str>, Option<&str>, &str)>(
             }
             walk_text(url_of(image.link.as_ref()), &image.bindings, path, check);
         }
-        Item::Container(container) => {
-            for (i, child) in container.items.iter().enumerate() {
-                walk_item(child, &format!("{path}.items[{i}]"), check);
-            }
-        }
+        // A container's children are walked below.
+        Item::Container(_) => {}
         Item::QrCode(qr) => {
             if let Some(binding) = &qr.data {
                 check(
@@ -243,5 +240,16 @@ pub(super) fn walk_item<F: FnMut(&str, Option<&str>, Option<&str>, &str)>(
         // (`missing_data` / `not_an_array`), and its per-entry keys
         // against the element scope in [`entry`].
         Item::Repeat(_) | Item::RepeatFlow(_) | Item::List(_) => {}
+    }
+    // Only a container's children share its scalar scope; every other box
+    // is element-scoped, and checked where its array is (the repeat check
+    // in `validate`, a table's `cell:` columns in `validate/tables.rs`).
+    for list in item.child_lists() {
+        if list.holder == ChildHolder::Container {
+            let items_path = list.items_path(path);
+            for (i, child) in list.container.items.iter().enumerate() {
+                walk_item(child, &format!("{items_path}[{i}]"), check);
+            }
+        }
     }
 }

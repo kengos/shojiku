@@ -37,8 +37,9 @@ injected at parse). The template model splits along CSS lines.
   data-scoped box is placed for (`None` = the parent's scope).
   `ChildList::box_path` / `items_path` give the box's and its list's
   template paths. The match spells every leaf kind out, so a new nesting
-  kind must declare its boxes here. The descent step for a whole-tree
-  walk; no walk reads it yet.
+  kind must declare its boxes here. The descent step every item-tree walk
+  in `validate` and `engine/image`'s preparation takes (see
+  `validate/collect.rs` below).
 - `template/items.rs` — the drawn leaves: `TextItem` (incl. `mark`,
   `bindings` — ONE map per item serving its `text`/`link.url` AND its
   spans), `RectItem` (unified `Style`, no default stroke), `LineItem`,
@@ -339,13 +340,15 @@ injected at parse). The template model splits along CSS lines.
   Every walk (and `validate.rs`'s own per-section loops) starts from
   `Sections::item_lists` (`template/sections.rs`), so it covers the
   bands as well as the body.
-  **Every walk here descends into a table column's `cell:` — and so do
-  the three walks that keep their OWN recursion: `validate/presence.rs`
-  (a form mark's `data:` and every item's `visible:`),
-  `validate/styles.rs`, and `engine/image`'s cell walk. A new
-  cell-bearing key must be added to each — and an item list spelled
-  anything but `items:` must be taught to `parse/nesting.rs`, which counts
-  only that spelling.**
+  **The item-tree walks in `validate` and `engine/image` descend
+  through `Item::child_lists` (`template/children.rs`)**; a walk that
+  stops at containers filters on `ChildHolder::Container`, and a walk
+  that treats some boxes differently decides on `ChildList::holder` /
+  `array_key`. Layout's placement walks are separate. The depth cap
+  reports an over-deep `cell:` column at `<item>.columns[<i>]`, one
+  level above its box. An item list spelled anything but `items:` must
+  still be taught to `parse/nesting.rs`, which counts only that
+  spelling.
 - `validate/styles.rs` — named-style refs (spans, shapes, text mark,
   conditional-style entries included). `validate/shapes.rs` — inert keys
   on shape styles, per surface (`Item::kind()` → `Style::ignored_on`).
