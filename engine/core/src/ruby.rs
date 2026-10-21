@@ -221,13 +221,14 @@ impl Parser {
             });
             return;
         }
-        if !target.is_empty() && self.plain.is_empty() && self.bar.is_none() {
-            if let Some(last) = self.segments.last_mut() {
-                if last.text == target {
-                    last.scale = Some(scale);
-                    return;
-                }
-            }
+        if !target.is_empty()
+            && self.plain.is_empty()
+            && self.bar.is_none()
+            && let Some(last) = self.segments.last_mut()
+            && last.text == target
+        {
+            last.scale = Some(scale);
+            return;
         }
         self.warnings.push(RubyWarning::LargeNoTarget);
         self.echo_note(body);

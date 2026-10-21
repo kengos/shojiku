@@ -148,11 +148,11 @@ pub fn format_value(
     // `datetimeFormats.date`, not re-type the value and render the date
     // default under a label that promised the pack's pattern. Every name no
     // pack or registry declares still overrides, on every type.
-    if let Some(v) = variant.filter(|v| !dated::declares(v, field_type, &ctx, pack)) {
-        if let Some(overridden) = FieldType::from_name(v) {
-            field_type = overridden;
-            variant = None;
-        }
+    if let Some(v) = variant.filter(|v| !dated::declares(v, field_type, &ctx, pack))
+        && let Some(overridden) = FieldType::from_name(v)
+    {
+        field_type = overridden;
+        variant = None;
     }
     // A currency-variant pick on a plain number promotes the value to
     // currency, keeping the variant (the code rides the `defaults.currency`

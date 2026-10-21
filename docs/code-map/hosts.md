@@ -759,7 +759,7 @@ per SDK covers both.
   not produce.
 - `include/shojiku.h` — hand-written (cbindgen was rejected: a new toolchain
   dependency for a 15-symbol surface, and the prose is the point). A parity
-  test in `tests/capi/header.rs` runs BOTH ways against the `#[no_mangle]`
+  test in `tests/capi/header.rs` runs BOTH ways against the `#[unsafe(no_mangle)]`
   attributes, so the two cannot drift.
 - `tests/capi/` — the near-e2e suite, driven through the exported symbols and
   the real accessors only: anything an SDK cannot do, the tests do not do.

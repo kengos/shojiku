@@ -180,10 +180,10 @@ fn push_images<'a>(
 ) {
     for (index, item) in items.iter().enumerate() {
         let path = format!("{prefix}[{index}]");
-        if let Item::Image(image) = item {
-            if !in_cell || !is_element_scoped(image) {
-                out.push((path.clone(), image));
-            }
+        if let Item::Image(image) = item
+            && (!in_cell || !is_element_scoped(image))
+        {
+            out.push((path.clone(), image));
         }
         // Every box but a container is a per-element cell — a `repeat`
         // cell, a `repeat_flow` card, a table column's `cell:` — whose

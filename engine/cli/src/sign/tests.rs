@@ -223,7 +223,11 @@ fn the_real_source_reads_the_process_environment() {
     // The adapter the command uses outside tests. Named per process so a
     // parallel test cannot see or clobber it.
     let name = format!("SHOJIKU_PASSPHRASE_PROBE_{}", std::process::id());
-    std::env::set_var(&name, "a value from the environment");
+    // SAFETY: test-only. The write can race only a read that bypasses
+    // std's environment lock, i.e. C code calling `getenv` on another test
+    // thread; every read this crate's own code makes goes through
+    // `std::env`, which takes that lock.
+    unsafe { std::env::set_var(&name, "a value from the environment") };
     assert_eq!(
         super::Terminal
             .read_variable(&name)
@@ -231,7 +235,8 @@ fn the_real_source_reads_the_process_environment() {
             .map(String::as_str),
         Some("a value from the environment")
     );
-    std::env::remove_var(&name);
+    // SAFETY: as for the write above.
+    unsafe { std::env::remove_var(&name) };
     assert!(super::Terminal.read_variable(&name).is_none());
 }
 

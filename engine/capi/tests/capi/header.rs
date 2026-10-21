@@ -8,7 +8,7 @@
 
 use super::*;
 
-/// Every symbol this crate exports, taken from the `#[no_mangle]` attributes
+/// Every symbol this crate exports, taken from the `#[unsafe(no_mangle)]` attributes
 /// themselves rather than from a list someone has to remember to update.
 fn exported_symbols() -> Vec<String> {
     let mut found = Vec::new();
@@ -16,7 +16,7 @@ fn exported_symbols() -> Vec<String> {
         let text = std::fs::read_to_string(&file).expect("a source file");
         let mut lines = text.lines();
         while let Some(line) = lines.next() {
-            if line.trim() != "#[no_mangle]" {
+            if line.trim() != "#[unsafe(no_mangle)]" {
                 continue;
             }
             // The signature may start on the next line or a few below it
@@ -24,7 +24,7 @@ fn exported_symbols() -> Vec<String> {
             let signature = lines
                 .by_ref()
                 .find(|line| line.contains("extern \"C\" fn "))
-                .expect("a #[no_mangle] item declares an extern fn");
+                .expect("a #[unsafe(no_mangle)] item declares an extern fn");
             found.push(fn_name(signature));
         }
     }

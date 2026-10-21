@@ -85,15 +85,15 @@ impl Style {
     /// Child style: this element's attributes over the inherited values.
     pub(super) fn updated(&self, node: &roxmltree::Node, warnings: &mut Warnings) -> Style {
         let mut style = self.clone();
-        if let Some(raw) = node.attribute("fill") {
-            if let Some(paint) = parse_fill(raw, warnings) {
-                style.fill = paint;
-            }
+        if let Some(raw) = node.attribute("fill")
+            && let Some(paint) = parse_fill(raw, warnings)
+        {
+            style.fill = paint;
         }
-        if let Some(raw) = node.attribute("stroke") {
-            if let Some(paint) = parse_stroke(raw, warnings) {
-                style.stroke = paint;
-            }
+        if let Some(raw) = node.attribute("stroke")
+            && let Some(paint) = parse_stroke(raw, warnings)
+        {
+            style.stroke = paint;
         }
         if let Some(raw) = node.attribute("stroke-width") {
             match parse_stroke_width(raw) {

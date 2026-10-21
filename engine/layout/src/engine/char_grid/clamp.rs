@@ -27,15 +27,15 @@ pub(super) fn clamp_markup(
     let scale_max = cpl.min(lines);
     let cell_max = cpl.saturating_sub(1);
     for segment in segments.iter_mut() {
-        if let Some(scale) = segment.scale {
-            if scale > scale_max {
-                clamps.push(MarkupClamp {
-                    note: "大書き",
-                    value: scale,
-                    max: scale_max,
-                });
-                segment.scale = Some(scale_max);
-            }
+        if let Some(scale) = segment.scale
+            && scale > scale_max
+        {
+            clamps.push(MarkupClamp {
+                note: "大書き",
+                value: scale,
+                max: scale_max,
+            });
+            segment.scale = Some(scale_max);
         }
         clamp_placement(&mut segment.placement, cell_max, &mut clamps);
     }

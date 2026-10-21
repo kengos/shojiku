@@ -160,17 +160,16 @@ impl<'a> PresenceCtx<'a> {
             BindingScope::Element => array,
         };
         let target = self.lookup(key, array, path);
-        if array.is_none() {
-            if let Some(params) = self.params {
-                if resolve_path(params, key).is_none() {
-                    self.diags.push(
-                        Diagnostic::new(Code::MissingData)
-                            .arg("scope", "")
-                            .arg("key", key)
-                            .with_path(path.to_string()),
-                    );
-                }
-            }
+        if array.is_none()
+            && let Some(params) = self.params
+            && resolve_path(params, key).is_none()
+        {
+            self.diags.push(
+                Diagnostic::new(Code::MissingData)
+                    .arg("scope", "")
+                    .arg("key", key)
+                    .with_path(path.to_string()),
+            );
         }
         let Some(target) = target else { return };
         let Some(equals) = equals else {

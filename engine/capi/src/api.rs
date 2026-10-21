@@ -31,7 +31,7 @@ const ABI_VERSION: u32 = 1;
 
 /// The ABI revision this library implements. Call it first; everything else
 /// assumes the caller agreed with the answer.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn shojiku_abi_version() -> u32 {
     ABI_VERSION
 }
@@ -42,7 +42,7 @@ pub extern "C" fn shojiku_abi_version() -> u32 {
 /// # Safety
 ///
 /// `out` must be null or point at one writable result-handle slot.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_engine_info(out: *mut *mut ShojikuResult) -> i32 {
     // SAFETY: `deliver` checks `out` itself; this work borrows nothing raw.
     unsafe { deliver(out, Work::Info) }
@@ -54,7 +54,7 @@ pub unsafe extern "C" fn shojiku_engine_info(out: *mut *mut ShojikuResult) -> i3
 ///
 /// `request` must point at `request_len` readable bytes for the duration of
 /// the call, and `out` must be null or point at one writable slot.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_validate(
     request: *const u8,
     request_len: usize,
@@ -74,7 +74,7 @@ pub unsafe extern "C" fn shojiku_validate(
 /// # Safety
 ///
 /// As [`shojiku_validate`].
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_render(
     request: *const u8,
     request_len: usize,
@@ -90,7 +90,7 @@ pub unsafe extern "C" fn shojiku_render(
 /// # Safety
 ///
 /// As [`shojiku_validate`].
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_preview(
     request: *const u8,
     request_len: usize,
@@ -112,7 +112,7 @@ pub unsafe extern "C" fn shojiku_preview(
 /// Each `(pointer, length)` pair must describe readable bytes for the
 /// duration of the call; `passphrase` may be null; `out` must be null or
 /// point at one writable slot.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_sign(
     pdf: *const u8,
     pdf_len: usize,
@@ -151,7 +151,7 @@ pub unsafe extern "C" fn shojiku_sign(
 ///
 /// Each `(pointer, length)` pair must describe readable bytes for the
 /// duration of the call; `out` must be null or point at one writable slot.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_sign_prepare(
     pdf: *const u8,
     pdf_len: usize,
@@ -182,7 +182,7 @@ pub unsafe extern "C" fn shojiku_sign_prepare(
 /// # Safety
 ///
 /// As [`shojiku_sign_prepare`].
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_sign_complete(
     pdf: *const u8,
     pdf_len: usize,
@@ -221,7 +221,7 @@ pub unsafe extern "C" fn shojiku_sign_complete(
 ///
 /// Each `(pointer, length)` pair must describe readable bytes for the
 /// duration of the call; `out` must be null or point at one writable slot.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn shojiku_verify(
     pdf: *const u8,
     pdf_len: usize,

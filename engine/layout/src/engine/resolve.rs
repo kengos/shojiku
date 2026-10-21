@@ -102,14 +102,15 @@ impl<'a, 'b> Ctx<'a, 'b> {
         &mut self,
         computed: &ComputedStyle,
     ) -> crate::font::ResolvedChain<'a> {
-        if let Some(family) = computed.font_family.as_deref() {
-            if !self.input.fonts.has_family(family) && !self.warned_families.contains(family) {
-                self.warned_families.insert(family.to_string());
-                self.diags.push(
-                    Diagnostic::new(Code::UnknownFontFamily)
-                        .arg("family", crate::color::snippet(family)),
-                );
-            }
+        if let Some(family) = computed.font_family.as_deref()
+            && !self.input.fonts.has_family(family)
+            && !self.warned_families.contains(family)
+        {
+            self.warned_families.insert(family.to_string());
+            self.diags.push(
+                Diagnostic::new(Code::UnknownFontFamily)
+                    .arg("family", crate::color::snippet(family)),
+            );
         }
         self.input.fonts.resolve_chain(
             computed.font_family.as_deref(),

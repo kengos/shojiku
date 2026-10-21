@@ -85,11 +85,11 @@ impl Ctx<'_, '_> {
         // The anchored end picks the page; a mixed line follows it there.
         // Two anchored ends on DIFFERENT pages have no page to draw on —
         // a line cannot span a sheet boundary.
-        if let (Some(a), Some(b)) = (from.page, to.page) {
-            if a != b {
-                self.anchor_fault(Code::AnchorCrossPage, p, None);
-                return None;
-            }
+        if let (Some(a), Some(b)) = (from.page, to.page)
+            && a != b
+        {
+            self.anchor_fault(Code::AnchorCrossPage, p, None);
+            return None;
         }
         // A pending line exists only because at least one endpoint is
         // anchored, and an anchored endpoint that landed carries its page —

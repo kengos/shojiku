@@ -117,17 +117,17 @@ impl<'a, 'b> Ctx<'a, 'b> {
 
         let avail = box_h.map(|h| content_avail(h, padding));
         let mut clip = false;
-        if let Some(avail) = avail {
-            if content_h > avail + 0.01 {
-                match computed.text_overflow {
-                    TextOverflow::Visible => {}
-                    // `clip` semantics, like the plain block: reserve
-                    // exactly the authored height and clip at its edge.
-                    TextOverflow::Clip => clip = true,
-                    TextOverflow::Shrink | TextOverflow::Ellipsis => {
-                        self.diags
-                            .push(Diagnostic::new(Code::SpanOverflowUnsupported));
-                    }
+        if let Some(avail) = avail
+            && content_h > avail + 0.01
+        {
+            match computed.text_overflow {
+                TextOverflow::Visible => {}
+                // `clip` semantics, like the plain block: reserve
+                // exactly the authored height and clip at its edge.
+                TextOverflow::Clip => clip = true,
+                TextOverflow::Shrink | TextOverflow::Ellipsis => {
+                    self.diags
+                        .push(Diagnostic::new(Code::SpanOverflowUnsupported));
                 }
             }
         }

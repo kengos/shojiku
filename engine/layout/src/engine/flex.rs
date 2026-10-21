@@ -101,12 +101,12 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // on a flex child is almost certainly a missing `type: grid` on
         // the parent, so surface it.
         for (i, child) in items.iter().enumerate() {
-            if let Some(kind) = FlexKind::of(child) {
-                if kind.box_().has_span_keys() {
-                    let mark = self.enter_item(format!("items[{i}]"));
-                    self.diags.push(Diagnostic::new(Code::SpanOutsideGrid));
-                    self.leave_item(mark);
-                }
+            if let Some(kind) = FlexKind::of(child)
+                && kind.box_().has_span_keys()
+            {
+                let mark = self.enter_item(format!("items[{i}]"));
+                self.diags.push(Diagnostic::new(Code::SpanOutsideGrid));
+                self.leave_item(mark);
             }
         }
         // Both axes plan their MAIN size before layout, and each child

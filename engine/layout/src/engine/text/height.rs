@@ -42,14 +42,15 @@ impl Ctx<'_, '_> {
     /// author opted in to cutting. `avail` is `None` for auto-height
     /// boxes (they grow, never overflow).
     pub(super) fn warn_block_overflow(&mut self, avail: Option<f64>, content_h: f64, clip: bool) {
-        if let Some(avail) = avail {
-            if content_h > avail + 0.01 && !clip {
-                self.diags.push(
-                    Diagnostic::new(Code::TextOverflow)
-                        .arg("content", content_h)
-                        .arg("avail", avail),
-                );
-            }
+        if let Some(avail) = avail
+            && content_h > avail + 0.01
+            && !clip
+        {
+            self.diags.push(
+                Diagnostic::new(Code::TextOverflow)
+                    .arg("content", content_h)
+                    .arg("avail", avail),
+            );
         }
     }
 }

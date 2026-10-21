@@ -92,6 +92,14 @@ platform binaries.
   stroke, so a dashed, dotted or double pattern there never did anything;
   validation now says so, as it already did for text keys on them. A
   template that sets one renders exactly as before, with one more warning.
+- **The Rust crates are built as edition 2024 and use let chains, so
+  depending on them from crates.io needs rustc 1.88 or newer.** The crates
+  declare no `rust-version`, so an older compiler fails partway through the
+  build rather than being told the version up front. `cargo install
+  shojiku-cli` is the same case, including for the Go and PHP SDKs when the
+  CLI they drive is installed that way. The prebuilt CLI binaries, the
+  Docker image and the five SDKs that carry the engine library need no Rust
+  toolchain.
 
 ### Removed
 

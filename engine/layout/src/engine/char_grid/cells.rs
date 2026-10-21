@@ -111,10 +111,10 @@ pub(super) fn assign_cells(
             (cur.line, cur.pos) = break_to_sheet(cur.line, cur.pos, lines_per_sheet);
             cur.fresh_line = true;
         }
-        if cur.fresh_line {
-            if let Some(LinePlacement::Indent(n)) = segment.placement {
-                cur.pos = n.min(chars_per_line.saturating_sub(1));
-            }
+        if cur.fresh_line
+            && let Some(LinePlacement::Indent(n)) = segment.placement
+        {
+            cur.pos = n.min(chars_per_line.saturating_sub(1));
         }
         match segment.scale {
             Some(scale) => span::place_span(
