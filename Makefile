@@ -45,6 +45,17 @@
 #     make <scope>:update       same scopes, but BUMP within the manifest's
 #                               ranges — the verb that clears an advisory
 #
+#   Housekeeping (removes things, proves nothing)
+#     make docker:clean:all     stopped gate containers, the free target slot
+#                               volumes, the cargo/rustup/pnpm caches and this
+#                               WORK_TAG's built images (caches and images are
+#                               kept while an engine gate holds a slot). Every
+#                               resource prints as removed or kept with the
+#                               reason; base images and the build cache are
+#                               listed with the command that drops them. The
+#                               next gate rebuilds what it needs
+#     make clean:target         this tree's host engine/target
+#
 #   Where did it break?
 #     cat .make-logs/last-error.log                always the last failure
 #
@@ -299,7 +310,8 @@ GATE_LOCK  := scripts/gate-lock.sh
 # scrub that keeps one tree from running another tree's stale build.
 #
 #   make investigate:gates      who holds which slot
-#   make docker:clean:volumes   drop the free slot volumes (SLOT=<k> for one)
+#   make docker:clean:volumes   drop the free slot volumes and the caches
+#                               (SLOT=<k>: that one slot, caches kept)
 #   TARGET_SLOTS=0              no pool: engine/target on the bind mount
 #
 # CI sets CI=true and so gets 0 — one checkout per job, engine/target restored
@@ -510,7 +522,7 @@ include mk/investigate.mk
         _sdk-ruby-lint _sdk-ruby-test _sdk-ruby-verify _site-build _site-check \
         _site-gates _site-lint _site-node-modules _site-test _site-verify _verify \
         _version-check _examples-render clean clean\:target docker\:build \
-        docker\:clean\:images docker\:clean\:volumes \
+        docker\:clean\:all docker\:clean\:containers docker\:clean\:images docker\:clean\:volumes \
         docker\:render docker\:scan docker\:verify engine\:budget \
         engine\:capi-dist engine\:capi-lib engine\:cli-bin engine\:cli-dist \
         engine\:clippy engine\:coverage engine\:coverage-why engine\:deny \

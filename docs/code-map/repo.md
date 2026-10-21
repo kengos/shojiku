@@ -546,6 +546,14 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   another — and `last-tree` is written back only after that scrub succeeds,
   so an interrupted one is owed again. Off (`TARGET_SLOTS=0`) under `CI`, where engine/target stays on
   the bind mount. `status` / `clean` back `investigate:gates` / `docker:clean:volumes`.
+  `docker-clean.sh` — the `docker:clean:*` housekeeping: stopped containers
+  of a `shojiku-*` image or volume, the free target slots (through
+  `target-slot.sh clean`, which owns the lease) and the cache volumes, this
+  WORK_TAG's built images; the caches and images are kept while
+  `target-slot.sh busy` reports a leased slot. Every resource prints a `removed` / `kept` line with
+  the reason; the fuzz corpus, other WORK_TAGs' images, base images and the
+  build cache are only listed. The image/volume names come in from make, so
+  none is re-derived in the script.
   `check-make-namespace.sh` — `make make:check`, the invariant over the
   target surface itself (CI job `versions`, no Docker): a target defined in
   `mk/<x>.mk` belongs to scope `<x>`, a public target is colon-named or

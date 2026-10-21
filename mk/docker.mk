@@ -44,8 +44,9 @@ _docker-scan:
 ## ---- job: clean --------------------------------------------------------
 #
 # The Docker resources the gates leave behind. They remove things and prove
-# nothing, so they do not go through `quiet`. The files inside a working tree
-# are `clean:*`, kept apart on purpose.
+# nothing, so they do not go through `quiet`: each resource is reported on a
+# `removed` or `kept` line (scripts/docker-clean.sh says what is kept and why).
+# The files inside a working tree are `clean:*`, kept apart on purpose.
 
 # The images a local gate run leaves behind. They are cheap to lose — each
 # rebuilds from the layer cache in seconds — but there are eleven of them and
@@ -54,20 +55,26 @@ _docker-scan:
 #
 # Deliberately driven off the same variables the gates BUILD with, rather than
 # a `docker images` name pattern: that makes it WORK_TAG-aware for free, so a
-# parallel session removes exactly its own images and cannot reach another
-# session's. It also means a renamed image cannot be missed here.
+# parallel session that sets its own WORK_TAG removes exactly its own images.
+# Trees that set none all share `local`. It also means a renamed image cannot
+# be missed here.
 BUILT_IMAGES := $(IMAGE) $(GUI_APP_IMAGE) $(APP_E2E_IMAGE) $(WASM_E2E_IMAGE) \
                 $(PHP_IMAGE) $(GO_IMAGE) $(RUBY_IMAGE) $(PYTHON_IMAGE) \
                 $(DOTNET_IMAGE) $(JAVA_IMAGE) $(JS_IMAGE)
 
-docker\:clean\:images: ## Remove the docker images this tree's gates build (keeps the cache volumes)
-	@docker rmi $(BUILT_IMAGES) 2>/dev/null || true
-	@echo "removed this tree's built images (WORK_TAG=$(WORK_TAG)); cache and target volumes kept — 'make docker:clean:volumes' drops those"
+DOCKER_CLEAN = SHOJIKU_BUILT_IMAGES="$(BUILT_IMAGES)" \
+	SHOJIKU_PULLED_IMAGES="$(RUST_IMAGE) $(NODE_IMAGE) $(NODE_FLOOR_IMAGE) $(TRIVY_IMAGE) $(SYFT_IMAGE)" \
+	SHOJIKU_CACHE_VOLUMES="$(CARGO_VOLUME) $(RUSTUP_VOLUME) $(PNPM_VOLUME)" \
+	SLOT="$(SLOT)" scripts/docker-clean.sh
 
-# The pooled target volumes no gate is using and the cargo/rustup/pnpm caches.
-# A slot another tree is using is reported and kept. SLOT=<k> drops that one
-# slot and nothing else — the reset for a slot that went bad, which must not
-# cost the caches minutes to refill.
+docker\:clean\:containers: ## Remove stopped gate containers from any worktree (running ones are only listed)
+	@$(DOCKER_CLEAN) containers
+
 docker\:clean\:volumes: ## Drop the free pooled target volumes and the cargo/rustup/pnpm caches (SLOT=<k>: that slot only)
-	@$(GATE_LOCK) scripts/target-slot.sh clean $(SLOT)
-	$(if $(SLOT),,-docker volume rm $(CARGO_VOLUME) $(RUSTUP_VOLUME) $(PNPM_VOLUME))
+	@$(DOCKER_CLEAN) volumes
+
+docker\:clean\:images: ## Remove this WORK_TAG's built images (other sessions' images, base images and the build cache are only listed)
+	@$(DOCKER_CLEAN) images
+
+docker\:clean\:all: ## All three above, reporting what was removed and what was kept
+	@$(DOCKER_CLEAN) all

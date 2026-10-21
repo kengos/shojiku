@@ -133,6 +133,15 @@ platform binaries.
   buffers is a detail of serde rather than of the wire, so the one YAML
   reader now refuses the key in every document.
 
+### For contributors
+
+- The Docker housekeeping targets are `make docker:clean:containers`,
+  `docker:clean:volumes`, `docker:clean:images` and `docker:clean:all`,
+  and each resource prints as removed or kept with the reason. They
+  replace `clean:cache` and `clean:images`; `clean:target` now removes only
+  the tree's host `engine/target`, and the target slot volumes moved to
+  `docker:clean:volumes` (`SLOT=<k>` still resets one).
+
 ## [0.3.0] - 2026-10-14
 
 This release is mostly about the Designer. In 0.2.0 a good part of the

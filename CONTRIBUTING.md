@@ -327,7 +327,9 @@ takes `version-check-exempt: <reason>`, the same shape as
 > judges freshness by file time and would otherwise run the other tree's
 > build. A gate that seems stuck may be waiting for a slot:
 > `make investigate:gates` shows who holds what; `make docker:clean:volumes`
-> frees the disk (`SLOT=<k>` resets one slot), and `make clean:target`
+> frees the disk — the free slots and the cargo/rustup/pnpm caches, which
+> take minutes to refill (`SLOT=<k>` resets one slot and keeps the
+> caches) — and `make clean:target`
 > removes the pre-pool `engine/target` a tree may still carry. `TARGET_SLOTS=<n>`
 > changes the pool size, `TARGET_SLOTS=0` turns it off; CI runs with it
 > off. On macOS, Docker Desktop's disk image (Settings → Resources) must
