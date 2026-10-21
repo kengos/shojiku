@@ -248,9 +248,15 @@ endif
 # a machine that `make verify` would otherwise thrash.
 
 # Keep in sync with the three Dockerfile builders (docker/, engine/wasm/e2e/,
-# gui/designer-app/), .github/workflows/release-artifacts.yml (RUST_VERSION)
-# and scripts/install-proof/published-crates.sh.
+# gui/designer-app/), .github/workflows/release-artifacts.yml (RUST_VERSION),
+# scripts/install-proof/published-crates.sh, and the toolchain image's ARG
+# defaults (docker/toolchain.Dockerfile, with LLVM_COV_VERSION below).
 RUST_VERSION := 1.99.0
+# The toolchain image (docker/toolchain.Dockerfile) installs this cargo-llvm-cov.
+# No gate reads it yet: engine:coverage still installs the latest on first use.
+# scripts/check-toolchain-pins.sh compares both pins with the Dockerfile before
+# the image is published.
+LLVM_COV_VERSION := 0.9.1
 RUST_IMAGE   := rust:$(RUST_VERSION)-slim-bookworm
 TRIVY_IMAGE  := aquasec/trivy:latest
 # Pinned to a DIGEST, and the pin is load-bearing: `make sbom:check` compares
