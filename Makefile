@@ -254,24 +254,27 @@ endif
 # Keep in sync with the three Dockerfile builders (docker/, engine/wasm/e2e/,
 # gui/designer-app/), .github/workflows/release-artifacts.yml (RUST_VERSION),
 # scripts/install-proof/published-crates.sh, and the toolchain image's ARG
-# defaults (docker/toolchain.Dockerfile, with LLVM_COV_VERSION below).
+# defaults (docker/toolchain.Dockerfile, with the other pins it builds with).
 #
 # Every engine container runs the toolchain image: docker/toolchain.Dockerfile
-# (rust + rustfmt, clippy, llvm-tools-preview and cargo-llvm-cov), published by
+# (rust + rustfmt, clippy, llvm-tools-preview, the wasm32 target, git,
+# cargo-llvm-cov, cargo-deny, wasm-bindgen and wasm-opt), published by
 # .github/workflows/toolchain-image.yml and pinned here by DIGEST, which a
 # rebuild cannot move the way it moves a tag.
 #
-#   RUST_VERSION, LLVM_COV_VERSION  the pins the workflow builds with.
-#                     engine:budget fails when the Dockerfile's ARG defaults
-#                     say otherwise (scripts/check-toolchain-pins.sh)
+#   RUST_VERSION, LLVM_COV_VERSION, CARGO_DENY_*, WASM_BINDGEN_*, WASM_OPT_*
+#                     the pins the workflow builds with. engine:budget fails
+#                     when the Dockerfile's ARG defaults say otherwise
+#                     (scripts/check-toolchain-pins.sh)
 #   TOOLCHAIN_TAG     the tag TOOLCHAIN_DIGEST was published under,
 #                     <rust>-llvmcov<cargo-llvm-cov>. engine:lint fails when
 #                     the pinned image does not hold those versions
 #   TOOLCHAIN_DIGEST  that build's multi-arch index (amd64 + arm64)
 #
 # Bumping takes two pull requests, because the image is published from main:
-#   1. Change RUST_VERSION / LLVM_COV_VERSION here and the ARG defaults in the
-#      Dockerfile, and merge. The workflow pushes the new image.
+#   1. Change the pins here and the ARG defaults in the Dockerfile, and merge
+#      (`make docker:toolchain` builds and checks the image locally first).
+#      The workflow pushes the new image.
 #   2. Copy the digest from that run's job summary into TOOLCHAIN_DIGEST, set
 #      TOOLCHAIN_TAG to the new pins, and merge.
 # Until step 2 the gates still run the previous image. Nothing fails when step
@@ -279,6 +282,12 @@ endif
 # Afterwards `make docker:clean:images` drops the previous image locally.
 RUST_VERSION     := 1.99.0
 LLVM_COV_VERSION := 0.9.1
+# cargo-deny for engine:deny. The toolchain image installs the upstream release
+# binary, checked against the per-architecture checksum below; a gate running
+# an image without it installs this version with cargo install instead.
+CARGO_DENY_VERSION := 0.20.2
+CARGO_DENY_SHA256_x86_64 := 9f12ed4c49936e09b48bf862b595cde2fe64fcbd9d74dfacac6131ca824c8d5f
+CARGO_DENY_SHA256_aarch64 := 995c82be0defc7a025cae49a2aa2644ce8245c9a3318fc4103907c6a285e8c7d
 TOOLCHAIN_TAG    := 1.99.0-llvmcov0.9.1
 TOOLCHAIN_DIGEST := sha256:512c06e92e8c1a0526dc42f7852672a68a1652ad446a7e4a620c0e08072c27a0
 RUST_IMAGE   := ghcr.io/kengos/shojiku-toolchain@$(TOOLCHAIN_DIGEST)
@@ -354,6 +363,9 @@ export SHOJIKU_TARGET_SLOTS := $(TARGET_SLOTS)
 export SHOJIKU_TARGET_IMAGE := $(RUST_IMAGE)
 
 IMAGE        := shojiku-ci:$(WORK_TAG)
+# `make docker:toolchain`'s local build of docker/toolchain.Dockerfile. No gate
+# runs it: they run the published image pinned by TOOLCHAIN_DIGEST.
+TOOLCHAIN_LOCAL_IMAGE := shojiku-toolchain:$(WORK_TAG)
 
 # The two browser golden paths build their images from shell scripts rather
 # than from a recipe here, so their names are declared alongside the other
@@ -435,7 +447,11 @@ VITEST_JOBS := $(if $(JOBS),--maxWorkers=$(JOBS))
 gate = $(if $(V),$(GATE_LOCK) )$(MAKE) --no-print-directory $(if $(V),$(1),quiet T=$(1) NAME=$(2))
 
 # wasm-bindgen CLI must match the crate version pinned in engine/Cargo.toml.
+# The checksums are of the upstream release binaries the toolchain image
+# installs (docker/toolchain.Dockerfile), one per architecture.
 WASM_BINDGEN_VERSION := 0.2.126
+WASM_BINDGEN_SHA256_x86_64 := 064948d58e2d6c0a745216477a639ba696216d6309aaa902939d1b865b1d869d
+WASM_BINDGEN_SHA256_aarch64 := 2245120254a9f6c9a9adf3601f3d52bb31309219e9ceab7696e74e24885c440a
 # wasm-opt (binaryen) shrinks the bindgen output before the budget check.
 # Pinned like wasm-bindgen, and fetched as the upstream RELEASE tarball into
 # the persistent cargo volume: the `wasm-opt` CRATE builds binaryen from C++
@@ -480,11 +496,14 @@ WASM_MAX_GZIP := 3145728
 # package-cache lock on the volume too, so gates of two working trees never
 # write the shared cache unlocked.
 #
-# The tools the image does NOT hold (cargo-deny, wasm-bindgen, wasm-opt,
-# cargo-fuzz) are installed on first use into $CARGO_HOME/bin, on the volume;
-# the recipes that run them put that directory on PATH. The extra rustup
-# targets (wasm32, the dist cross targets, nightly for fuzz) are downloaded by
-# each run that needs them: nothing keeps RUSTUP_HOME between runs.
+# The recipes look for each tool they run before installing it, so a tool the
+# pinned image holds is used from there. One it does not hold is installed on
+# first use into $CARGO_HOME/bin, on the volume, and the recipes put that
+# directory on PATH: cargo-fuzz always, and cargo-deny, wasm-bindgen and
+# wasm-opt while TOOLCHAIN_DIGEST names an image built before
+# docker/toolchain.Dockerfile installed them. A rustup target the image lacks
+# (the dist cross targets, nightly for fuzz; wasm32 until then) is downloaded
+# by each run that needs it: nothing keeps RUSTUP_HOME between runs.
 #
 # Removing the volume costs the next gate a download and those installs, never
 # a toolchain. CARGO_VOLUME is OVERRIDABLE, and docker takes either form in
@@ -556,7 +575,7 @@ include mk/proof.mk
 # The investigation surface. Not gates — they print state, they check nothing —
 # so they live in their own file. See mk/investigate.mk for why they exist.
 include mk/investigate.mk
-.PHONY: _docker-build _docker-render _docker-scan _docker-verify _engine-budget \
+.PHONY: _docker-build _docker-render _docker-scan _docker-toolchain _docker-verify _engine-budget \
         _engine-capi-dist _engine-capi-lib _engine-cli-bin _engine-cli-dist \
         _engine-clippy _engine-coverage _engine-deny _engine-fmt _engine-fuzz \
         _engine-lint _engine-map-check _engine-napi _engine-preview _engine-render _engine-test _engine-toolchain _engine-verify _engine-wasm \
@@ -573,7 +592,7 @@ include mk/investigate.mk
         _sdk-ruby-lint _sdk-ruby-test _sdk-ruby-verify _site-build _site-check \
         _site-gates _site-lint _site-node-modules _site-test _site-verify _verify \
         _version-check _examples-render clean clean\:target docker\:build \
-        docker\:clean\:all docker\:clean\:containers docker\:clean\:images docker\:clean\:volumes \
+        docker\:clean\:all docker\:clean\:containers docker\:clean\:images docker\:clean\:volumes docker\:toolchain \
         docker\:render docker\:scan docker\:verify engine\:budget \
         engine\:capi-dist engine\:capi-lib engine\:cli-bin engine\:cli-dist \
         engine\:clippy engine\:coverage engine\:coverage-why engine\:deny \

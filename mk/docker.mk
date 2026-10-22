@@ -41,6 +41,27 @@ _docker-scan:
 		image --exit-code 1 --ignore-unfixed --ignorefile /.trivyignore.yaml \
 		--severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL $(IMAGE)
 
+## ---- job: toolchain --------------------------------------------------
+
+# The toolchain image the engine gates run is published from main
+# (.github/workflows/toolchain-image.yml), so a change to
+# docker/toolchain.Dockerfile is otherwise first built after its merge. This
+# builds it here from the Dockerfile's ARG defaults, which the pins step first
+# checks against the Makefile (the values the workflow builds with), and checks
+# that the result holds what the Makefile pins. PLATFORM=linux/amd64 or
+# linux/arm64 builds that half instead of the host's; Docker Desktop emulates
+# the other one. The gates never run this build: they run TOOLCHAIN_DIGEST.
+docker\:toolchain: ## Build docker/toolchain.Dockerfile locally and check its tool versions (PLATFORM=linux/amd64|linux/arm64)
+	@$(call gate,_docker-toolchain,docker:toolchain)
+
+_docker-toolchain:
+	@echo "== toolchain pins =="
+	@scripts/check-toolchain-pins.sh
+	@echo "== toolchain image build$(if $(PLATFORM), ($(PLATFORM))) =="
+	docker build $(if $(PLATFORM),--platform $(PLATFORM)) -f docker/toolchain.Dockerfile -t $(TOOLCHAIN_LOCAL_IMAGE) docker
+	@echo "== toolchain image versions =="
+	@scripts/check-toolchain-image.sh $(TOOLCHAIN_LOCAL_IMAGE) $(PLATFORM)
+
 ## ---- job: clean --------------------------------------------------------
 #
 # The Docker resources the gates leave behind. They remove things and prove
@@ -49,7 +70,7 @@ _docker-scan:
 # The files inside a working tree are `clean:*`, kept apart on purpose.
 
 # The images a local gate run leaves behind. They are cheap to lose — each
-# rebuilds from the layer cache in seconds — but there are eleven of them and
+# rebuilds from the layer cache in seconds — but there are twelve of them and
 # together they run to gigabytes, so a machine that has run `make verify` a few
 # times accumulates silently with nothing offering to clean up.
 #
@@ -60,7 +81,7 @@ _docker-scan:
 # be missed here.
 BUILT_IMAGES := $(IMAGE) $(GUI_APP_IMAGE) $(APP_E2E_IMAGE) $(WASM_E2E_IMAGE) \
                 $(PHP_IMAGE) $(GO_IMAGE) $(RUBY_IMAGE) $(PYTHON_IMAGE) \
-                $(DOTNET_IMAGE) $(JAVA_IMAGE) $(JS_IMAGE)
+                $(DOTNET_IMAGE) $(JAVA_IMAGE) $(JS_IMAGE) $(TOOLCHAIN_LOCAL_IMAGE)
 
 # The toolchain image is REMOVED, unlike the other pulled images: only this
 # repository runs it, and the next engine gate pulls it again. The plain rust

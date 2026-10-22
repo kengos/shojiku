@@ -1,8 +1,8 @@
 name: Publish toolchain image
 
 # Builds docker/toolchain.Dockerfile and pushes it to
-# ghcr.io/<owner>/shojiku-toolchain: rust plus the components and the
-# cargo-llvm-cov the engine gates run. The gates run it pinned by digest
+# ghcr.io/<owner>/shojiku-toolchain: rust plus the components, the wasm32
+# target and the tools the engine gates run. The gates run it pinned by digest
 # (TOOLCHAIN_DIGEST in the Makefile), which this run writes to its job summary;
 # a new image reaches the gates only when that pin is changed.
 #
@@ -17,6 +17,7 @@ on:
     paths:
       - docker/toolchain.Dockerfile
       - scripts/check-toolchain-pins.sh
+      - scripts/check-toolchain-image.sh
       - .github/workflows/toolchain-image.yml
   workflow_dispatch:
 
@@ -58,8 +59,9 @@ jobs:
 
       # Both architectures from this one amd64 runner, arm64 under QEMU. The
       # image only installs the toolchain, so emulation costs one
-      # `cargo install` of cargo-llvm-cov, and a single build pushes a single
-      # multi-arch manifest with no per-architecture digests to stitch.
+      # `cargo install` of cargo-llvm-cov (the other tools are release
+      # binaries), and a single build pushes a single multi-arch manifest with
+      # no per-architecture digests to stitch.
       - uses: docker/setup-qemu-action@v4
         with:
           platforms: arm64
@@ -90,15 +92,26 @@ jobs:
           context: docker
           file: docker/toolchain.Dockerfile
           platforms: linux/amd64,linux/arm64
-          build-args: |
-            RUST_VERSION=${{ steps.pins.outputs.rust }}
-            LLVM_COV_VERSION=${{ steps.pins.outputs.llvm_cov }}
+          build-args: ${{ steps.pins.outputs.build_args }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha,scope=toolchain-image
           cache-to: type=gha,scope=toolchain-image,mode=max
+
+      # Each half of what was just pushed holds the Makefile's versions. The
+      # tags already point at it by now; what this protects is the pin: an
+      # image missing a tool fails this run, so its digest is never copied
+      # into TOOLCHAIN_DIGEST, and the gates (which pull by digest) never run
+      # it. arm64 runs under the QEMU set up above.
+      - name: Check the pushed image
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          for platform in linux/amd64 linux/arm64; do
+            scripts/check-toolchain-image.sh "${IMAGE}@${DIGEST}" "$platform"
+          done
 
       # The digest of the multi-arch manifest: what the Makefile pins,
       # since a tag can be moved and a digest cannot.

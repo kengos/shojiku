@@ -206,7 +206,8 @@ _engine-deny:
 	$(CARGO_IN_DOCKER) 'export PATH="$$PATH:$$CARGO_HOME/bin"; \
 		command -v git >/dev/null 2>&1 || \
 			{ apt-get update -qq && apt-get install -y -qq git >/dev/null; }; \
-		command -v cargo-deny >/dev/null 2>&1 || cargo install cargo-deny --locked; \
+		command -v cargo-deny >/dev/null 2>&1 || \
+			cargo install cargo-deny --version =$(CARGO_DENY_VERSION) --locked; \
 		cargo deny --all-features check advisories licenses bans sources'
 
 ## ---- wasm --------------------------------------------------------------
