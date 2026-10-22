@@ -70,9 +70,10 @@
 #
 # The host has no Rust toolchain (see shojiku-rust-professional): every gate
 # runs inside Docker, the engine's in a pinned toolchain image that already
-# holds rustfmt, clippy and cargo-llvm-cov (RUST_IMAGE below). A named volume
-# keeps cargo's download cache and the cargo subcommands the image does not
-# hold (deny) between runs.
+# holds rustfmt, clippy, the wasm32 target, cargo-llvm-cov, cargo-deny,
+# wasm-bindgen and wasm-opt (RUST_IMAGE below). A named volume keeps cargo's
+# download cache, cargo-fuzz, and any pinned tool fetched ahead of the image
+# between runs.
 #
 # GNU Make 4 or newer, because make itself is the one tool that does NOT run
 # in a container and so is the one place local and CI can silently disagree.
@@ -277,19 +278,21 @@ endif
 #      The workflow pushes the new image.
 #   2. Copy the digest from that run's job summary into TOOLCHAIN_DIGEST, set
 #      TOOLCHAIN_TAG to the new pins, and merge.
-# Until step 2 the gates still run the previous image. Nothing fails when step
-# 2 is forgotten: the pins above would then name an image nobody runs.
+# Until step 2 the gates still run the previous image, and fetch any of
+# cargo-deny, wasm-bindgen and wasm-opt whose pin moved
+# (scripts/pinned-tools.sh). Nothing fails when step 2 is forgotten: the pins
+# above would then name an image nobody runs, and those fetches would go on.
 # Afterwards `make docker:clean:images` drops the previous image locally.
 RUST_VERSION     := 1.99.0
 LLVM_COV_VERSION := 0.9.1
 # cargo-deny for engine:deny. The toolchain image installs the upstream release
-# binary, checked against the per-architecture checksum below; a gate running
-# an image without it installs this version with cargo install instead.
+# binary, checked against the per-architecture checksum below; a gate whose
+# image holds another version fetches this one the same way (PINNED_TOOLS).
 CARGO_DENY_VERSION := 0.20.2
 CARGO_DENY_SHA256_x86_64 := 9f12ed4c49936e09b48bf862b595cde2fe64fcbd9d74dfacac6131ca824c8d5f
 CARGO_DENY_SHA256_aarch64 := 995c82be0defc7a025cae49a2aa2644ce8245c9a3318fc4103907c6a285e8c7d
 TOOLCHAIN_TAG    := 1.99.0-llvmcov0.9.1
-TOOLCHAIN_DIGEST := sha256:512c06e92e8c1a0526dc42f7852672a68a1652ad446a7e4a620c0e08072c27a0
+TOOLCHAIN_DIGEST := sha256:0d631062b245b823cf952225f77621d83290161402ba86b045a6dafb06479b81
 RUST_IMAGE   := ghcr.io/kengos/shojiku-toolchain@$(TOOLCHAIN_DIGEST)
 TRIVY_IMAGE  := aquasec/trivy:latest
 # Pinned to a DIGEST, and the pin is load-bearing: `make sbom:check` compares
@@ -453,16 +456,29 @@ WASM_BINDGEN_VERSION := 0.2.126
 WASM_BINDGEN_SHA256_x86_64 := 064948d58e2d6c0a745216477a639ba696216d6309aaa902939d1b865b1d869d
 WASM_BINDGEN_SHA256_aarch64 := 2245120254a9f6c9a9adf3601f3d52bb31309219e9ceab7696e74e24885c440a
 # wasm-opt (binaryen) shrinks the bindgen output before the budget check.
-# Pinned like wasm-bindgen, and fetched as the upstream RELEASE tarball into
-# the persistent cargo volume: the `wasm-opt` CRATE builds binaryen from C++
-# source, which the slim rust image has no toolchain for, and Debian's package
-# would be version-pinned only by the distro. Arch-aware — an Apple Silicon
-# builder runs the aarch64 image — and CHECKSUM-pinned per arch, so a
-# recut/compromised release cannot silently become the tool that rewrites the
-# module we ship (a version tag alone is not an integrity check).
+# Pinned like wasm-bindgen, and installed from the upstream RELEASE tarball:
+# the `wasm-opt` CRATE builds binaryen from C++ source, which the slim rust
+# image has no toolchain for, and Debian's package would be version-pinned
+# only by the distro. Arch-aware — an Apple Silicon builder runs the aarch64
+# image — and CHECKSUM-pinned per arch, so a recut/compromised release cannot
+# silently become the tool that rewrites the module we ship (a version tag
+# alone is not an integrity check).
 WASM_OPT_VERSION := 123
 WASM_OPT_SHA256_x86_64 := e959f2170af4c20c552e9de3a0253704d6a9d2766e8fdb88e4d6ac4bae9388fe
 WASM_OPT_SHA256_aarch64 := 4b6bd61ba6cd3b18c993b4657d93426c782f9b91b74be0d38018cd8be1319376
+# The head of an engine container's command that puts the three tools above on
+# PATH at their pinned versions: `$(PINNED_TOOLS) pinned_tool wasm-opt; …`.
+# scripts/pinned-tools.sh reads the pins from these assignments.
+PINNED_TOOLS = CARGO_DENY_VERSION=$(CARGO_DENY_VERSION) \
+	CARGO_DENY_SHA256_x86_64=$(CARGO_DENY_SHA256_x86_64) \
+	CARGO_DENY_SHA256_aarch64=$(CARGO_DENY_SHA256_aarch64) \
+	WASM_BINDGEN_VERSION=$(WASM_BINDGEN_VERSION) \
+	WASM_BINDGEN_SHA256_x86_64=$(WASM_BINDGEN_SHA256_x86_64) \
+	WASM_BINDGEN_SHA256_aarch64=$(WASM_BINDGEN_SHA256_aarch64) \
+	WASM_OPT_VERSION=$(WASM_OPT_VERSION) \
+	WASM_OPT_SHA256_x86_64=$(WASM_OPT_SHA256_x86_64) \
+	WASM_OPT_SHA256_aarch64=$(WASM_OPT_SHA256_aarch64); \
+	. /repo/scripts/pinned-tools.sh;
 # Size budget for the browser bindings (raw / gzip bytes) — a build over
 # budget fails, so a dep that balloons the module is caught, not a footnote.
 # Raw was 5 MiB from the wasm introduction until engine FEATURE growth
@@ -496,19 +512,23 @@ WASM_MAX_GZIP := 3145728
 # package-cache lock on the volume too, so gates of two working trees never
 # write the shared cache unlocked.
 #
-# The recipes look for each tool they run before installing it, so a tool the
-# pinned image holds is used from there. One it does not hold is installed on
-# first use into $CARGO_HOME/bin, on the volume, and the recipes put that
-# directory on PATH: cargo-fuzz always, and cargo-deny, wasm-bindgen and
-# wasm-opt while TOOLCHAIN_DIGEST names an image built before
-# docker/toolchain.Dockerfile installed them. A rustup target the image lacks
-# (the dist cross targets, nightly for fuzz; wasm32 until then) is downloaded
-# by each run that needs it: nothing keeps RUSTUP_HOME between runs.
+# cargo-deny, wasm-bindgen and wasm-opt are used from the pinned image when it
+# reports the version pinned above, and fetched into the volume when it does
+# not, which happens while a pull request moves one of those pins ahead of
+# TOOLCHAIN_DIGEST (PINNED_TOOLS above). So a pin can move in the same change
+# as the code that needs it, and the gates never run a stale copy. cargo-fuzz,
+# which the image does not hold, is installed on first use into
+# $CARGO_HOME/bin, on the volume. A rustup target the image lacks (the dist
+# cross targets, nightly for fuzz) is downloaded by each run that needs it:
+# nothing keeps RUSTUP_HOME between runs. The wasm32 target and git are always
+# in the image: the publishing workflow refuses an image without them.
 #
-# Removing the volume costs the next gate a download and those installs, never
-# a toolchain. CARGO_VOLUME is OVERRIDABLE, and docker takes either form in
-# `-v src:dst`: a bare name is a named volume, an absolute path is a host bind
-# mount, so a pipeline can restore a cache into it. The target needs no such
+# Removing the volume costs the next engine:verify the crate downloads, and the
+# fetch of any of those three tools whose pin leads TOOLCHAIN_DIGEST; it builds
+# no tool (engine:fuzz compiles cargo-fuzz again on its next run).
+# CARGO_VOLUME is OVERRIDABLE, and docker takes either form in `-v src:dst`: a
+# bare name is a named volume, an absolute path is a host bind mount, so a
+# pipeline can restore a cache into it. The target needs no such
 # switch: under CI the pool is off and `engine/target/` is inside the
 # repository mount, so a restored cache is already where cargo looks
 # (TARGET_SLOTS above).

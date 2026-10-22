@@ -175,8 +175,10 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   runs `scripts/check-toolchain-image.sh` over both halves of what it
   pushed. `make docker:toolchain` (`PLATFORM=`) builds it locally and runs
   the same two checks. The engine containers mount
-  only `CARGO_HOME` (the `shojiku-cargo-cache` volume: downloads + the
-  subcommands the pinned image lacks), never the image's own cargo/rustup homes.
+  only `CARGO_HOME` (the `shojiku-cargo-cache` volume: downloads,
+  cargo-fuzz, and any of the three release binaries whose Makefile pin the
+  pinned image does not hold, fetched by `scripts/pinned-tools.sh`), never
+  the image's own cargo/rustup homes.
 - `site/` — the public site (Cloudflare Pages): a STANDALONE pnpm project
   (not a gui/ workspace member), VitePress, eleven nav pages + the index
   ×2 locales (en canonical, `/ja` twin; copy is written JAPANESE-FIRST per
@@ -583,6 +585,15 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   image once and compares each tool's reported version with the Makefile's
   pins, plus the wasm32 target and git. Run by `docker:toolchain` and by
   `toolchain-image.yml` over the pushed digest, per architecture.
+  `pinned-tools.sh` — SOURCED inside an engine container (the Makefile's
+  `PINNED_TOOLS` prefix passes the pins and sources it; `engine:deny`,
+  `engine:wasm`): `pinned_tool cargo-deny|wasm-bindgen|wasm-opt` keeps the
+  image's copy when it reports the Makefile's version, else fetches that
+  release (checksum-checked, same URLs as the Dockerfile) into
+  `$CARGO_HOME/tools/<tool>-<version>-<arch>/` and puts it first on PATH —
+  so a pin can lead `TOOLCHAIN_DIGEST` without a stale tool running. It also
+  puts `$CARGO_HOME/bin` LAST on PATH: cargo otherwise searches that
+  directory first for `cargo deny`, ahead of the checked copy.
   `check-make-namespace.sh` — `make make:check`, the invariant over the
   target surface itself (CI job `versions`, no Docker): a target defined in
   `mk/<x>.mk` belongs to scope `<x>`, a public target is colon-named or

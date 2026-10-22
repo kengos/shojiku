@@ -167,6 +167,13 @@ platform binaries.
   `make docker:toolchain` builds the image locally (`PLATFORM=` picks the
   architecture) and checks that it holds the pinned versions; the publishing
   workflow runs the same check on both architectures of what it pushed.
+- The engine gates now run that image, so after `make docker:clean:all` the
+  first `make engine:verify` downloads the crates and installs no tool.
+  `engine:deny` and `engine:wasm` check the version of `cargo-deny`,
+  `wasm-bindgen` and `wasm-opt` rather than only that they exist: a pull
+  request that moves one of those pins ahead of the image (a `wasm-bindgen`
+  bump, say) fetches that checksum-checked release into the cargo volume
+  instead of running the image's older copy.
 
 ## [0.3.0] - 2026-10-14
 

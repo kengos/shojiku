@@ -40,6 +40,15 @@ updates:
         versions: [">=0.3"]
       - dependency-name: pkcs8
         versions: [">=0.11"]
+    # A `wasm-bindgen` bump (it rides the minor-patch group) is incomplete as
+    # dependabot opens it, and `make engine:wasm` fails on it: the CLI that
+    # target runs refuses a module built against another crate version. The
+    # same PR moves WASM_BINDGEN_VERSION and its two checksums (the upstream
+    # release's `.sha256` files) in the Makefile and the matching `ARG`
+    # defaults in docker/toolchain.Dockerfile; `make engine:budget` fails
+    # while those two disagree. Until a later PR moves TOOLCHAIN_DIGEST to the
+    # image that merge publishes, engine:wasm fetches the new CLI itself
+    # (scripts/pinned-tools.sh).
 
   # Three Dockerfiles pin the SAME `rust:<X.Y.Z>-slim-bookworm` builder and
   # must move together. All three directories are listed so none is silently
@@ -71,10 +80,7 @@ updates:
   # The six pins that must move together: `Makefile` (RUST_VERSION),
   # `docker/toolchain.Dockerfile` (`ARG RUST_VERSION`),
   # `.github/workflows/release-artifacts.yml` (RUST_VERSION), `docker/Dockerfile`,
-  # `engine/wasm/e2e/Dockerfile` and `gui/designer-app/Dockerfile`. Check the
-  # wasm-bindgen pin set with them: it has to match the wasm-bindgen-cli the
-  # toolchain image installs (WASM_BINDGEN_VERSION and its checksums, in the
-  # Makefile and as `ARG` defaults in docker/toolchain.Dockerfile).
+  # `engine/wasm/e2e/Dockerfile` and `gui/designer-app/Dockerfile`.
   #
   # NODE HAS THE SAME SPLIT, in miniature — and it is FIVE pins, not three.
   # A `node:` bump PR touches only `gui/designer-app/Dockerfile`; the ones
