@@ -2,15 +2,16 @@
 # The toolchain image's build-arg defaults equal the Makefile's pins.
 #
 #   scripts/check-toolchain-pins.sh            check, print OK or the mismatch
-#   scripts/check-toolchain-pins.sh --github   also append the pins to
-#                                              $GITHUB_OUTPUT (rust=, llvm_cov=)
+#   scripts/check-toolchain-pins.sh --github   also append to $GITHUB_OUTPUT:
+#                                              rust=, llvm_cov= (the image tag)
+#                                              and build_args (NAME=value lines)
 #
-# The versions are written twice: RUST_VERSION and LLVM_COV_VERSION in the
-# Makefile and the ARG defaults in docker/toolchain.Dockerfile (what a plain
-# `docker build` of it makes). The publishing workflow builds with the
-# Makefile's values, so a mismatch would not make a wrong image; it would make
-# a file that says one version while the image holds another. Refusing to
-# publish is how a half-done bump is noticed.
+# Every pin in PINS below is written twice: as a variable in the Makefile and
+# as an ARG default in docker/toolchain.Dockerfile (what a plain `docker build`
+# of it makes). The publishing workflow builds with the Makefile's values, so a
+# mismatch would not make a wrong image; it would make a file that says one
+# version while the image holds another. Refusing to publish is how a half-done
+# bump is noticed.
 #
 # Only the exact spellings below are read (`NAME := x` in the Makefile,
 # `ARG NAME=x` in the Dockerfile); a pin that moved to another spelling reads
@@ -41,8 +42,13 @@ dockerfile=$root/docker/toolchain.Dockerfile
 make_pin() { sed -n "s/^$1[[:blank:]]*:=[[:blank:]]*\([^[:blank:]#]*\).*/\1/p" "$makefile" | head -1; }
 docker_pin() { sed -n "s/^ARG[[:blank:]][[:blank:]]*$1=\([^[:blank:]#]*\).*/\1/p" "$dockerfile" | head -1; }
 
+PINS="RUST_VERSION LLVM_COV_VERSION
+CARGO_DENY_VERSION CARGO_DENY_SHA256_x86_64 CARGO_DENY_SHA256_aarch64
+WASM_BINDGEN_VERSION WASM_BINDGEN_SHA256_x86_64 WASM_BINDGEN_SHA256_aarch64
+WASM_OPT_VERSION WASM_OPT_SHA256_x86_64 WASM_OPT_SHA256_aarch64"
+
 status=0
-for name in RUST_VERSION LLVM_COV_VERSION; do
+for name in $PINS; do
     m=$(make_pin "$name")
     d=$(docker_pin "$name")
     if [ -z "$m" ] || [ -z "$d" ]; then
@@ -58,6 +64,11 @@ done
 rust=$(make_pin RUST_VERSION)
 llvm_cov=$(make_pin LLVM_COV_VERSION)
 if [ "${1:-}" = --github ]; then
-    printf 'rust=%s\nllvm_cov=%s\n' "$rust" "$llvm_cov" >>"$GITHUB_OUTPUT"
+    {
+        printf 'rust=%s\nllvm_cov=%s\n' "$rust" "$llvm_cov"
+        echo 'build_args<<EOF'
+        for name in $PINS; do echo "$name=$(make_pin "$name")"; done
+        echo 'EOF'
+    } >>"$GITHUB_OUTPUT"
 fi
-echo "toolchain-pins: OK (rust $rust, cargo-llvm-cov $llvm_cov)"
+echo "toolchain-pins: OK (rust $rust, cargo-llvm-cov $llvm_cov, cargo-deny $(make_pin CARGO_DENY_VERSION), wasm-bindgen $(make_pin WASM_BINDGEN_VERSION), wasm-opt $(make_pin WASM_OPT_VERSION))"

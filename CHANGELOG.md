@@ -159,6 +159,14 @@ platform binaries.
   removes them. `make engine:budget` now fails when the Makefile's toolchain
   versions and `docker/toolchain.Dockerfile` disagree, and `make engine:lint`
   when the pinned image does not hold the versions its tag names.
+- `docker/toolchain.Dockerfile` also installs the wasm32 target, git,
+  `cargo-deny`, `wasm-bindgen` and `wasm-opt`, the last three as release
+  binaries checked against per-architecture checksums in the Makefile, so
+  once the gates pin an image built from it, a first `make engine:verify`
+  installs nothing. `cargo-deny` is now pinned (`CARGO_DENY_VERSION`).
+  `make docker:toolchain` builds the image locally (`PLATFORM=` picks the
+  architecture) and checks that it holds the pinned versions; the publishing
+  workflow runs the same check on both architectures of what it pushed.
 
 ## [0.3.0] - 2026-10-14
 

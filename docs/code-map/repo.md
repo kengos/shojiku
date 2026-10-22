@@ -159,18 +159,24 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   past that date trivy reports the finding again and the gate reds, so an
   acceptance cannot become permanent by being forgotten.
   `docker/toolchain.Dockerfile` is a different image: the toolchain every
-  engine container runs in (rust + rustfmt/clippy/llvm-tools-preview
-  + cargo-llvm-cov, no workspace crate built in), published to
+  engine container runs in (rust + rustfmt/clippy/llvm-tools-preview, the
+  wasm32 target, git, cargo-llvm-cov, and cargo-deny / wasm-bindgen /
+  wasm-opt as checksum-pinned release binaries; no workspace crate built
+  in), published to
   `ghcr.io/<owner>/shojiku-toolchain` for amd64+arm64 by
   `.github/workflows/toolchain-image.yml` on a main push touching its inputs
   or by hand; the job summary prints the multi-arch digest, which the
   Makefile pins as `TOOLCHAIN_DIGEST` (`RUST_IMAGE`; `TOOLCHAIN_TAG` names
   its versions, checked by `engine:lint`'s `_engine-toolchain`). Its `ARG`
-  defaults must equal the Makefile's `RUST_VERSION` / `LLVM_COV_VERSION`;
-  `scripts/check-toolchain-pins.sh` compares them in `engine:budget`, and
-  the workflow refuses to publish on a mismatch. The engine containers mount
+  defaults must equal the Makefile variables of the same names (rust,
+  cargo-llvm-cov, and the versions + per-arch checksums of the three
+  release binaries); `scripts/check-toolchain-pins.sh` compares them in
+  `engine:budget`, and the workflow refuses to publish on a mismatch, then
+  runs `scripts/check-toolchain-image.sh` over both halves of what it
+  pushed. `make docker:toolchain` (`PLATFORM=`) builds it locally and runs
+  the same two checks. The engine containers mount
   only `CARGO_HOME` (the `shojiku-cargo-cache` volume: downloads + the
-  subcommands the image lacks), never the image's own cargo/rustup homes.
+  subcommands the pinned image lacks), never the image's own cargo/rustup homes.
 - `site/` — the public site (Cloudflare Pages): a STANDALONE pnpm project
   (not a gui/ workspace member), VitePress, eleven nav pages + the index
   ×2 locales (en canonical, `/ja` twin; copy is written JAPANESE-FIRST per
@@ -569,9 +575,14 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   build cache are only listed. The image/volume names come in from make, so
   none is re-derived in the script.
   `check-toolchain-pins.sh` — the toolchain image's `ARG` defaults vs the
-  Makefile's `RUST_VERSION` / `LLVM_COV_VERSION` (exit 1 on a mismatch or a
-  pin it cannot read; `--github` appends `rust=` / `llvm_cov=` to
-  `$GITHUB_OUTPUT`). Run by `toolchain-image.yml` and `engine:budget`.
+  Makefile's pins of the same names (its `PINS` list; exit 1 on a mismatch
+  or a pin it cannot read; `--github` appends `rust=` / `llvm_cov=` (the
+  tag) and the `build_args` lines to `$GITHUB_OUTPUT`). Run by
+  `toolchain-image.yml`, `engine:budget` and `docker:toolchain`.
+  `check-toolchain-image.sh <image> [<platform>]` — runs a built toolchain
+  image once and compares each tool's reported version with the Makefile's
+  pins, plus the wasm32 target and git. Run by `docker:toolchain` and by
+  `toolchain-image.yml` over the pushed digest, per architecture.
   `check-make-namespace.sh` — `make make:check`, the invariant over the
   target surface itself (CI job `versions`, no Docker): a target defined in
   `mk/<x>.mk` belongs to scope `<x>`, a public target is colon-named or

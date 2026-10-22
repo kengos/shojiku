@@ -73,7 +73,8 @@ updates:
   # `.github/workflows/release-artifacts.yml` (RUST_VERSION), `docker/Dockerfile`,
   # `engine/wasm/e2e/Dockerfile` and `gui/designer-app/Dockerfile`. Check the
   # wasm-bindgen pin set with them: it has to match the wasm-bindgen-cli the
-  # wasm gate installs.
+  # toolchain image installs (WASM_BINDGEN_VERSION and its checksums, in the
+  # Makefile and as `ARG` defaults in docker/toolchain.Dockerfile).
   #
   # NODE HAS THE SAME SPLIT, in miniature — and it is FIVE pins, not three.
   # A `node:` bump PR touches only `gui/designer-app/Dockerfile`; the ones
