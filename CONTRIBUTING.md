@@ -338,14 +338,16 @@ takes `version-check-exempt: <reason>`, the same shape as
 
 > **The engine gates run in a pinned toolchain image.** The first engine
 > gate pulls `ghcr.io/kengos/shojiku-toolchain` (pinned by digest in the
-> `Makefile`; no login needed), which already holds Rust, rustfmt, clippy
-> and `cargo-llvm-cov`, and downloads the crates into the Docker volume
-> `shojiku-cargo-cache`. The cargo subcommands the image does not hold
-> (`cargo-deny`, `wasm-bindgen`, `wasm-opt`, `cargo-fuzz`) are installed
-> into that volume on first use, and the extra Rust targets (wasm32, the
-> dist cross targets, nightly for fuzzing) are downloaded by each run that
-> needs them. So `make docker:clean:all` is safe at any time: the next
-> gate pulls and downloads again and never rebuilds the toolchain. If you
+> `Makefile`; no login needed), which already holds Rust, rustfmt, clippy,
+> the wasm32 target, `cargo-llvm-cov`, `cargo-deny`, `wasm-bindgen` and
+> `wasm-opt`, and downloads the crates into the Docker volume
+> `shojiku-cargo-cache`. Only the on-demand targets add to that:
+> `cargo-fuzz` is compiled into the volume on first use, and nightly and
+> the dist cross targets are downloaded by each run that needs them. So
+> `make docker:clean:all` is safe at any time: the next `engine:verify`
+> pulls and downloads again and builds no tool. A pull request that moves the
+> `cargo-deny`, `wasm-bindgen` or `wasm-opt` pin ahead of the image has its
+> gates fetch that release into the volume until the image catches up. If you
 > ran the gates before the toolchain image, the same command removes the
 > volumes that layout left behind (`shojiku-cargo`, `shojiku-rustup`);
 > `rust:<version>-slim-bookworm` is only listed, since the runtime and

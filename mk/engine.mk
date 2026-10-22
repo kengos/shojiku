@@ -203,11 +203,7 @@ engine\:deny: ## cargo deny check advisories licenses bans sources (ALL features
 
 _engine-deny:
 	@echo "== cargo deny =="
-	$(CARGO_IN_DOCKER) 'export PATH="$$PATH:$$CARGO_HOME/bin"; \
-		command -v git >/dev/null 2>&1 || \
-			{ apt-get update -qq && apt-get install -y -qq git >/dev/null; }; \
-		command -v cargo-deny >/dev/null 2>&1 || \
-			cargo install cargo-deny --version =$(CARGO_DENY_VERSION) --locked; \
+	$(CARGO_IN_DOCKER) '$(PINNED_TOOLS) pinned_tool cargo-deny; \
 		cargo deny --all-features check advisories licenses bans sources'
 
 ## ---- wasm --------------------------------------------------------------
@@ -233,27 +229,7 @@ _engine-wasm:
 	@$(GATE_LOCK) $(TARGET_DOCKER) run --rm \
 		$(ENGINE_MOUNTS) -w /repo/engine \
 		$(RUST_IMAGE) sh -euc '\
-		export PATH="$$PATH:$$CARGO_HOME/bin"; \
-		rustup target add wasm32-unknown-unknown >/dev/null; \
-		command -v wasm-bindgen >/dev/null 2>&1 || \
-			cargo install wasm-bindgen-cli --version =$(WASM_BINDGEN_VERSION) --locked; \
-		command -v wasm-opt >/dev/null 2>&1 || { \
-			apt-get update -qq >/dev/null && \
-			apt-get install -y -qq --no-install-recommends curl ca-certificates >/dev/null && \
-			arch=$$(uname -m) && \
-			rel=binaryen-version_$(WASM_OPT_VERSION) && \
-			case $$arch in \
-				x86_64) want=$(WASM_OPT_SHA256_x86_64) ;; \
-				aarch64) want=$(WASM_OPT_SHA256_aarch64) ;; \
-				*) echo "no pinned wasm-opt checksum for $$arch"; exit 1 ;; \
-			esac && \
-			curl -fsSL -o /tmp/$$rel.tar.gz \
-				"https://github.com/WebAssembly/binaryen/releases/download/version_$(WASM_OPT_VERSION)/$$rel-$$arch-linux.tar.gz" && \
-			echo "$$want  /tmp/$$rel.tar.gz" | sha256sum -c - && \
-			mkdir -p "$$CARGO_HOME/bin" && \
-			tar -xzf /tmp/$$rel.tar.gz -C "$$CARGO_HOME" && \
-			ln -sf "$$CARGO_HOME/$$rel/bin/wasm-opt" "$$CARGO_HOME/bin/wasm-opt"; \
-		}; \
+		$(PINNED_TOOLS) pinned_tool wasm-bindgen; pinned_tool wasm-opt; \
 		cargo build -p shojiku-wasm --profile wasm-release \
 			--target wasm32-unknown-unknown --locked; \
 		wasm-bindgen --target web --out-dir /repo/engine/wasm/pkg \
