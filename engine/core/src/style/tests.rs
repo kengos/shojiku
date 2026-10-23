@@ -29,10 +29,10 @@ fn border_properties_round_trip_as_camel_case() {
         border_color: Some(BorderColor::All("#333333".into())),
         ..Style::default()
     };
-    let yaml = serde_yaml::to_string(&s).expect("yaml");
+    let yaml = crate::yaml::to_string(&s).expect("yaml");
     assert!(yaml.contains("borderWidth: 0.8"), "got: {yaml}");
     assert!(yaml.contains("borderColor: '#333333'"), "got: {yaml}");
-    let back: Style = serde_yaml::from_str(&yaml).expect("parse");
+    let back: Style = crate::yaml::from_str(&yaml).expect("parse");
     assert_eq!(back.border_width, Some(BorderWidth::All(0.8)));
     assert_eq!(back.border_color, Some(BorderColor::All("#333333".into())));
     // A style with only borders set is not empty (it serializes).
@@ -48,7 +48,7 @@ fn text_overflow_parses_round_trips_and_defaults_to_visible() {
         // `clip` is a real value, no longer merely reserved.
         ("textOverflow: clip", TextOverflow::Clip),
     ] {
-        let s: Style = serde_yaml::from_str(yaml).expect("parse");
+        let s: Style = crate::yaml::from_str(yaml).expect("parse");
         assert_eq!(s.text_overflow, Some(expect), "{yaml}");
     }
     assert_eq!(TextOverflow::default(), TextOverflow::Visible);
@@ -56,7 +56,7 @@ fn text_overflow_parses_round_trips_and_defaults_to_visible() {
         text_overflow: Some(TextOverflow::Ellipsis),
         ..Style::default()
     };
-    let yaml = serde_yaml::to_string(&s).expect("yaml");
+    let yaml = crate::yaml::to_string(&s).expect("yaml");
     assert!(yaml.contains("textOverflow: ellipsis"), "got: {yaml}");
     assert!(!s.is_empty());
 }
@@ -66,7 +66,7 @@ fn unknown_text_overflow_values_are_rejected() {
     // `hidden` belongs to `overflow`, not `textOverflow` — keep the two
     // vocabularies typo-safe against each other.
     for yaml in ["textOverflow: hidden", "textOverflow: truncate"] {
-        let e = serde_yaml::from_str::<Style>(yaml).expect_err("must reject");
+        let e = crate::yaml::from_str::<Style>(yaml).expect_err("must reject");
         assert!(e.to_string().contains("unknown variant"), "got: {e}");
     }
 }
@@ -77,7 +77,7 @@ fn overflow_parses_round_trips_and_rejects_unknown_values() {
         ("overflow: visible", Overflow::Visible),
         ("overflow: hidden", Overflow::Hidden),
     ] {
-        let s: Style = serde_yaml::from_str(yaml).expect("parse");
+        let s: Style = crate::yaml::from_str(yaml).expect("parse");
         assert_eq!(s.overflow, Some(expect), "{yaml}");
     }
     assert_eq!(Overflow::default(), Overflow::Visible);
@@ -85,13 +85,13 @@ fn overflow_parses_round_trips_and_rejects_unknown_values() {
         overflow: Some(Overflow::Hidden),
         ..Style::default()
     };
-    let yaml = serde_yaml::to_string(&s).expect("yaml");
+    let yaml = crate::yaml::to_string(&s).expect("yaml");
     assert!(yaml.contains("overflow: hidden"), "got: {yaml}");
     assert!(!s.is_empty());
     // `scroll`/`auto` exist in CSS but have no meaning on paper; `clip`
     // belongs to `textOverflow`.
     for yaml in ["overflow: scroll", "overflow: auto", "overflow: clip"] {
-        let e = serde_yaml::from_str::<Style>(yaml).expect_err("must reject");
+        let e = crate::yaml::from_str::<Style>(yaml).expect_err("must reject");
         assert!(e.to_string().contains("unknown variant"), "got: {e}");
     }
 }
@@ -102,14 +102,14 @@ fn unknown_border_keys_are_rejected() {
     // not silent no-ops (`deny_unknown_fields`). The `border:` shorthand
     // is a string mini-grammar — per-side maps are the supported form.
     for yaml in ["border: 1pt solid black", "borderTopWidth: 1"] {
-        let e = serde_yaml::from_str::<Style>(yaml).expect_err("must reject");
+        let e = crate::yaml::from_str::<Style>(yaml).expect_err("must reject");
         assert!(e.to_string().contains("unknown field"), "got: {e}");
     }
 }
 
 #[test]
 fn border_side_maps_parse_on_a_style() {
-    let s: Style = serde_yaml::from_str(
+    let s: Style = crate::yaml::from_str(
         "{ borderWidth: { top: 2 }, borderColor: { top: \"#f00\" }, borderStyle: { top: double } }",
     )
     .expect("style");
@@ -119,7 +119,7 @@ fn border_side_maps_parse_on_a_style() {
     );
     assert!(matches!(s.border_style, Some(BorderStyle::PerSide(_))));
     // Round-trip keeps the authored per-side form.
-    let yaml = serde_yaml::to_string(&s).expect("yaml");
+    let yaml = crate::yaml::to_string(&s).expect("yaml");
     assert!(
         yaml.contains("top: 2") && yaml.contains("top: double"),
         "got: {yaml}"
@@ -132,9 +132,9 @@ fn background_color_round_trips_as_camel_case() {
         background_color: Some("#eef".into()),
         ..Style::default()
     };
-    let yaml = serde_yaml::to_string(&s).expect("yaml");
+    let yaml = crate::yaml::to_string(&s).expect("yaml");
     assert!(yaml.contains("backgroundColor: '#eef'"), "got: {yaml}");
-    let back: Style = serde_yaml::from_str(&yaml).expect("parse");
+    let back: Style = crate::yaml::from_str(&yaml).expect("parse");
     assert_eq!(back.background_color.as_deref(), Some("#eef"));
 }
 
@@ -148,7 +148,7 @@ fn style_serialization_skips_unset_and_uses_camel_case() {
         line_break: Some(LineBreak::Anywhere),
         ..Style::default()
     };
-    let yaml = serde_yaml::to_string(&s).expect("yaml");
+    let yaml = crate::yaml::to_string(&s).expect("yaml");
     assert!(yaml.contains("fontSize: 12.0"), "got: {yaml}");
     assert!(yaml.contains("textAlign: right"), "got: {yaml}");
     assert!(yaml.contains("verticalAlign: middle"), "got: {yaml}");
@@ -166,7 +166,7 @@ fn style_serialization_skips_unset_and_uses_camel_case() {
 
 #[test]
 fn style_parses_camel_case_names() {
-    let s: Style = serde_yaml::from_str(
+    let s: Style = crate::yaml::from_str(
         "textAlign: center\nverticalAlign: bottom\nfontFamily: mincho\nfontSize: 9\nlineHeight: 1.2\ncolor: '#ff0000'\n",
     )
     .expect("parse");
@@ -181,12 +181,12 @@ fn style_parses_camel_case_names() {
 #[test]
 fn font_properties_round_trip_as_camel_case() {
     let s: Style =
-        serde_yaml::from_str("fontWeight: bold\nfontStyle: italic\nletterSpacing: 1.5\n")
+        crate::yaml::from_str("fontWeight: bold\nfontStyle: italic\nletterSpacing: 1.5\n")
             .expect("parse");
     assert_eq!(s.font_weight, Some(FontWeight::Bold));
     assert_eq!(s.font_style, Some(FontStyle::Italic));
     assert_eq!(s.letter_spacing, Some(Length::Pt(1.5)));
-    let yaml = serde_yaml::to_string(&s).expect("yaml");
+    let yaml = crate::yaml::to_string(&s).expect("yaml");
     assert!(yaml.contains("fontWeight: bold"), "got: {yaml}");
     assert!(yaml.contains("fontStyle: italic"), "got: {yaml}");
     assert!(yaml.contains("letterSpacing: 1.5"), "got: {yaml}");
@@ -197,12 +197,12 @@ fn font_property_keywords_are_the_css_subset_only() {
     // Unknown enum values are parse errors, not silent fallbacks.
     for bad in ["fontWeight: heavy", "fontWeight: 700", "fontStyle: oblique"] {
         assert!(
-            serde_yaml::from_str::<Style>(bad).is_err(),
+            crate::yaml::from_str::<Style>(bad).is_err(),
             "expected rejection of `{bad}`"
         );
     }
     // The explicit `normal` keywords parse.
-    let s: Style = serde_yaml::from_str("fontWeight: normal\nfontStyle: normal\n").expect("parse");
+    let s: Style = crate::yaml::from_str("fontWeight: normal\nfontStyle: normal\n").expect("parse");
     assert_eq!(s.font_weight, Some(FontWeight::Normal));
     assert_eq!(s.font_style, Some(FontStyle::Normal));
 }
@@ -222,7 +222,7 @@ fn font_variant_enums_have_css_initial_defaults() {
 fn negative_letter_spacing_parses() {
     // CSS allows negative letter-spacing (tightening); the range guard
     // lives in layout, not the parser.
-    let s: Style = serde_yaml::from_str("letterSpacing: -0.5").expect("parse");
+    let s: Style = crate::yaml::from_str("letterSpacing: -0.5").expect("parse");
     assert_eq!(s.letter_spacing, Some(Length::Pt(-0.5)));
 }
 
@@ -231,7 +231,7 @@ fn old_pre_rename_keys_are_rejected() {
     // Hard rename: the pre-1.0 names must not silently survive.
     for old in ["align: right", "valign: middle", "font: gothic"] {
         assert!(
-            serde_yaml::from_str::<Style>(old).is_err(),
+            crate::yaml::from_str::<Style>(old).is_err(),
             "expected rejection of `{old}`"
         );
     }
@@ -247,8 +247,8 @@ fn line_style_keeps_concrete_defaults() {
 fn line_style_serializes_only_authored_keys() {
     // GUI round-trip: an unset stroke width must not be injected into the
     // output (`color`-only stays `color`-only).
-    let line: LineStyle = serde_yaml::from_str("color: \"#0000ff\"").expect("line style");
-    let out = serde_yaml::to_string(&line).expect("serialize");
+    let line: LineStyle = crate::yaml::from_str("color: \"#0000ff\"").expect("line style");
+    let out = crate::yaml::to_string(&line).expect("serialize");
     assert!(!out.contains("width"), "injected default: {out}");
     assert_eq!(line.width(), 1.0);
 }
@@ -256,7 +256,7 @@ fn line_style_serializes_only_authored_keys() {
 #[test]
 fn ignored_span_keys_names_exactly_the_inert_set() {
     // Every span-inert key set → all names, in wire spelling.
-    let all = serde_yaml::from_str::<Style>(
+    let all = crate::yaml::from_str::<Style>(
         "{ lineHeight: 2, textAlign: right, verticalAlign: middle, lineBreak: anywhere, \
            backgroundColor: '#eeeeee', borderWidth: 1, borderColor: '#000000', \
            textOverflow: clip, overflow: hidden, opacity: 0.5 }",
@@ -278,7 +278,7 @@ fn ignored_span_keys_names_exactly_the_inert_set() {
         ]
     );
     // The span-honored properties never appear.
-    let honored = serde_yaml::from_str::<Style>(
+    let honored = crate::yaml::from_str::<Style>(
         "{ fontSize: 12, fontFamily: f, fontWeight: bold, fontStyle: italic, \
            letterSpacing: 1, color: '#333333', textDecoration: underline }",
     )

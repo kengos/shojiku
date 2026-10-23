@@ -3,7 +3,7 @@
 use super::*;
 
 fn parse_box(yaml: &str) -> OptBox {
-    serde_yaml::from_str(yaml).expect("opt box")
+    shojiku_core::yaml::from_str(yaml).expect("opt box")
 }
 
 fn resolve(yaml: &str, basis: &Basis) -> (ResolvedBox, Diagnostics) {

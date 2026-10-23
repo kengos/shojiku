@@ -53,13 +53,13 @@ fn an_unset_break_before_never_serializes() {
     let repeat = parse_repeat("");
     // Serialize the repeat node alone: the template level still injects
     // defaults from older wire structs, which would mask this check.
-    let yaml = serde_yaml::to_string(&repeat).expect("serialize");
+    let yaml = crate::yaml::to_string(&repeat).expect("serialize");
     assert!(!yaml.contains("breakBefore"), "yaml: {yaml}");
 }
 
 #[test]
 fn an_authored_break_before_round_trips_in_its_authored_form() {
     let repeat = parse_repeat("        breakBefore: auto\n");
-    let yaml = serde_yaml::to_string(&repeat).expect("serialize");
+    let yaml = crate::yaml::to_string(&repeat).expect("serialize");
     assert!(yaml.contains("breakBefore: auto"), "yaml: {yaml}");
 }

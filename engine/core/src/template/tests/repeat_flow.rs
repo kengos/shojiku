@@ -48,11 +48,11 @@ fn minimal_repeat_flow_round_trips_without_injected_defaults() {
     // Serialize the repeat_flow node alone: unset keys stay unset (the
     // template-level serialization still injects pre-existing defaults
     // elsewhere, which is a known asymmetry rather than a rule).
-    let yaml = serde_yaml::to_string(&flow.items[0]).expect("yaml");
+    let yaml = crate::yaml::to_string(&flow.items[0]).expect("yaml");
     assert!(!yaml.contains("gap"), "injected gap: {yaml}");
     assert!(!yaml.contains("\nid:"), "injected id: {yaml}");
     // And the round-trip parses back to the same shape.
-    let again = parse_template(&serde_yaml::to_string(&tpl).expect("yaml")).expect("reparse");
+    let again = parse_template(&crate::yaml::to_string(&tpl).expect("yaml")).expect("reparse");
     let Body::Flow(flow) = &again.sections.body else { panic!("expected flow") };
     assert!(matches!(&flow.items[0], Item::RepeatFlow(rf) if rf.gap.is_none() && rf.id.is_none()));
 }

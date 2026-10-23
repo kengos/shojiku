@@ -32,7 +32,7 @@ fn parses<T>(yaml: &str) -> bool
 where
     T: for<'de> Deserialize<'de>,
 {
-    serde_yaml::from_str::<T>(yaml).is_ok()
+    crate::yaml::from_str::<T>(yaml).is_ok()
 }
 
 /// Asserts every form in `accepted` parses and every form in `refused` does

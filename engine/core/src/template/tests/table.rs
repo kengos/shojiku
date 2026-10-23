@@ -88,7 +88,7 @@ fn minimal_table_round_trips_without_injected_defaults() {
         "        data: { key: rows }\n        columns:\n          - { data: { key: a } }\n",
     ))
     .expect("template");
-    let yaml = serde_yaml::to_string(&tpl).expect("yaml");
+    let yaml = crate::yaml::to_string(&tpl).expect("yaml");
     // (`sections.header: null` is a pre-existing template-level wart, so
     // `header` is asserted via the table-specific keys only.)
     for absent in [
@@ -120,7 +120,7 @@ fn table_styles_and_zebra_round_trip_in_authored_form() {
 "##,
     ))
     .expect("template");
-    let yaml = serde_yaml::to_string(&tpl).expect("yaml");
+    let yaml = crate::yaml::to_string(&tpl).expect("yaml");
     // Authored forms survive: names, the zebra keys, and the % width.
     for present in [
         "tableBase",
@@ -171,13 +171,13 @@ fn header_groups_and_merge_empty_cells_parse_and_round_trip() {
     assert_eq!(t.header_groups[0].label.as_deref(), Some("期間"));
     assert_eq!(t.header_groups[0].span, 2);
     // Round-trip: only authored keys serialize.
-    let yaml = serde_yaml::to_string(&t).expect("yaml");
+    let yaml = crate::yaml::to_string(&t).expect("yaml");
     assert!(yaml.contains("mergeEmptyCells: true"), "got: {yaml}");
     assert!(yaml.contains("span: 2"), "got: {yaml}");
     // A table without either key serializes neither.
     let plain = parse_table("        data: { key: rows }\n        columns: []\n");
     assert!(!plain.merge_empty_cells());
-    let yaml = serde_yaml::to_string(&plain).expect("yaml");
+    let yaml = crate::yaml::to_string(&plain).expect("yaml");
     assert!(!yaml.contains("mergeEmptyCells") && !yaml.contains("headerGroups"));
 }
 
@@ -202,9 +202,9 @@ fn visually_hidden_parses_defaults_and_round_trips() {
     assert!(hidden.header.as_ref().expect("header").visually_hidden());
     // An authored key round-trips; an ABSENT one serializes nothing, which is
     // what makes an untouched document byte-identical.
-    let yaml = serde_yaml::to_string(&hidden).expect("yaml");
+    let yaml = crate::yaml::to_string(&hidden).expect("yaml");
     assert!(yaml.contains("visuallyHidden: true"), "got: {yaml}");
-    let yaml = serde_yaml::to_string(&plain).expect("yaml");
+    let yaml = crate::yaml::to_string(&plain).expect("yaml");
     assert!(!yaml.contains("visuallyHidden"), "got: {yaml}");
 }
 
@@ -251,7 +251,7 @@ fn column_type_and_fit_parse_and_round_trip() {
     assert_eq!(t.columns[1].column_type(), ColumnType::Image);
     assert_eq!(t.columns[1].fit(), crate::template::ImageFit::Cover);
     assert_eq!(t.columns[2].column_type(), ColumnType::Text);
-    let yaml = serde_yaml::to_string(&t).expect("yaml");
+    let yaml = crate::yaml::to_string(&t).expect("yaml");
     assert!(yaml.contains("type: qr_code") && yaml.contains("fit: cover"));
     // The default type serializes nothing.
     assert_eq!(yaml.matches("type:").count(), 2, "got: {yaml}");
@@ -274,7 +274,7 @@ fn table_box_parses_and_round_trips_and_is_unset_by_default() {
         parse_table("        data: { key: rows }\n        columns: [ { data: { key: a } } ]\n");
     assert!(plain.box_.is_none());
     assert!(
-        !serde_yaml::to_string(&plain)
+        !crate::yaml::to_string(&plain)
             .expect("yaml")
             .contains("box:")
     );
@@ -285,6 +285,6 @@ fn table_box_parses_and_round_trips_and_is_unset_by_default() {
     let b = boxed.box_.as_ref().expect("box");
     assert_eq!(b.x, Some(Length::Pt(10.0)));
     assert_eq!(b.w, Some(Length::Pt(200.0)));
-    let yaml = serde_yaml::to_string(&boxed).expect("yaml");
+    let yaml = crate::yaml::to_string(&boxed).expect("yaml");
     assert!(yaml.contains("box:"), "got: {yaml}");
 }

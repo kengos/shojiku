@@ -17,7 +17,7 @@ fn every_initial_value_is_one_the_wire_takes() {
         let Some(value) = initial(key) else { continue };
         with_initial += 1;
         let yaml = format!("{{ {}: {} }}", key.as_str(), value.to_json());
-        let style: Style = serde_yaml::from_str(&yaml).unwrap_or_else(|e| panic!("{yaml}: {e}"));
+        let style: Style = crate::yaml::from_str(&yaml).unwrap_or_else(|e| panic!("{yaml}: {e}"));
         assert!(style.is_set(key), "{yaml}");
     }
     assert_eq!(
@@ -25,7 +25,7 @@ fn every_initial_value_is_one_the_wire_takes() {
         "fontFamily, backgroundColor, borderRadius have none"
     );
     let line: crate::LineStyle =
-        serde_yaml::from_str("{ width: 1, color: '#000000', opacity: 1, style: solid }")
+        crate::yaml::from_str("{ width: 1, color: '#000000', opacity: 1, style: solid }")
             .expect("the line keys parse");
     let written = serde_json::to_value(line).expect("a line style serializes");
     let listed: BTreeSet<&str> = line_initial().iter().map(|(k, _)| *k).collect();

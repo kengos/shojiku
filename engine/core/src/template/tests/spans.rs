@@ -50,7 +50,7 @@ sections:
     .expect("template");
     let Body::Flow(flow) = &tpl.sections.body else { panic!("expected flow") };
     // Serialize the item node alone: unset span fields must not appear.
-    let yaml = serde_yaml::to_string(&flow.items[0]).expect("yaml");
+    let yaml = crate::yaml::to_string(&flow.items[0]).expect("yaml");
     assert!(yaml.contains("spans:"), "got: {yaml}");
     assert!(!yaml.contains("data:"), "got: {yaml}");
     assert!(!yaml.contains("styleNames:"), "got: {yaml}");
@@ -62,7 +62,7 @@ sections:
     )
     .expect("plain");
     let Body::Flow(pf) = &plain.sections.body else { panic!("expected flow") };
-    let yaml = serde_yaml::to_string(&pf.items[0]).expect("yaml");
+    let yaml = crate::yaml::to_string(&pf.items[0]).expect("yaml");
     assert!(!yaml.contains("spans"), "got: {yaml}");
 }
 

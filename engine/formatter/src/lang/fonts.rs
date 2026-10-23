@@ -129,15 +129,16 @@ impl PackManifest {
     /// that the moment a field is added.
     ///
     /// Infallible by construction: every field is a `String`, a `u32`, a
-    /// bool or a `Vec` of those, and serde_yaml refuses only shapes this
-    /// struct cannot hold (non-string map keys, non-finite floats). Were
-    /// that ever untrue the result would be an empty document, which
+    /// bool or a `Vec` of those, and the YAML door's writer
+    /// ([`shojiku_core::yaml::to_string`]) refuses only shapes this struct
+    /// cannot hold (such as an enum inside an enum, or a `Serialize` that
+    /// fails). Were that ever untrue the result would be an empty document, which
     /// [`Self::from_yaml`] rejects for want of `version` — a pack that
     /// fails loudly at the next load rather than one that silently means
     /// nothing.
     #[must_use]
     pub fn to_yaml(&self) -> String {
-        serde_yaml::to_string(self).unwrap_or_default()
+        shojiku_core::yaml::to_string(self).unwrap_or_default()
     }
 
     /// Parses a `manifest.yml`'s text. The inverse of [`Self::to_yaml`],

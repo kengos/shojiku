@@ -127,7 +127,7 @@ sections:
     let Item::Text(t) = &abs.items[0] else { panic!("text") };
     assert_eq!(t.style_names, vec!["muted", "emphasis"]);
     // Round-trip preserves the registry and the (ordered) references.
-    let out = serde_yaml::to_string(&tpl).expect("yaml");
+    let out = crate::yaml::to_string(&tpl).expect("yaml");
     assert!(out.contains("styleNames:"), "got: {out}");
     assert!(out.contains("emphasis:"), "got: {out}");
     let reparsed = parse_template(&out).expect("reparse");
@@ -142,7 +142,7 @@ fn absent_style_names_and_registry_are_skipped_on_serialization() {
         "sections:\n  body:\n    type: absolute\n    items:\n      - { type: text, text: hi }\n",
     )
     .expect("parse");
-    let yaml = serde_yaml::to_string(&tpl).expect("yaml");
+    let yaml = crate::yaml::to_string(&tpl).expect("yaml");
     assert!(!yaml.contains("styleNames"), "got: {yaml}");
     assert!(!yaml.contains("styles:"), "got: {yaml}");
 }
@@ -154,7 +154,7 @@ fn empty_style_is_skipped_on_serialization() {
         "sections:\n  body:\n    type: absolute\n    items:\n      - { type: text, text: hi }\n",
     )
     .expect("parse");
-    let yaml = serde_yaml::to_string(&tpl).expect("yaml");
+    let yaml = crate::yaml::to_string(&tpl).expect("yaml");
     assert!(!yaml.contains("style"), "got: {yaml}");
 }
 

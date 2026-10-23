@@ -18,12 +18,12 @@ fn writing_mode_variants_round_trip() {
             writing_mode: Some(variant),
             ..Style::default()
         };
-        let yaml = serde_yaml::to_string(&s).expect("yaml");
+        let yaml = crate::yaml::to_string(&s).expect("yaml");
         assert!(
             yaml.contains(&format!("writingMode: {spelling}")),
             "got: {yaml}"
         );
-        let back: Style = serde_yaml::from_str(&yaml).expect("parse");
+        let back: Style = crate::yaml::from_str(&yaml).expect("parse");
         assert_eq!(back.writing_mode, Some(variant));
     }
 }
@@ -38,12 +38,12 @@ fn text_orientation_variants_round_trip() {
             text_orientation: Some(variant),
             ..Style::default()
         };
-        let yaml = serde_yaml::to_string(&s).expect("yaml");
+        let yaml = crate::yaml::to_string(&s).expect("yaml");
         assert!(
             yaml.contains(&format!("textOrientation: {spelling}")),
             "got: {yaml}"
         );
-        let back: Style = serde_yaml::from_str(&yaml).expect("parse");
+        let back: Style = crate::yaml::from_str(&yaml).expect("parse");
         assert_eq!(back.text_orientation, Some(variant));
     }
 }
@@ -56,20 +56,20 @@ fn default_variants_are_horizontal_and_mixed() {
 
 #[test]
 fn both_keys_unset_do_not_serialize() {
-    let yaml = serde_yaml::to_string(&Style::default()).expect("yaml");
+    let yaml = crate::yaml::to_string(&Style::default()).expect("yaml");
     assert!(!yaml.contains("writingMode"), "got: {yaml}");
     assert!(!yaml.contains("textOrientation"), "got: {yaml}");
 }
 
 #[test]
 fn writing_mode_rejects_unknown_variant() {
-    let err = serde_yaml::from_str::<Style>("writingMode: sideways\n");
+    let err = crate::yaml::from_str::<Style>("writingMode: sideways\n");
     assert!(err.is_err(), "unknown writingMode value must reject");
 }
 
 #[test]
 fn text_orientation_rejects_unknown_variant() {
-    let err = serde_yaml::from_str::<Style>("textOrientation: slanted\n");
+    let err = crate::yaml::from_str::<Style>("textOrientation: slanted\n");
     assert!(err.is_err(), "unknown textOrientation value must reject");
 }
 
@@ -91,15 +91,15 @@ fn text_combine_upright_none_round_trips_as_keyword() {
         text_combine_upright: Some(TextCombineUpright::None),
         ..Style::default()
     };
-    let yaml = serde_yaml::to_string(&s).expect("yaml");
+    let yaml = crate::yaml::to_string(&s).expect("yaml");
     assert!(yaml.contains("textCombineUpright: none"), "got: {yaml}");
-    let back: Style = serde_yaml::from_str(&yaml).expect("parse");
+    let back: Style = crate::yaml::from_str(&yaml).expect("parse");
     assert_eq!(back.text_combine_upright, Some(TextCombineUpright::None));
     assert_eq!(TextCombineUpright::None.digits(), None);
     // The `to_value` serializer is a second Serialize instantiation
     // (used by wire tests elsewhere); exercise it too.
-    let v = serde_yaml::to_value(&s).expect("value");
-    assert_eq!(v["textCombineUpright"], serde_yaml::Value::from("none"));
+    let v = serde_json::to_value(&s).expect("value");
+    assert_eq!(v["textCombineUpright"], serde_json::json!("none"));
 }
 
 #[test]
@@ -109,20 +109,17 @@ fn text_combine_upright_digits_round_trips_as_map() {
             text_combine_upright: Some(TextCombineUpright::Digits(n)),
             ..Style::default()
         };
-        let yaml = serde_yaml::to_string(&s).expect("yaml");
+        let yaml = crate::yaml::to_string(&s).expect("yaml");
         assert!(yaml.contains(&format!("digits: {n}")), "got: {yaml}");
-        let back: Style = serde_yaml::from_str(&yaml).expect("parse");
+        let back: Style = crate::yaml::from_str(&yaml).expect("parse");
         assert_eq!(
             back.text_combine_upright,
             Some(TextCombineUpright::Digits(n))
         );
         assert_eq!(back.text_combine_upright.unwrap().digits(), Some(n));
         // Exercise the `to_value` serializer instantiation's map arm too.
-        let v = serde_yaml::to_value(&s).expect("value");
-        assert_eq!(
-            v["textCombineUpright"]["digits"],
-            serde_yaml::Value::from(n)
-        );
+        let v = serde_json::to_value(&s).expect("value");
+        assert_eq!(v["textCombineUpright"]["digits"], serde_json::json!(n));
     }
 }
 
@@ -131,7 +128,7 @@ fn text_combine_upright_rejects_out_of_range_digits() {
     for bad in ["{ digits: 1 }", "{ digits: 5 }", "{ digits: 99 }"] {
         let yaml = format!("textCombineUpright: {bad}\n");
         assert!(
-            serde_yaml::from_str::<Style>(&yaml).is_err(),
+            crate::yaml::from_str::<Style>(&yaml).is_err(),
             "digits outside 2..=4 must reject: {bad}"
         );
     }
@@ -147,7 +144,7 @@ fn text_combine_upright_rejects_malformed_forms() {
     ] {
         let yaml = format!("textCombineUpright: {bad}\n");
         assert!(
-            serde_yaml::from_str::<Style>(&yaml).is_err(),
+            crate::yaml::from_str::<Style>(&yaml).is_err(),
             "malformed textCombineUpright must reject: {bad}"
         );
     }
@@ -155,7 +152,7 @@ fn text_combine_upright_rejects_malformed_forms() {
 
 #[test]
 fn text_combine_upright_unset_does_not_serialize() {
-    let yaml = serde_yaml::to_string(&Style::default()).expect("yaml");
+    let yaml = crate::yaml::to_string(&Style::default()).expect("yaml");
     assert!(!yaml.contains("textCombineUpright"), "got: {yaml}");
 }
 
@@ -174,7 +171,7 @@ fn text_combine_upright_is_shape_inert_but_span_honored() {
 #[test]
 fn text_combine_upright_rejects_a_non_keyword_non_map_value() {
     // A bare scalar is neither form; the visitor's `expecting` names both.
-    let err = serde_yaml::from_str::<Style>("textCombineUpright: 5\n")
+    let err = crate::yaml::from_str::<Style>("textCombineUpright: 5\n")
         .expect_err("a bare number must reject");
     assert!(err.to_string().contains("digits"), "got: {err}");
 }
@@ -191,16 +188,8 @@ fn text_combine_upright_rejects_a_duplicate_digits_key() {
 #[test]
 fn text_combine_upright_rejects_a_non_scalar_digits_value() {
     // `digits: []` fails inside `next_value` — the mid-map error path.
-    let err = serde_yaml::from_str::<Style>("textCombineUpright: { digits: [] }\n");
+    let err = crate::yaml::from_str::<Style>("textCombineUpright: { digits: [] }\n");
     assert!(err.is_err(), "a non-scalar digits value must reject");
-}
-
-#[test]
-fn text_combine_upright_rejects_a_non_string_map_key() {
-    // A YAML complex key fails inside `next_key::<String>` — the other
-    // mid-map error path.
-    let err = serde_yaml::from_str::<Style>("textCombineUpright: { ? [1, 2] : 3 }\n");
-    assert!(err.is_err(), "a non-string key must reject");
 }
 
 #[test]

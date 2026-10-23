@@ -46,7 +46,7 @@ fn an_axis_key_wins_over_the_shorthand() {
 fn a_bare_grid_still_serializes_as_absent() {
     let rep = repeat_of("grid: { columns: 2 }");
     assert!(rep.grid.column_gap().is_none() && rep.grid.row_gap().is_none());
-    let out = serde_yaml::to_string(&rep).expect("yaml");
+    let out = crate::yaml::to_string(&rep).expect("yaml");
     assert!(!out.contains("gap"), "{out}");
     assert!(!out.contains("cutMarks"), "{out}");
 }
@@ -56,7 +56,7 @@ fn an_unauthored_grid_never_serializes_at_all() {
     // `GridSpec::is_default` still gates the whole key, so adding `gap`
     // did not start injecting a `grid:` into every repeat.
     let rep = repeat_of("breakBefore: auto");
-    let out = serde_yaml::to_string(&rep).expect("yaml");
+    let out = crate::yaml::to_string(&rep).expect("yaml");
     assert!(!out.contains("grid"), "{out}");
 }
 
@@ -65,7 +65,7 @@ fn cut_marks_default_to_off_and_round_trip() {
     assert!(!repeat_of("grid: { columns: 2 }").cut_marks());
     let rep = repeat_of("cutMarks: true\n        grid: { columns: 2 }");
     assert!(rep.cut_marks());
-    let out = serde_yaml::to_string(&rep).expect("yaml");
+    let out = crate::yaml::to_string(&rep).expect("yaml");
     assert!(out.contains("cutMarks: true"), "{out}");
 }
 
@@ -111,7 +111,7 @@ sections:
         Some(BindingScope::Element)
     );
     // Unset never serializes; the authored escape round-trips.
-    let out = serde_yaml::to_string(&tpl).expect("yaml");
+    let out = crate::yaml::to_string(&tpl).expect("yaml");
     assert_eq!(out.matches("scope:").count(), 1, "{out}");
     assert!(out.contains("scope: document"), "{out}");
     parse_template(&out).expect("reparse");

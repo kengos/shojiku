@@ -35,7 +35,7 @@ const NOT_INITIAL: [(&str, &str); 24] = [
 ];
 
 fn style(yaml: &str) -> Style {
-    serde_yaml::from_str(yaml).unwrap_or_else(|e| panic!("{yaml}: {e}"))
+    shojiku_core::yaml::from_str(yaml).unwrap_or_else(|e| panic!("{yaml}: {e}"))
 }
 
 #[test]

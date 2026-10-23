@@ -1,4 +1,5 @@
-//! The one door YAML (and JSON, a subset of it) enters the engine through.
+//! The one door YAML (and JSON, a subset of it) enters the engine through,
+//! and the one it is written out through ([`to_string`]).
 //!
 //! Every refusal that does not depend on WHICH document a door reads is made
 //! HERE, while the document is being read into a [`Value`], so that no
@@ -41,6 +42,7 @@
 //! bound on alias RESOLUTIONS, inside the parser; the Designer holds the
 //! browser side with `MAX_ALIAS_COUNT` over a different YAML library.
 
+use serde::Serialize;
 use serde::de::DeserializeOwned;
 
 /// How many collections deep a document may nest, counting the outermost.
@@ -104,6 +106,17 @@ pub fn from_str<T: DeserializeOwned>(input: &str) -> Result<T, YamlError> {
     parse(input)?.typed()
 }
 
+/// Writes `value` as a YAML document. The other half of the door: what the
+/// engine writes is written by the parser crate it is read back with, so
+/// replacing the parser replaces both in one place. A value is written as
+/// its type serializes it, including what the read refuses on the way back
+/// in: a non-finite float (written as `.nan` or `.inf`), an integer wider
+/// than 64 bits, and an enum variant that carries a value, which today's
+/// parser writes as a local tag (`!Variant`).
+pub fn to_string<T: Serialize + ?Sized>(value: &T) -> Result<String, YamlError> {
+    write::to_string(value)
+}
+
 /// Reads a tree (or a subtree) into `T`. A failure carries the field path
 /// below `value`; there is no line/column, since a tree has no source.
 pub fn from_value<T: DeserializeOwned>(value: &Value) -> Result<T, YamlError> {
@@ -116,3 +129,4 @@ mod read;
 #[cfg(test)]
 mod tests;
 mod value;
+mod write;

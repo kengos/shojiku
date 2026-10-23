@@ -15,7 +15,7 @@ fn basis(w: f64, h: Option<f64>) -> Basis {
 }
 
 fn edges(yaml: &str) -> EdgeSpec {
-    serde_yaml::from_str(yaml).expect("edge spec")
+    shojiku_core::yaml::from_str(yaml).expect("edge spec")
 }
 
 #[test]

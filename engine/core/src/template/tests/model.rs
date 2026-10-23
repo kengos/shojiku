@@ -50,7 +50,7 @@ sections:
     assert!((w - 226.771_653).abs() < 1e-6);
     assert!((h - 623.622_047).abs() < 1e-6);
     // North star: the authored unit survives serialization.
-    let out = serde_yaml::to_string(&tpl).expect("yaml");
+    let out = crate::yaml::to_string(&tpl).expect("yaml");
     assert!(
         out.contains("w: 80mm") && out.contains("h: 220mm"),
         "got: {out}"
@@ -78,16 +78,16 @@ fn custom_page_size_rejects_bad_dimensions() {
 #[test]
 fn page_size_serializes_back_to_wire_form() {
     assert_eq!(
-        serde_yaml::to_string(&PageSize::A4).expect("yaml").trim(),
+        crate::yaml::to_string(&PageSize::A4).expect("yaml").trim(),
         "A4"
     );
     assert_eq!(
-        serde_yaml::to_string(&PageSize::Letter)
+        crate::yaml::to_string(&PageSize::Letter)
             .expect("yaml")
             .trim(),
         "Letter"
     );
-    let custom = serde_yaml::to_string(&PageSize::Custom {
+    let custom = crate::yaml::to_string(&PageSize::Custom {
         w: Length::Pt(100.0),
         h: Length::Pt(200.0),
     })
@@ -151,8 +151,9 @@ sections:
 
 #[test]
 fn deeply_nested_containers_fail_parsing_not_the_stack() {
-    // serde_yaml's recursion limit bounds template depth; a hostile
-    // 200-deep container chain must error, never overflow the stack.
+    // The YAML door's `MAX_DEPTH` stops it before the container nesting
+    // bound is reached; a hostile 200-deep container chain must error,
+    // never overflow the stack.
     let mut yaml = String::from("sections:\n  body:\n    type: absolute\n    items:\n");
     let mut indent = String::from("      ");
     for _ in 0..200 {
@@ -258,7 +259,7 @@ sections:
     let Item::Text(t) = &rep.cell.items[0] else { panic!("expected cell text") };
     assert_eq!(t.data.as_ref().map(|b| b.key.as_str()), Some("order_code"));
     // Round-trip preserves the grid and cell.
-    let out = serde_yaml::to_string(&tpl).expect("yaml");
+    let out = crate::yaml::to_string(&tpl).expect("yaml");
     let reparsed = parse_template(&out).expect("reparse");
     let Body::Flow(flow2) = &reparsed.sections.body else { panic!("flow") };
     let Item::Repeat(rep2) = &flow2.items[0] else { panic!("repeat") };
@@ -287,6 +288,6 @@ sections:
     assert_eq!(rep.grid.direction(), GridDirection::Row);
     assert!(rep.grid.column_gap().is_none() && rep.grid.row_gap().is_none());
     // An all-default grid does not serialize its gap fields back.
-    let out = serde_yaml::to_string(&tpl).expect("yaml");
+    let out = crate::yaml::to_string(&tpl).expect("yaml");
     assert!(!out.contains("columnGap"), "got: {out}");
 }

@@ -5,11 +5,11 @@ use crate::PhysicalUnit;
 use crate::geometry::OptBox;
 
 fn parse(yaml: &str) -> EdgeSpec {
-    serde_yaml::from_str(yaml).expect("edge spec should parse")
+    crate::yaml::from_str(yaml).expect("edge spec should parse")
 }
 
 fn parse_err(yaml: &str) -> String {
-    serde_yaml::from_str::<EdgeSpec>(yaml)
+    crate::yaml::from_str::<EdgeSpec>(yaml)
         .expect_err("edge spec should be rejected")
         .to_string()
 }
@@ -75,7 +75,7 @@ fn auto_sides_parse_flag_and_resolve_to_zero() {
 
 #[test]
 fn auto_round_trips_in_authored_form() {
-    let out = serde_yaml::to_string(&parse("{ left: auto, right: auto }")).expect("serialize");
+    let out = crate::yaml::to_string(&parse("{ left: auto, right: auto }")).expect("serialize");
     assert_eq!(out.trim(), "right: auto\nleft: auto");
 }
 
@@ -114,19 +114,19 @@ fn hostile_side_value_error_is_truncated() {
 #[test]
 fn round_trip_serializes_only_the_authored_keys() {
     let spec = parse("{ top: 10, left: \"5%\" }");
-    let out = serde_yaml::to_string(&spec).expect("serialize");
+    let out = crate::yaml::to_string(&spec).expect("serialize");
     assert_eq!(out.trim(), "top: 10.0\nleft: 5%");
 }
 
 #[test]
 fn round_trip_keeps_physical_units_in_authored_form() {
-    let out = serde_yaml::to_string(&parse("{ bottom: \"8mm\" }")).expect("serialize");
+    let out = crate::yaml::to_string(&parse("{ bottom: \"8mm\" }")).expect("serialize");
     assert_eq!(out.trim(), "bottom: 8mm");
 }
 
 #[test]
 fn round_trip_keeps_bare_number_a_number() {
-    let out = serde_yaml::to_string(&parse("6")).expect("serialize");
+    let out = crate::yaml::to_string(&parse("6")).expect("serialize");
     assert_eq!(out.trim(), "6.0");
 }
 
@@ -136,34 +136,34 @@ fn hand_built_number_form_degrades_to_the_map() {
         sides: [Some(EdgeValue::Len(Length::Percent(5.0))); 4],
         form: EdgeForm::Number,
     };
-    let out = serde_yaml::to_string(&spec).expect("serialize");
+    let out = crate::yaml::to_string(&spec).expect("serialize");
     assert!(out.contains("top: 5%"), "degraded map form: {out}");
 }
 
 #[test]
 fn optbox_parses_margin_and_padding_and_skips_unset() {
     let b: OptBox =
-        serde_yaml::from_str("{ x: 5, margin: { top: 1, right: 2 }, padding: 3 }").expect("box");
+        crate::yaml::from_str("{ x: 5, margin: { top: 1, right: 2 }, padding: 3 }").expect("box");
     let margin = b.margin.expect("margin");
     assert_eq!(margin.edges()[1], Length::Pt(2.0));
     let padding = b.padding.expect("padding");
     assert_eq!(padding.edges()[0], Length::Pt(3.0));
 
-    let bare: OptBox = serde_yaml::from_str("{ x: 5 }").expect("box");
-    let out = serde_yaml::to_string(&bare).expect("serialize");
+    let bare: OptBox = crate::yaml::from_str("{ x: 5 }").expect("box");
+    let out = crate::yaml::to_string(&bare).expect("serialize");
     assert!(!out.contains("margin"), "unset margin serialized: {out}");
     assert!(!out.contains("padding"), "unset padding serialized: {out}");
 }
 
 #[test]
 fn explicit_null_padding_stays_unset() {
-    let b: OptBox = serde_yaml::from_str("{ padding: ~ }").expect("null padding");
+    let b: OptBox = crate::yaml::from_str("{ padding: ~ }").expect("null padding");
     assert!(b.padding.is_none());
 }
 
 #[test]
 fn negative_margin_is_allowed_negative_padding_rejected() {
-    let b: OptBox = serde_yaml::from_str("{ margin: { top: -5 } }").expect("negative margin");
+    let b: OptBox = crate::yaml::from_str("{ margin: { top: -5 } }").expect("negative margin");
     assert_eq!(b.margin.expect("margin").edges()[0], Length::Pt(-5.0));
 
     for yaml in [
@@ -173,7 +173,7 @@ fn negative_margin_is_allowed_negative_padding_rejected() {
         "{ padding: { top: \"-1em\" } }",
         "{ padding: { left: \"-1rem\" } }",
     ] {
-        let err = serde_yaml::from_str::<OptBox>(yaml)
+        let err = crate::yaml::from_str::<OptBox>(yaml)
             .expect_err("negative padding should be rejected")
             .to_string();
         assert!(err.contains("must not be negative"), "{yaml}: {err}");
@@ -182,13 +182,13 @@ fn negative_margin_is_allowed_negative_padding_rejected() {
 
 #[test]
 fn auto_margin_parses_on_boxes_but_auto_padding_is_rejected() {
-    let b: OptBox = serde_yaml::from_str("{ margin: { left: auto } }").expect("auto margin");
+    let b: OptBox = crate::yaml::from_str("{ margin: { left: auto } }").expect("auto margin");
     assert_eq!(
         b.margin.expect("margin").auto_sides(),
         [false, false, false, true]
     );
 
-    let err = serde_yaml::from_str::<OptBox>("{ padding: { left: auto } }")
+    let err = crate::yaml::from_str::<OptBox>("{ padding: { left: auto } }")
         .expect_err("auto padding should be rejected")
         .to_string();
     assert!(err.contains("must not be `auto`"), "{err}");

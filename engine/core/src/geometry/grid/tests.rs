@@ -5,11 +5,11 @@ use crate::geometry::{GridTrack, OptBox, TrackSpec};
 use crate::length::Length;
 
 fn parse(yaml: &str) -> OptBox {
-    serde_yaml::from_str(yaml).expect("box should parse")
+    crate::yaml::from_str(yaml).expect("box should parse")
 }
 
 fn parse_err(yaml: &str) -> String {
-    serde_yaml::from_str::<OptBox>(yaml)
+    crate::yaml::from_str::<OptBox>(yaml)
         .expect_err("box should be rejected")
         .to_string()
 }
@@ -47,11 +47,11 @@ fn string_fractional_and_negative_counts_are_rejected() {
 #[test]
 fn track_specs_round_trip_in_authored_form() {
     let b = parse("{ type: grid, columns: 2, rows: [\"30%\", \"8mm\"] }");
-    let out = serde_yaml::to_string(&b).expect("serialize");
+    let out = crate::yaml::to_string(&b).expect("serialize");
     assert!(out.contains("columns: 2"), "{out}");
     assert!(out.contains("- 30%") && out.contains("- 8mm"), "{out}");
     // Unset grid keys are skipped entirely.
-    let plain = serde_yaml::to_string(&parse("{ x: 5 }")).expect("serialize");
+    let plain = crate::yaml::to_string(&parse("{ x: 5 }")).expect("serialize");
     assert!(
         !plain.contains("columns") && !plain.contains("rowGap"),
         "{plain}"
@@ -81,9 +81,9 @@ fn an_auto_track_parses_trims_and_round_trips() {
     let Some(TrackSpec::Tracks(cols)) = &padded.columns else { panic!("columns should be tracks") };
     assert_eq!(cols[0], GridTrack::Auto);
 
-    let yaml = serde_yaml::to_string(&b).expect("serialize");
+    let yaml = crate::yaml::to_string(&b).expect("serialize");
     assert!(yaml.contains("auto"), "got: {yaml}");
-    let again: OptBox = serde_yaml::from_str(&yaml).expect("re-parse");
+    let again: OptBox = crate::yaml::from_str(&yaml).expect("re-parse");
     assert_eq!(again.columns, b.columns);
 }
 

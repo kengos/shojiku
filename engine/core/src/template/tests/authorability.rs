@@ -18,10 +18,10 @@ fn version_accepts_number_and_string_and_round_trips_as_authored() {
     assert_eq!(s.version, Some(Version::Text("2.0".to_string())));
     // Authored form survives serialization: numbers stay numbers,
     // strings stay strings.
-    let out = serde_yaml::to_string(&n).expect("yaml");
+    let out = crate::yaml::to_string(&n).expect("yaml");
     assert!(out.contains("version: 1"), "got: {out}");
     assert!(!out.contains("version: '1'"), "got: {out}");
-    let out = serde_yaml::to_string(&s).expect("yaml");
+    let out = crate::yaml::to_string(&s).expect("yaml");
     assert!(out.contains("version: '2.0'"), "got: {out}");
 }
 
@@ -57,7 +57,7 @@ sections:
 "#,
     )
     .expect("parse");
-    let yaml = serde_yaml::to_string(&tpl).expect("yaml");
+    let yaml = crate::yaml::to_string(&tpl).expect("yaml");
     assert!(!yaml.contains("null"), "injected null: {yaml}");
     for injected in [
         "version:",
@@ -83,7 +83,7 @@ sections:
     }
     // And it re-parses to the same structure.
     let back = parse_template(&yaml).expect("reparse");
-    assert_eq!(serde_yaml::to_string(&back).expect("yaml"), yaml);
+    assert_eq!(crate::yaml::to_string(&back).expect("yaml"), yaml);
 }
 
 #[test]

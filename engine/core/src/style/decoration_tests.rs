@@ -13,7 +13,7 @@ fn text_decoration_parses_round_trips_and_defaults_to_none() {
         ("textDecoration: underline", TextDecoration::Underline),
         ("textDecoration: line_through", TextDecoration::LineThrough),
     ] {
-        let s: Style = serde_yaml::from_str(yaml).expect("parse");
+        let s: Style = crate::yaml::from_str(yaml).expect("parse");
         assert_eq!(s.text_decoration, Some(expect), "{yaml}");
     }
     assert_eq!(TextDecoration::default(), TextDecoration::None);
@@ -21,7 +21,7 @@ fn text_decoration_parses_round_trips_and_defaults_to_none() {
         text_decoration: Some(TextDecoration::LineThrough),
         ..Style::default()
     };
-    let yaml = serde_yaml::to_string(&s).expect("yaml");
+    let yaml = crate::yaml::to_string(&s).expect("yaml");
     assert!(yaml.contains("textDecoration: line_through"), "got: {yaml}");
     assert!(!s.is_empty());
     // Copy-derived clone/Debug are separate llvm-cov functions.
@@ -45,12 +45,12 @@ fn text_decoration_rejects_css_spellings_we_do_not_support() {
         "textDecorationLine: underline",
     ] {
         assert!(
-            serde_yaml::from_str::<Style>(bad).is_err(),
+            crate::yaml::from_str::<Style>(bad).is_err(),
             "expected rejection of `{bad}`"
         );
     }
     // The refusal names what IS accepted, both lines included.
-    let err = serde_yaml::from_str::<Style>("textDecoration: overline")
+    let err = crate::yaml::from_str::<Style>("textDecoration: overline")
         .expect_err("refused")
         .to_string();
     assert!(err.contains("`underline line_through`"), "got: {err}");
@@ -62,13 +62,13 @@ fn text_decoration_takes_both_lines_in_either_order_and_writes_one_spelling() {
         "textDecoration: underline line_through",
         "textDecoration: line_through   underline",
     ] {
-        let s: Style = serde_yaml::from_str(yaml).expect("parse");
+        let s: Style = crate::yaml::from_str(yaml).expect("parse");
         assert_eq!(
             s.text_decoration,
             Some(TextDecoration::UnderlineLineThrough),
             "{yaml}"
         );
-        let out = serde_yaml::to_string(&s).expect("yaml");
+        let out = crate::yaml::to_string(&s).expect("yaml");
         assert!(
             out.contains("textDecoration: underline line_through"),
             "got: {out}"
@@ -91,23 +91,23 @@ fn text_decoration_reports_each_line_it_draws() {
 
 #[test]
 fn opacity_parses_and_round_trips() {
-    let s: Style = serde_yaml::from_str("opacity: 0.5").expect("parse");
+    let s: Style = crate::yaml::from_str("opacity: 0.5").expect("parse");
     assert_eq!(s.opacity, Some(0.5));
-    let yaml = serde_yaml::to_string(&s).expect("yaml");
+    let yaml = crate::yaml::to_string(&s).expect("yaml");
     assert!(yaml.contains("opacity: 0.5"), "got: {yaml}");
     // Out-of-range parses (the clamp + warning live in layout, like
     // letterSpacing's range guard).
-    let s: Style = serde_yaml::from_str("opacity: 7").expect("parse");
+    let s: Style = crate::yaml::from_str("opacity: 7").expect("parse");
     assert_eq!(s.opacity, Some(7.0));
     // Unset never serializes.
-    let yaml = serde_yaml::to_string(&Style::default()).expect("yaml");
+    let yaml = crate::yaml::to_string(&Style::default()).expect("yaml");
     assert!(!yaml.contains("opacity"), "got: {yaml}");
 }
 
 #[test]
 fn a_rect_names_the_inert_set_in_field_order_and_passes_the_honored_one() {
     // Every shape-inert key set → all names, in wire spelling.
-    let all = serde_yaml::from_str::<Style>(
+    let all = crate::yaml::from_str::<Style>(
         "{ fontSize: 12, fontFamily: f, fontWeight: bold, fontStyle: italic, \
            letterSpacing: 1, lineHeight: 2, color: '#112233', textAlign: right, \
            verticalAlign: middle, lineBreak: anywhere, textSpacingTrim: normal, \
@@ -138,7 +138,7 @@ fn a_rect_names_the_inert_set_in_field_order_and_passes_the_honored_one() {
         ]
     );
     // The decoration subset shapes honor is never flagged.
-    let honored = serde_yaml::from_str::<Style>(
+    let honored = crate::yaml::from_str::<Style>(
         "{ backgroundColor: '#eeeeee', borderWidth: 2, borderColor: '#000000', \
            borderStyle: double, opacity: 0.5 }",
     )
@@ -148,10 +148,10 @@ fn a_rect_names_the_inert_set_in_field_order_and_passes_the_honored_one() {
 
 #[test]
 fn line_style_takes_opacity_without_serializing_defaults() {
-    let l: LineStyle = serde_yaml::from_str("opacity: 0.25\nwidth: 2").expect("parse");
+    let l: LineStyle = crate::yaml::from_str("opacity: 0.25\nwidth: 2").expect("parse");
     assert_eq!(l.opacity, Some(0.25));
     assert!(LineStyle::default().opacity.is_none());
     // Unset opacity stays out of the serialized form (round-trip).
-    let yaml = serde_yaml::to_string(&LineStyle::default()).expect("yaml");
+    let yaml = crate::yaml::to_string(&LineStyle::default()).expect("yaml");
     assert!(!yaml.contains("opacity"), "got: {yaml}");
 }

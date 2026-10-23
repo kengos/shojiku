@@ -65,7 +65,7 @@ fn every_equals_scalar_form_round_trips_in_its_authored_shape() {
     );
     // The string "2" and the number 2 stay distinguishable after a
     // serialize round-trip (the predicate is type-strict).
-    let yaml = serde_yaml::to_string(&t.row.conditional_styles).expect("yaml");
+    let yaml = crate::yaml::to_string(&t.row.conditional_styles).expect("yaml");
     assert!(yaml.contains("equals: '2'"), "yaml: {yaml}");
     assert!(yaml.contains("equals: 2\n"), "yaml: {yaml}");
 }
@@ -75,7 +75,7 @@ fn an_entry_serializes_only_what_was_authored() {
     let t = parse_table(&conditional_yaml(
         "            - when: { key: kind, equals: heading }\n              style: { textAlign: center }\n",
     ));
-    let yaml = serde_yaml::to_string(&t.row.conditional_styles[0]).expect("yaml");
+    let yaml = crate::yaml::to_string(&t.row.conditional_styles[0]).expect("yaml");
     assert!(!yaml.contains("styleNames"), "unset keys stay out: {yaml}");
     assert!(!yaml.contains("null"), "no injected defaults: {yaml}");
 }
@@ -86,7 +86,7 @@ fn a_row_without_conditional_styles_round_trips_without_the_key() {
         "        data: { key: rows }\n        columns:\n          - data: { key: a }\n",
     );
     assert!(t.row.is_empty(), "an unauthored row: stays empty");
-    let yaml = serde_yaml::to_string(&t.row).expect("yaml");
+    let yaml = crate::yaml::to_string(&t.row).expect("yaml");
     assert!(!yaml.contains("conditionalStyles"), "yaml: {yaml}");
 }
 
@@ -96,7 +96,7 @@ fn a_row_with_conditional_styles_is_not_empty() {
         "            - when: { key: kind, equals: heading }\n",
     ));
     assert!(!t.row.is_empty(), "entries make the row: worth serializing");
-    let yaml = serde_yaml::to_string(&t.row).expect("yaml");
+    let yaml = crate::yaml::to_string(&t.row).expect("yaml");
     assert!(yaml.contains("conditionalStyles"), "yaml: {yaml}");
 }
 

@@ -7,7 +7,7 @@ use super::{ChildHolder, ChildList};
 use crate::template::{ContainerItem, Item, ItemKind};
 
 fn item(yaml: &str) -> Item {
-    serde_yaml::from_str(yaml).unwrap_or_else(|e| panic!("{yaml}: {e}"))
+    crate::yaml::from_str(yaml).unwrap_or_else(|e| panic!("{yaml}: {e}"))
 }
 
 fn kinds(list: &ChildList<'_>) -> Vec<ItemKind> {
@@ -101,7 +101,7 @@ fn every_leaf_kind_nests_no_box() {
 
 #[test]
 fn the_paths_spell_each_holders_address() {
-    let empty: ContainerItem = serde_yaml::from_str("{ items: [] }").expect("a container");
+    let empty: ContainerItem = crate::yaml::from_str("{ items: [] }").expect("a container");
     let list = |holder| ChildList {
         holder,
         container: &empty,
