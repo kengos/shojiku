@@ -373,12 +373,12 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 132 files / 19612 lines; tests 271 files / 38054 lines
+### `layout` (L3) — 132 files / 19612 lines; tests 271 files / 38139 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
 - `src/color.rs` 32 — `#rrggbb` color parsing.
-- `src/engine.rs` 274 ▲ — Template + params -> positioned pages.
+- `src/engine.rs` 270 ▲ — Template + params -> positioned pages.
 - `src/engine/anchor.rs` 143 — Anchored line endpoints: the deferred record and its page resolution.
 - `src/engine/anchor/band.rs` 59 — The rectangle an anchored `ellipse` circles.
 - `src/engine/anchor/defer.rs` 85 — Deferral: the one place a [`PendingAnchor`] is made.
@@ -410,10 +410,10 @@ first sentence of its `//!` header.
 - `src/engine/flex/child.rs` 64 — Placing and measuring ONE flex/grid child.
 - `src/engine/flex/column.rs` 229 — The column side of the flex walk: the main-axis `flexGrow` pre-pass (heights measured, then shared) and the per-item main/cross offsets.
 - `src/engine/flex/kind.rs` 66 — `FlexKind`: the classification of a box child into the atom kinds that participate in flex/grid placement, plus the authored-box accessor both the planning pre-pass and the walk read it through.
-- `src/engine/flex/offsets.rs` 236 — The row side of the flex walk: the main-axis pre-pass (slot bases from measured widths) and the cross-axis offsets, feeding the walk in the parent module.
+- `src/engine/flex/offsets.rs` 238 — The row side of the flex walk: the main-axis pre-pass (slot bases from measured widths) and the cross-axis offsets, feeding the walk in the parent module.
 - `src/engine/flex/slots.rs` 90 — Slot emission: the document-order tail every box-children walk (flex and grid) shares, plus the flow body's horizontal auto-margin shift.
 - `src/engine/flow.rs` 257 — Flow-section placement: the flow item walk and the absolute-body item walk; the paginating cursor lives in [`layouter`].
-- `src/engine/flow/layouter.rs` 101 — The paginating flow cursor: page breaks, the page cap, and atom placement (vertical fit + the horizontal-overflow check).
+- `src/engine/flow/layouter.rs` 102 — The paginating flow cursor: page breaks, the page cap, and atom placement (vertical fit + the horizontal-overflow check).
 - `src/engine/fragments.rs` 104 — Per-page vertical extents of a paginating item's placed atoms, emitted as the item's own `PlacedBox` fragments (one per page it spans).
 - `src/engine/grid.rs` 294 ▲ — Static grid child placement (box-model Phase 3, `box.type: grid`): children without authored `box.x`/`box.y` tile the column tracks in fill order (`direction`), rows are explicit tracks or sized by their tallest child, and `justifyContent` distributes leftover track space.
 - `src/engine/grid/cells.rs` 189 — Cell assignment and `auto` column measurement.
@@ -427,7 +427,7 @@ first sentence of its `//!` header.
 - `src/engine/marks.rs` 272 ▲ — Form marks (`ellipse`, `checkbox`): box-inscribed vector shapes whose *presence* is params-driven but whose *geometry* is template-fixed — an unmatched mark still reserves its box, so the blank↔filled one-template workflow never shifts layout between params sets.
 - `src/engine/marks/presence.rs` 59 — Form-mark presence: turns a `MarkBinding` into "draw / don't draw" against the current data scope, warning on the two params shapes the predicate cannot use.
 - `src/engine/meta.rs` 197 — Document-metadata resolution: interpolates the `document:` block against params, then gates every resolved value before it enters the tree — layout is the trust boundary here exactly as it is for `link.url` (see `engine/link.rs`); renderers write what the tree carries without judgment.
-- `src/engine/overflow.rs` 150 — The horizontal-overflow policy: the one home for every "does this reach past the box that holds it?" check, so the rules can be read against each other instead of being inferred from three call sites.
+- `src/engine/overflow.rs` 151 — The horizontal-overflow policy: the one home for every "does this reach past the box that holds it?" check, so the rules can be read against each other instead of being inferred from three call sites.
 - `src/engine/path.rs` 93 — The structural path stack: addresses every laid-out item in the validate-diagnostic grammar (`sections.body.items[3].items[0]`, `…cell.items[1]`, `…columns[2]`) so `inspect` emits a stable `PlacedBox.path` for id-less items too, not only id-carrying ones.
 - `src/engine/predicate.rs` 81 — Pure presence predicate shared by the declarative `{ key, equals?
 - `src/engine/qr.rs` 184 — QR code items: content is encoded at *layout* time and emitted as run-length-merged module [`RectShape`]s — no tree/renderer/asset change, which is what lets a `qr_code` work inside `repeat` cells with element-scoped bindings on day one.

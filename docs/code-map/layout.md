@@ -132,7 +132,8 @@ Wire types stay in core; content measurement stays in layout.
   child adds no width and no gap).
 - `engine/overflow.rs` — `OVERFLOW_EPS` + `exceeds(extent, limit)`, the
   slack-aware comparison an overflow warning or a "does it still fit?"
-  policy decision calls (a fit check is `!exceeds`). Also the
+  policy decision calls (a fit check is `!exceeds`); a comparison that
+  allows a slack calls it rather than writing its own. Also the
   horizontal-overflow POLICY, all three bounds in one file so they read
   against each other. Each emits its OWN
   number-only code (`sheet_overflow` / `child_overflow` /

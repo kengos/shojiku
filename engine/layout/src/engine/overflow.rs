@@ -1,7 +1,9 @@
 //! The horizontal-overflow policy: the one home for every "does this
 //! reach past the box that holds it?" check, so the rules can be read
 //! against each other instead of being inferred from three call sites.
-//! Also [`exceeds`], the slack-aware comparison an overflow check calls.
+//! Also [`exceeds`] and its [`OVERFLOW_EPS`]: an overflow comparison
+//! that allows a slack calls it rather than writing its own, so the
+//! engine has one tolerance.
 //!
 //! Three bounds, one per placement context:
 //!
@@ -40,7 +42,7 @@
 
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::{Atom, Basis, Ctx, H_OVERFLOW_EPS};
+use super::{Atom, Basis, Ctx};
 
 /// Slack for overflow verdicts, in pt: an excess at or below this
 /// is float noise from `%`/physical-unit resolution and text measuring,
@@ -78,10 +80,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 .map(|b| b.border.x + b.border.w)
                 .fold(f64::NEG_INFINITY, f64::max),
         };
-        let over = right - sheet_right;
-        if over > H_OVERFLOW_EPS {
+        if exceeds(right, sheet_right) {
             self.diags
-                .push(Diagnostic::new(Code::SheetOverflow).arg("over", over));
+                .push(Diagnostic::new(Code::SheetOverflow).arg("over", right - sheet_right));
         }
     }
 
@@ -104,8 +105,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let Some((rb, w)) = atom.rb.and_then(|rb| rb.w.map(|w| (rb, w))) else {
             return;
         };
-        let over = (rb.x - basis.x) + w + rb.margin[1] - basis.w;
-        if over > H_OVERFLOW_EPS {
+        let reach = (rb.x - basis.x) + w + rb.margin[1];
+        if exceeds(reach, basis.w) {
             // States the MAGNITUDE, never a side. Which side the excess
             // lands on is decided after this pass: `column_offsets` feeds
             // the (negative) free space to `cross_offset`, so
@@ -114,7 +115,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             self.diags.push(
                 Diagnostic::new(Code::ChildOverflow)
                     .arg("avail", basis.w)
-                    .arg("over", over),
+                    .arg("over", reach - basis.w),
             );
         }
     }
@@ -135,7 +136,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             return;
         };
         let child = (rb.x - basis.x) + w + rb.margin[1];
-        if child > basis.w + H_OVERFLOW_EPS {
+        if exceeds(child, basis.w) {
             self.diags.push(
                 Diagnostic::new(Code::GridColumnOverflow)
                     .arg("child", child)

@@ -43,6 +43,26 @@ fn a_child_wider_than_its_column_track_warns() {
 }
 
 #[test]
+fn a_few_hundredths_past_the_track_warns() {
+    // Same 0.01pt slack as every other overflow check: 0.03pt past the
+    // first of two 100pt tracks warns, 0.005pt is float noise.
+    let child = |w: &str| {
+        grid(
+            "2",
+            &format!(
+                "          - {{ type: rect, style: {{ borderWidth: 1 }}, box: {{ w: {w}, h: 10 }} }}\n"
+            ),
+        )
+    };
+    let diags = child("100.03");
+    let hits = cell_overflows(&diags);
+    assert_eq!(hits.len(), 1, "{diags:?}");
+    assert_eq!(arg_num(hits[0], "child"), Some(100.03));
+    let diags = child("100.005");
+    assert!(cell_overflows(&diags).is_empty(), "{diags:?}");
+}
+
+#[test]
 fn a_child_wider_than_its_spanned_columns_names_the_span() {
     // A 2-track span is 200pt; a 240pt child still overruns it, and the
     // `extent` says which measurement it was checked against.

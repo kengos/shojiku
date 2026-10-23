@@ -55,10 +55,6 @@ use std::rc::Rc;
 
 const BLACK: (f32, f32, f32) = (0.0, 0.0, 0.0);
 
-/// Slack for horizontal-overflow detection: differences below this are
-/// float noise from `%`/physical-unit resolution, not authoring errors.
-pub(super) const H_OVERFLOW_EPS: f64 = 0.05;
-
 /// Everything the layout pass needs.
 pub struct LayoutInput<'a> {
     pub template: &'a Template,

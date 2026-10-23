@@ -9,7 +9,9 @@ use shojiku_layout_box::{
     resolve_flex_lengths,
 };
 
-use super::super::{Atom, Basis, Ctx, H_OVERFLOW_EPS};
+use crate::engine::overflow::exceeds;
+
+use super::super::{Atom, Basis, Ctx};
 use super::{FlexKind, FlexSpec};
 
 impl<'a, 'b> Ctx<'a, 'b> {
@@ -142,7 +144,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // `overflow: hidden` parents clip by intent and stay silent (the
         // container_overflow convention).
         let used: f64 = inner.w - leftover;
-        if used - inner.w > H_OVERFLOW_EPS && !clipped {
+        if exceeds(used, inner.w) && !clipped {
             self.diags.push(
                 Diagnostic::new(Code::FlexRowOverflow)
                     .arg("needed", used)
