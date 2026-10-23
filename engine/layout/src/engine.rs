@@ -9,6 +9,7 @@
 //! positioning bases (`Basis`), the atom primitive, and the page
 //! assembly in [`layout`]. Each concern lives in a child module.
 
+mod absolute;
 mod anchor;
 mod assemble;
 mod atoms;

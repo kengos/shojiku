@@ -1,9 +1,9 @@
 //! Header/footer bands: per-page item placement and `page_number`
 //! substitution ({page}/{pages}).
 
-use shojiku_core::{Band, Item, PageNumberItem, WritingMode};
-use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
+use shojiku_core::{Band, PageNumberItem, WritingMode};
 
+use super::absolute::Placement;
 use super::visibility::{self, Visibility};
 use super::{Atom, Basis, Ctx, PageBuild, placed_box, with_vertical_margin};
 
@@ -34,112 +34,13 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 visibility::draw_mark(std::slice::from_ref(&out), self.pending_anchors.len())
             });
             let item_mark = self.enter_item(format!("items[{i}]"));
-            // Every arm builds an atom and hands it to `emit_placed`, the
-            // one tail that translates it onto the page AND checks the
-            // sheet edge — a band item is placed straight onto paper, so
-            // nothing else would catch it running off the sheet.
-            match item {
-                Item::Text(text) => {
-                    let b = text.box_.clone().unwrap_or_default();
-                    let dy = self.resolve_y(b.y, basis).unwrap_or(0.0);
-                    let atom = self.text_atom(text, basis);
-                    self.emit_placed(&mut out, atom, dy, basis);
-                }
-                Item::PageNumber(pn) => {
-                    let (atom, dy) = self.page_number_atom(pn, page_no, total, basis);
-                    self.emit_placed(&mut out, atom, dy, basis);
-                }
-                Item::Rect(rect) => {
-                    if let Some(atom) = self.rect_atom(rect, basis) {
-                        let dy = self.resolve_y(rect.box_.y, basis).unwrap_or(0.0);
-                        self.emit_placed(&mut out, atom, dy, basis);
-                    }
-                }
-                Item::Line(line) => {
-                    // Band lines resolve their endpoints against the band
-                    // basis (the margin box); the endpoints ARE the
-                    // offsets, so there is no `dy` to apply. Built by the
-                    // shared `line_atom` so the stroke pattern cannot
-                    // drift between contexts, and emitted through the same
-                    // tail as every sibling — a line carries no box, so
-                    // the sheet-edge check reads `rb: None` and returns.
-                    let atom = self.line_atom(line, basis);
-                    self.emit_placed(&mut out, atom, 0.0, basis);
-                }
-                Item::Image(image) => {
-                    if let Some(atom) = self.image_atom(image, basis) {
-                        let dy = self
-                            .resolve_y(image.box_.clone().unwrap_or_default().y, basis)
-                            .unwrap_or(0.0);
-                        self.emit_placed(&mut out, atom, dy, basis);
-                    }
-                }
-                Item::Container(container) => {
-                    let dy = self
-                        .resolve_y(container.box_.clone().unwrap_or_default().y, basis)
-                        .unwrap_or(0.0);
-                    if let Some(atom) = self.container_atom(container, basis, 1) {
-                        self.emit_placed(&mut out, atom, dy, basis);
-                    }
-                }
-                Item::QrCode(qr) => {
-                    if let Some(atom) = self.qr_atom(qr, basis) {
-                        let dy = self
-                            .resolve_y(qr.box_.clone().unwrap_or_default().y, basis)
-                            .unwrap_or(0.0);
-                        self.emit_placed(&mut out, atom, dy, basis);
-                    }
-                }
-                Item::List(list) => {
-                    if let Some(atom) = self.list_atom(list, basis) {
-                        let dy = self
-                            .resolve_y(list.box_.clone().unwrap_or_default().y, basis)
-                            .unwrap_or(0.0);
-                        self.emit_placed(&mut out, atom, dy, basis);
-                    }
-                }
-                Item::CharGrid(grid) => {
-                    if let Some(atom) = self.char_grid_atom(grid, basis) {
-                        let dy = self
-                            .resolve_y(grid.box_.clone().unwrap_or_default().y, basis)
-                            .unwrap_or(0.0);
-                        self.emit_placed(&mut out, atom, dy, basis);
-                    }
-                }
-                Item::Ellipse(e) => {
-                    if let Some(atom) = self.ellipse_atom(e, basis) {
-                        let dy = self
-                            .resolve_y(e.box_.clone().unwrap_or_default().y, basis)
-                            .unwrap_or(0.0);
-                        self.emit_placed(&mut out, atom, dy, basis);
-                    }
-                }
-                Item::Checkbox(c) => {
-                    if let Some(atom) = self.checkbox_atom(c, basis) {
-                        let dy = self
-                            .resolve_y(super::marks::box_y(c.box_.as_ref()), basis)
-                            .unwrap_or(0.0);
-                        self.emit_placed(&mut out, atom, dy, basis);
-                    }
-                }
-                Item::Table(table) => {
-                    // A table in a band is one bounded block at `box.y`.
-                    let dy = self
-                        .resolve_y(table.box_.clone().unwrap_or_default().y, basis)
-                        .unwrap_or(0.0);
-                    if let Some(atom) = self.guarded_table_atom(table, basis) {
-                        self.emit_placed(&mut out, atom, dy, basis);
-                    }
-                }
-                Item::Repeat(_) => {
-                    self.diags.push(Diagnostic::new(Code::RepeatInBand));
-                }
-                Item::RepeatFlow(_) => {
-                    self.diags.push(Diagnostic::new(Code::RepeatFlowInBand));
-                }
-                Item::PageBreak(_) => {
-                    self.diags.push(Diagnostic::new(Code::PageBreakInBand));
-                }
+            // `emit_placed` is the one tail that translates the atom onto
+            // the page AND checks the sheet edge — a band item is placed
+            // straight onto paper, so nothing else would catch it running
+            // off the sheet.
+            let placement = Placement::Band { page_no, total };
+            if let Some((atom, dy)) = self.absolute_atom(item, basis, placement) {
+                self.emit_placed(&mut out, atom, dy, basis);
             }
             self.leave_item(item_mark);
             if let Some(mark) = mark {
@@ -159,7 +60,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
     /// The `page_number` atom plus its `box.y` offset — returned rather
     /// than emitted so it rides the same `emit_placed` tail (and the same
     /// sheet-edge check) as every other band item.
-    fn page_number_atom(
+    pub(super) fn page_number_atom(
         &mut self,
         pn: &PageNumberItem,
         page_no: usize,

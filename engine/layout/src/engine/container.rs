@@ -1,8 +1,8 @@
-//! Containers: box resolution, the style cascade push/restore, and the
-//! absolutely-positioned child atoms of the shared box-children walk
-//! (the walk itself, with flex placement, lives in `super::flex`).
+//! Containers: box resolution and the style cascade push/restore (the
+//! box-children walk, with flex placement, lives in `super::flex`; its
+//! absolutely positioned children go through `super::absolute`).
 
-use shojiku_core::{BindingScope, ContainerItem, ImageItem, Item, MAX_CONTAINER_DEPTH, Overflow};
+use shojiku_core::{BindingScope, ContainerItem, ImageItem, MAX_CONTAINER_DEPTH, Overflow};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use crate::boxes::translate_boxes;
@@ -151,117 +151,6 @@ impl<'a, 'b> Ctx<'a, 'b> {
         ))
     }
 
-    /// Lays out one absolutely positioned box child (authored `box.x` or
-    /// `box.y` — the Phase-1 escape hatch that every pre-flex template
-    /// uses) and returns its atom plus vertical offset. `table` /
-    /// `page_number` / `repeat` children are unsupported inside a box and
-    /// warn+skip; nested containers recurse at `depth + 1`.
-    pub(super) fn absolute_child_atom(
-        &mut self,
-        child: &Item,
-        inner: &Basis,
-        depth: usize,
-    ) -> Option<(Atom, f64)> {
-        match child {
-            Item::Text(text) => {
-                let dy = self
-                    .resolve_y(text.box_.clone().unwrap_or_default().y, inner)
-                    .unwrap_or(0.0);
-                Some((self.text_atom(text, inner), dy))
-            }
-            Item::Rect(rect) => {
-                let atom = self.rect_atom(rect, inner)?;
-                let dy = self.resolve_y(rect.box_.y, inner).unwrap_or(0.0);
-                Some((atom, dy))
-            }
-            Item::Line(line) => {
-                // Line endpoints are offsets from the box top-left,
-                // resolved against the container's CONTENT box — so
-                // `to: { x: "100%" }` underlines the full inner width of
-                // a flex child whose share was only known at layout time.
-                Some((self.line_atom(line, inner), 0.0))
-            }
-            Item::Image(image) => {
-                let atom = self.guarded_image_atom(image, inner)?;
-                let dy = self
-                    .resolve_y(image.box_.clone().unwrap_or_default().y, inner)
-                    .unwrap_or(0.0);
-                Some((atom, dy))
-            }
-            Item::Container(nested) => {
-                let dy = self
-                    .resolve_y(nested.box_.clone().unwrap_or_default().y, inner)
-                    .unwrap_or(0.0);
-                let atom = self.container_atom(nested, inner, depth + 1)?;
-                Some((atom, dy))
-            }
-            Item::QrCode(qr) => {
-                let atom = self.qr_atom(qr, inner)?;
-                let dy = self
-                    .resolve_y(qr.box_.clone().unwrap_or_default().y, inner)
-                    .unwrap_or(0.0);
-                Some((atom, dy))
-            }
-            Item::List(list) => {
-                let atom = self.list_atom(list, inner)?;
-                let dy = self
-                    .resolve_y(list.box_.clone().unwrap_or_default().y, inner)
-                    .unwrap_or(0.0);
-                Some((atom, dy))
-            }
-            Item::Table(table) => {
-                // A positioned table is one bounded block at `box.y`.
-                let dy = self
-                    .resolve_y(table.box_.clone().unwrap_or_default().y, inner)
-                    .unwrap_or(0.0);
-                let atom = self.guarded_table_atom(table, inner)?;
-                Some((atom, dy))
-            }
-            Item::PageNumber(_) => {
-                self.diags
-                    .push(Diagnostic::new(Code::PageNumberInContainer));
-                None
-            }
-            Item::Repeat(_) => {
-                self.diags.push(Diagnostic::new(Code::RepeatInContainer));
-                None
-            }
-            Item::RepeatFlow(_) => {
-                self.diags
-                    .push(Diagnostic::new(Code::RepeatFlowInContainer));
-                None
-            }
-            Item::PageBreak(_) => {
-                self.diags.push(Diagnostic::new(Code::PageBreakInContainer));
-                None
-            }
-            Item::CharGrid(grid) => {
-                // One sheet, band semantics (content past it warns
-                // `char_grid_overflow` and is dropped — no pagination
-                // inside a box).
-                let atom = self.char_grid_atom(grid, inner)?;
-                let dy = self
-                    .resolve_y(grid.box_.clone().unwrap_or_default().y, inner)
-                    .unwrap_or(0.0);
-                Some((atom, dy))
-            }
-            Item::Ellipse(e) => {
-                let atom = self.ellipse_atom(e, inner)?;
-                let dy = self
-                    .resolve_y(e.box_.as_ref().and_then(|b| b.y), inner)
-                    .unwrap_or(0.0);
-                Some((atom, dy))
-            }
-            Item::Checkbox(c) => {
-                let atom = self.checkbox_atom(c, inner)?;
-                let dy = self
-                    .resolve_y(super::marks::box_y(c.box_.as_ref()), inner)
-                    .unwrap_or(0.0);
-                Some((atom, dy))
-            }
-        }
-    }
-
     /// Draws an image, resolving its asset key for the placement context.
     /// Inside a `repeat`/`repeat_flow` cell a `data:` binding is
     /// element-scoped (`dyn:<array>[<i>].<key>`), while a static `src:`
@@ -269,7 +158,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
     /// `src:`/`dyn:` key. A `scope: document` binding takes the shared
     /// `dyn:<key>` id even inside a cell — one asset for the whole grid,
     /// matching what `shojiku_image::prepare_assets` loaded. Shared by the
-    /// absolute and flex child walks.
+    /// absolute-placement dispatch and the flex child walk.
     pub(super) fn guarded_image_atom(&mut self, image: &ImageItem, basis: &Basis) -> Option<Atom> {
         let key = match (self.scope.as_ref(), image.data.as_ref()) {
             (Some(scope), Some(binding))

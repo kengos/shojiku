@@ -970,7 +970,7 @@ Crossing between the two placement worlds is the part that edits keys.
 Into an ORDER-placed owner an authored `box.x`/`box.y` is dropped, for
 two different reasons: in the flow BODY it is the `flowPositioned` dead
 end the engine does not read, while a CONTAINER does honour it (the
-`absolute_child_atom` escape hatch every pre-flex template uses) and the
+`absolute_atom` escape hatch every pre-flex template uses) and the
 clearing is a deliberate choice — the numbers were measured against a
 different parent's origin, so keeping them would land the item somewhere
 it was not dropped, and putting something inside a container is a request

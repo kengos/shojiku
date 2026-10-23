@@ -42,10 +42,10 @@ pub(in crate::engine) struct ShapePaint {
     pub opacity: f32,
 }
 
-/// The absolute `y` of a checkbox's optional box (its frame may be omitted
-/// for auto-sizing), for the absolute-placement offset in the flow,
-/// band, and container walks. Pure so its box-absent / y-absent / present
-/// branches are unit-testable without a full layout.
+/// The absolute `y` of an ellipse's or a checkbox's optional box (its frame
+/// may be omitted for auto-sizing), for `absolute_atom`'s offset. Pure so
+/// its box-absent / y-absent / present branches are unit-testable without a
+/// full layout.
 pub(in crate::engine) fn box_y(b: Option<&OptBox>) -> Option<Length> {
     b.and_then(|b| b.y)
 }
