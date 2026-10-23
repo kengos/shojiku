@@ -21,6 +21,27 @@ fn an_unparseable_spec_writes_nothing() {
     assert!(refusal.to_string().contains("does not parse"));
 }
 
+/// A spec the YAML door refuses in the tree (here a duplicate key) says where,
+/// not only why: the refusal carries the path and the line/column.
+#[test]
+fn a_spec_refusal_says_where_it_happened() {
+    let tree = Tree::new("dup-spec");
+    tree.seed();
+
+    let refusal = run(&Job {
+        catalog: &tree.catalog,
+        docs: &tree.docs,
+        tables: "probe#keys: {}\nprobe#keys: {}\n",
+    })
+    .expect_err("a duplicate key refuses");
+
+    let message = refusal.to_string();
+    assert!(
+        message.contains("appears twice") && message.contains("at `.`, line "),
+        "names the refusal and where: {message}"
+    );
+}
+
 /// A page the spec names but the tree does not carry stops the run before any
 /// write, and says which file it wanted.
 #[test]

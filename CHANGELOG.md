@@ -77,6 +77,18 @@ platform binaries.
   "every key must be one". In a pack or a manifest, the message of one of
   these refusals ends with its path and line/column. The Designer's
   "remove this key" quick-fix reads none of these and is unchanged.
+- **The Rust functions that read a font-pack manifest and the reference
+  inputs return the YAML door's `YamlError`** instead of a
+  `serde_yaml::Error`: `shojiku_formatter::PackManifest::from_yaml`,
+  `shojiku_authoring::reference::annotations::parse` and
+  `shojiku_authoring::reference::tables::parse`. Its `located_message()`
+  is the one-string rendering they used to carry, with where the refusal
+  happened; its `to_string()` is the message alone. `CoreError` and `LangPackError` no longer convert from a
+  `serde_yaml::Error`, and no crate but `shojiku-core` depends on
+  serde_yaml any more. An oversize font-pack manifest handed over as text
+  (an injected pack, or one added to the WASM session) is now refused with
+  "the input is N bytes, over the 16777216-byte input cap" rather than
+  "pack is N bytes, …"; one read from disk is still refused at the read.
 
 ### Changed
 

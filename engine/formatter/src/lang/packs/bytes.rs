@@ -134,13 +134,13 @@ fn resolve_pack(
     seen: &mut HashSet<String>,
     out: &mut Vec<FaceBytes>,
 ) -> Result<(), PackError> {
-    // Through `from_yaml`, not `serde_yaml::from_str`: that is the one door
-    // carrying the input-size bound, and this string crosses the boundary
-    // from a WASM or MCP host exactly the way a locale overlay does.
+    // Through `from_yaml`, the one manifest door, which carries the
+    // input-size bound: this string crosses the boundary from a WASM or MCP
+    // host exactly the way a locale overlay does.
     let manifest =
         PackManifest::from_yaml(&inj.manifest).map_err(|err| PackError::ParseInjected {
             pack: Echo::from(pack_id),
-            detail: Echo::from(err.to_string()),
+            detail: Echo::from(err.located_message()),
         })?;
     // Confine every declared file first (defense-in-depth: `file` is a
     // lookup key here, but keeping parity with the filesystem path means

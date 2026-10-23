@@ -2,3 +2,30 @@
 # Counts non-comment lines; pairs with the 300-line file budget in
 # scripts/check-line-budget.sh.
 too-many-lines-threshold = 150
+
+# The YAML door (shojiku_core::yaml) is the one place the engine reads and
+# writes YAML: every refusal that does not depend on the document (input
+# size, depth, duplicate and non-string keys, non-finite numbers, local tags)
+# is made there, and the parser can be replaced in one module. A direct call
+# to the parser crate would skip all of it. Only engine/core/src/yaml/ calls
+# it, each use under an `#[expect(…, reason = …)]`; deny.toml holds the same
+# line at the dependency level (no other crate may depend on serde_yaml).
+disallowed-methods = [
+    { path = "serde_yaml::from_str", reason = "read YAML through shojiku_core::yaml" },
+    { path = "serde_yaml::from_slice", reason = "read YAML through shojiku_core::yaml" },
+    { path = "serde_yaml::from_reader", reason = "read YAML through shojiku_core::yaml" },
+    { path = "serde_yaml::from_value", reason = "read YAML through shojiku_core::yaml" },
+    { path = "serde_yaml::to_string", reason = "write YAML through shojiku_core::yaml::to_string" },
+    { path = "serde_yaml::to_value", reason = "write YAML through shojiku_core::yaml::to_string" },
+    { path = "serde_yaml::to_writer", reason = "write YAML through shojiku_core::yaml::to_string" },
+    { path = "serde_yaml::Deserializer::from_str", reason = "read YAML through shojiku_core::yaml" },
+    { path = "serde_yaml::Deserializer::from_slice", reason = "read YAML through shojiku_core::yaml" },
+    { path = "serde_yaml::Deserializer::from_reader", reason = "read YAML through shojiku_core::yaml" },
+]
+disallowed-types = [
+    { path = "serde_yaml::Value", reason = "use shojiku_core::yaml::Value" },
+    { path = "serde_yaml::Mapping", reason = "use shojiku_core::yaml::Value" },
+    { path = "serde_yaml::Error", reason = "use shojiku_core::yaml::YamlError" },
+    { path = "serde_yaml::Deserializer", reason = "read YAML through shojiku_core::yaml" },
+    { path = "serde_yaml::Serializer", reason = "write YAML through shojiku_core::yaml::to_string" },
+]

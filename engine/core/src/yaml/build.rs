@@ -34,6 +34,11 @@ enum Segment {
 type State = RefCell<Option<Refusal>>;
 
 /// Reads `input` into a checked tree.
+#[expect(
+    clippy::disallowed_methods,
+    clippy::disallowed_types,
+    reason = "the door itself: the one place a document is read into a tree"
+)]
 pub(super) fn tree(input: &str) -> Result<Value, YamlError> {
     if input.len() > MAX_INPUT_BYTES {
         let message = format!(

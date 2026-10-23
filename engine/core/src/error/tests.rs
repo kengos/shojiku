@@ -45,8 +45,9 @@ fn non_finite_maps_to_its_own_code() {
 
 #[test]
 fn structural_yaml_and_json_errors_degrade_to_parse_error() {
-    let yaml = serde_yaml::from_str::<i32>("[unterminated").unwrap_err();
-    let diag = CoreError::from(yaml).to_diagnostic();
+    let input = "[unterminated";
+    let yaml = crate::yaml::parse(input).unwrap_err();
+    let diag = CoreError::from_yaml("template", input.len(), yaml).to_diagnostic();
     assert_eq!(diag.code, "parse_error");
     assert!(diag.args.contains_key("detail"));
 
@@ -61,7 +62,9 @@ fn a_hostile_yaml_document_cannot_blow_up_the_parse_message() {
     // direct `Parse` path used to render the raw serde message, which quotes
     // the offending token verbatim.
     let hostile = format!("[{}", "k".repeat(10_000));
-    let err = CoreError::from(serde_yaml::from_str::<i32>(&hostile).unwrap_err());
+    let refusal = crate::yaml::parse(&hostile).unwrap_err();
+    let err = CoreError::from_yaml("template", hostile.len(), refusal);
+    assert!(matches!(err, CoreError::Parse(_)), "{err:?}");
     let message = err.to_string();
     assert!(
         message.chars().count() <= MAX_ECHO + 64,

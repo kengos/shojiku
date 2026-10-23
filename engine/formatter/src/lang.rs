@@ -38,21 +38,15 @@ pub enum LangPackError {
     #[error("failed to parse locale pack: {0}")]
     Parse(Echo),
     /// Refused unread for its size, on the same bound the core wire doors
-    /// use. A pack is data a host supplies, and every pack door goes
-    /// through `ensure_pack_size` — the locale pack, the builtin overlay,
-    /// and the font-pack manifest (`PackManifest::from_yaml`, the one door
-    /// every manifest caller parses through). Worded for any of the three.
+    /// use. A pack is data a host supplies, and both locale-pack doors go
+    /// through `ensure_pack_size` — the locale pack and the builtin overlay
+    /// — so it is worded for either. (The font-pack manifest's door,
+    /// `PackManifest::from_yaml`, returns the YAML door's own refusal.)
     /// Text handed over in memory arrives here unparsed; a pack read from
     /// disk is bounded earlier, at the read ([`read_pack_file`]), and an
     /// oversize file fails there as an I/O error instead.
     #[error("pack is {bytes} bytes, over the {limit}-byte input cap")]
     TooLarge { bytes: usize, limit: usize },
-}
-
-impl From<serde_yaml::Error> for LangPackError {
-    fn from(err: serde_yaml::Error) -> Self {
-        LangPackError::Parse(Echo::from(err.to_string()))
-    }
 }
 
 /// A refusal of the YAML door every pack is read through
@@ -133,9 +127,9 @@ fn default_percent_format() -> String {
 }
 
 /// Refuses host-supplied pack text over `shojiku_core::MAX_INPUT_BYTES`,
-/// unread. Shared by every pack door — the locale pack, the builtin
-/// OVERLAY, and the font-pack manifest — so the bound is compared in this
-/// one place rather than at each door, where copies drift apart.
+/// unread. Shared by both locale-pack doors — the locale pack and the
+/// builtin OVERLAY — so the bound is compared in this one place rather than
+/// at each door, where copies drift apart.
 pub(crate) fn ensure_pack_size(input: &str) -> Result<(), LangPackError> {
     if input.len() > shojiku_core::MAX_INPUT_BYTES {
         return Err(LangPackError::TooLarge {

@@ -371,9 +371,11 @@ injected at parse). The template model splits along CSS lines.
   authoring reference readers and the mcp gallery/front-matter readers all
   read through it, and every YAML the engine writes (`PackManifest::to_yaml`,
   the round-trip tests) goes out through its `to_string` (`yaml/write.rs`;
-  a `Serialize` failure is kind `Write`). serde_yaml still appears outside
-  it in the public signatures that return `serde_yaml::Error` and in
-  their `From` impls' tests. `MAX_INPUT_BYTES` (16 MiB, twice the Designer's
+  a `Serialize` failure is kind `Write`). serde_yaml appears nowhere else:
+  `engine/clippy.toml` refuses its functions and types outside
+  `yaml/{build,read,write,error}.rs` (each use there under an
+  `#[expect(…, reason)]`), and `engine/deny.toml` bans it for any crate but
+  `shojiku-core`. `MAX_INPUT_BYTES` (16 MiB, twice the Designer's
   8 MiB template ceiling) lives here. `parse(input) -> Document` reads into the engine's own `Value`
   (`yaml/value.rs`: Null/Bool/Int/UInt/Float/String/Sequence/Mapping as
   `Vec<(String, Value)>` in document order, `get`, `Serialize`) and makes

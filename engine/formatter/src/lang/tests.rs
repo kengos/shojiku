@@ -109,10 +109,9 @@ fn lang_pack_errors_bound_their_echoed_path_and_parse_detail() {
         path: shojiku_diagnostics::Echo::from(&hostile),
         source: std::io::Error::new(std::io::ErrorKind::NotFound, "nope"),
     };
-    let parse = LangPackError::from(
-        serde_yaml::from_str::<LangPack>(&format!("id: \"{}\"\n  bad", "y".repeat(500)))
-            .unwrap_err(),
-    );
+    let parse = LangPack::from_yaml_str(&format!("id: \"{}\"\n  bad", "y".repeat(500)))
+        .expect_err("not well-formed");
+    assert!(matches!(parse, LangPackError::Parse(_)), "{parse:?}");
     for err in [io, parse] {
         let message = err.to_string();
         assert!(
@@ -187,16 +186,20 @@ fn an_oversize_builtin_overlay_is_refused() {
 fn an_oversize_font_pack_manifest_is_refused() {
     // The manifest wire is fuzzed too. `from_yaml` is its one door: the
     // filesystem resolver, injected packs, the wasm session and the CLI all
-    // parse through it, and it refuses through the shared `ensure_pack_size`
-    // rather than a comparison of its own.
+    // parse through it, and it refuses through the YAML door's own size
+    // bound rather than a comparison of its own.
     let doc = "version: 1\nlicense: OFL-1.1\nfaces: []\n";
     let manifest = format!("{doc}{}", "#".repeat(shojiku_core::MAX_INPUT_BYTES));
     let err = PackManifest::from_yaml(&manifest).expect_err("must refuse");
-    let expected = LangPackError::TooLarge {
-        bytes: manifest.len(),
-        limit: shojiku_core::MAX_INPUT_BYTES,
-    };
-    assert_eq!(err.to_string(), expected.to_string());
+    assert_eq!(err.kind, shojiku_core::yaml::YamlErrorKind::TooLarge);
+    assert_eq!(
+        err.located_message(),
+        format!(
+            "the input is {} bytes, over the {}-byte input cap",
+            manifest.len(),
+            shojiku_core::MAX_INPUT_BYTES
+        )
+    );
     // Positive control: at the cap it still parses, so the refusal above is
     // the bound and not a manifest the type could never accept.
     let at_cap = format!(

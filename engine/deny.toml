@@ -42,6 +42,12 @@ allow = [
 
 [bans]
 multiple-versions = "warn"
+# The YAML door (shojiku_core::yaml) is the one place the engine reads and
+# writes YAML, so no crate but shojiku-core may depend on the parser crate.
+# engine/clippy.toml holds the same line at the call site.
+deny = [
+    { crate = "serde_yaml", wrappers = ["shojiku-core"] },
+]
 
 [sources]
 unknown-registry = "deny"

@@ -6,6 +6,7 @@
 //! from disagreeing.
 
 use serde::Deserialize;
+use shojiku_core::yaml::YamlError;
 use std::collections::BTreeMap;
 
 /// Where a cell's text comes from.
@@ -155,12 +156,10 @@ pub type Spec = BTreeMap<String, Table>;
 ///
 /// # Errors
 ///
-/// Returns the YAML error when the file does not match the shape above.
-/// Unknown keys are refused rather than ignored: a typo'd column or row key
-/// would otherwise render a silently different table. It is read through the
-/// YAML door ([`shojiku_core::yaml`]), whose refusal carries its message and
-/// where it happened, and no `location()`.
-pub fn parse(src: &str) -> Result<Spec, serde_yaml::Error> {
+/// Returns the YAML door's ([`shojiku_core::yaml`]) refusal when the file
+/// does not match the shape above. Unknown keys are refused rather than
+/// ignored: a typo'd column or row key would otherwise render a silently
+/// different table.
+pub fn parse(src: &str) -> Result<Spec, YamlError> {
     shojiku_core::yaml::from_str(src)
-        .map_err(|err| <serde_yaml::Error as serde::de::Error>::custom(err.located_message()))
 }
