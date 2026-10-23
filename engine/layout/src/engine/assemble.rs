@@ -9,6 +9,7 @@ use crate::tree::{LayoutDocument, LayoutPage};
 use shojiku_core::Body;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
+use super::absolute::Placement;
 use super::visibility::{self, Visibility};
 use super::{Basis, Ctx, LayoutInput, LayoutOutput, PageBuild, translate};
 
@@ -86,7 +87,9 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
                     visibility::draw_mark(std::slice::from_ref(&page), ctx.pending_anchors.len())
                 });
                 let item_mark = ctx.enter_item(format!("items[{i}]"));
-                ctx.place_absolute_item(item, &page_basis, &mut page);
+                if let Some((atom, dy)) = ctx.absolute_atom(item, &page_basis, Placement::Body) {
+                    ctx.emit_placed(&mut page, atom, dy, &page_basis);
+                }
                 ctx.leave_item(item_mark);
                 if let Some(mark) = mark {
                     visibility::blank_since(

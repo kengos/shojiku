@@ -3,9 +3,9 @@
 //! items placed along the parent box's main axis (`direction`, default
 //! `column`) with `gap`, `justifyContent`, `alignItems`, and auto
 //! margins; children with either coordinate keep the Phase-1 absolute
-//! placement (`super::container::absolute_child_atom`). The
-//! distribution math lives in `shojiku-layout-box`; this module walks
-//! the template and measures content. Paint order stays document order.
+//! placement (`super::absolute`). The distribution math lives in
+//! `shojiku-layout-box`; this module walks the template and measures
+//! content. Paint order stays document order.
 
 mod baseline;
 mod column;
@@ -21,6 +21,7 @@ use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 mod child;
 
+use super::absolute::Placement;
 use super::{Atom, Basis, Ctx};
 
 pub(in crate::engine) use kind::FlexKind;
@@ -201,7 +202,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     }
                 }
                 None => {
-                    if let Some((atom, dy)) = self.absolute_child_atom(child, inner, depth) {
+                    let placement = Placement::Container { depth };
+                    if let Some((atom, dy)) = self.absolute_atom(child, inner, placement) {
                         self.check_child_right(&atom, inner, clipped);
                         slots.push(Slot::Abs(self.blank_child(atom, hide), dy));
                     }

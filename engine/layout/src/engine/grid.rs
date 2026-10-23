@@ -21,6 +21,7 @@ use crate::engine::overflow::exceeds;
 use crate::tree::LayoutItem;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
+use super::absolute::Placement;
 use super::flex::{FlexKind, Slot, emit_slots, h_auto_margin};
 use super::visibility::Visibility;
 use super::{Atom, Basis, Ctx};
@@ -165,7 +166,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     }
                 }
                 None => {
-                    if let Some((atom, dy)) = self.absolute_child_atom(child, inner, depth) {
+                    let placement = Placement::Container { depth };
+                    if let Some((atom, dy)) = self.absolute_atom(child, inner, placement) {
                         self.check_child_right(&atom, inner, clipped);
                         slots.push(Slot::Abs(self.blank_child(atom, hide), dy));
                     }

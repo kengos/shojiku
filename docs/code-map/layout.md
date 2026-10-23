@@ -103,14 +103,24 @@ Wire types stay in core; content measurement stays in layout.
   chosen so their PRODUCT, the tallest admitted line box, is exactly
   `MAX_RESOLVED_PT` — and one stroke cap bounds both stroke widths. The guards run at USE,
   not in the cascade, since an inherited value can be hostile too.
-- `engine/flow.rs` — flow/absolute item walks; `engine/flow/layouter.rs` —
+- `engine/flow.rs` — the flow item walk; `engine/flow/layouter.rs` —
   `FlowLayouter`, the paginating cursor (page breaks, the `MAX_PAGES`
   runaway cap, atom placement = vertical fit + horizontal-overflow check).
-- `engine/band.rs` — header/footer + `page_number` (vertical_rl routes to
-  `vertical_text_block`); every arm hands its atom to `sheet.rs`'s
-  `emit_placed` rather than translating it inline.
+- `engine/absolute.rs` — `absolute_atom`, the ONE per-kind dispatch for an
+  item placed at its authored `box.y`: band items, absolute-body items and
+  container children with `box.x`/`box.y` (called from `band.rs`,
+  `assemble.rs`, `flex.rs`, `grid.rs`). `Placement` (`Band` / `Body` /
+  `Container { depth }`) carries the only differences: `page_number`
+  draws only in a band, each placement raises its OWN rejection code for
+  `page_number` / `repeat` / `repeat_flow` / `page_break`, and a nested
+  container lays out one level deeper. Returns `(atom, dy)`; the caller
+  emits it.
+- `engine/band.rs` — header/footer walk + `page_number_atom`
+  (vertical_rl routes to `vertical_text_block`); hands each atom from
+  `absolute_atom` to `sheet.rs`'s `emit_placed` rather than translating
+  it inline.
 - `engine/sheet.rs` — `emit_placed`, the ONE tail EVERY band and
-  absolute-body arm goes through (translate onto the page + the
+  absolute-body item goes through (translate onto the page + the
   sheet-edge check). No arm emits by hand, `line` included.
 - `engine/visibility.rs` — `visible:` at layout time: `Visibility`
   (`Draw`/`Hidden`/`Collapsed`) computed ONCE per child list by
@@ -190,7 +200,7 @@ Wire types stay in core; content measurement stays in layout.
   `begin_measure`/`end_measure` — parks diags AND the warning ledgers so a
   measure pass is silent without eating the render pass's warnings.
 - `engine/container.rs` — container box + cascade push/restore +
-  `absolute_child_atom`; `clip_children` (`overflow: hidden` wraps children
+  `guarded_image_atom`; `clip_children` (`overflow: hidden` wraps children
   in a `Clip`).
 - `engine/flex.rs` — `layout_box_children`, the shared container/cell
   child-walk: children with no authored `box.x`/`box.y` are flex items
