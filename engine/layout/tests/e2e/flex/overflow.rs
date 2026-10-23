@@ -56,6 +56,21 @@ fn exact_fit_row_does_not_warn() {
 }
 
 #[test]
+fn a_row_a_few_hundredths_over_warns() {
+    // Same 0.01pt slack as every other overflow check: 50 + 50.03 in a
+    // 100pt row warns, 50 + 50.005 does not.
+    let row = |w: &str| {
+        page(&format!(
+            "      - type: container\n        box: {{ w: 100, direction: row }}\n        items:\n          - {{ type: rect, style: {{ borderWidth: 1 }}, box: {{ w: 50, h: 10 }} }}\n          - {{ type: rect, style: {{ borderWidth: 1 }}, box: {{ w: {w}, h: 10 }} }}\n"
+        ))
+    };
+    let (_, diags) = run(&row("50.03"), json!({}));
+    only(&diags, "flex_row_overflow");
+    let (_, diags) = run(&row("50.005"), json!({}));
+    assert!(!overflows(&diags), "{diags:?}");
+}
+
+#[test]
 fn unsized_children_shrink_and_stay_silent() {
     // Flex shares always fit by construction.
     let yaml = page(
@@ -84,6 +99,22 @@ fn flow_item_past_the_region_edge_warns() {
     assert_eq!(arg_num(&hit, "over"), Some(50.0));
     assert_eq!(arg_num(&hit, "avail"), Some(200.0));
     assert!(args_all_numeric(&hit), "{hit:?}");
+}
+
+#[test]
+fn a_flow_item_a_few_hundredths_past_the_edge_warns() {
+    // Same 0.01pt slack as every other overflow check.
+    let item = |w: &str| {
+        page(&format!(
+            "      - {{ type: rect, style: {{ borderWidth: 1 }}, box: {{ x: 100, w: {w}, h: 10 }} }}\n"
+        ))
+    };
+    let (_, diags) = run(&item("100.03"), json!({}));
+    let hit = only(&diags, "flow_item_overflow");
+    let over = arg_num(&hit, "over").unwrap_or_default();
+    assert!((over - 0.03).abs() < 1e-9, "{hit:?}");
+    let (_, diags) = run(&item("100.005"), json!({}));
+    assert!(!overflows(&diags), "{diags:?}");
 }
 
 #[test]
@@ -127,6 +158,23 @@ fn a_column_child_that_fits_stays_silent() {
         "      - type: container\n        box: { w: 100 }\n        items:\n          - { type: rect, style: { borderWidth: 1 }, box: { w: 100, h: 10 } }\n",
     );
     let (_, diags) = run(&yaml, json!({}));
+    assert!(!overflows(&diags), "{diags:?}");
+}
+
+#[test]
+fn a_few_hundredths_excess_warns_but_float_noise_does_not() {
+    // The horizontal checks share the 0.01pt slack every other overflow
+    // check uses: 0.03pt over is reported, 0.005pt is not.
+    let child = |w: &str| {
+        page(&format!(
+            "      - type: container\n        box: {{ w: 100 }}\n        items:\n          - {{ type: rect, style: {{ borderWidth: 1 }}, box: {{ w: {w}, h: 10 }} }}\n"
+        ))
+    };
+    let (_, diags) = run(&child("100.03"), json!({}));
+    let hit = only(&diags, "child_overflow");
+    let over = arg_num(&hit, "over").unwrap_or_default();
+    assert!((over - 0.03).abs() < 1e-9, "{hit:?}");
+    let (_, diags) = run(&child("100.005"), json!({}));
     assert!(!overflows(&diags), "{diags:?}");
 }
 

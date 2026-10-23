@@ -6,6 +6,7 @@
 
 use std::ops::Range;
 
+use crate::engine::overflow::exceeds;
 use crate::font::{FontFace, RunOptions, down_advance_over, vertical_extent};
 use crate::tree::DecorationSpec;
 use crate::wrap::no_line_end;
@@ -112,7 +113,7 @@ pub(in crate::engine) fn clamp_column_down(
     opts: RunOptions,
     max_down: f64,
 ) -> String {
-    if column_extent(chain, text, size, orient, opts) <= max_down + 0.01 {
+    if !exceeds(column_extent(chain, text, size, orient, opts), max_down) {
         return text.to_string();
     }
     trim_to(chain, text, size, orient, opts, max_down)
@@ -147,7 +148,7 @@ pub(in crate::engine) fn trim_to(
                 .map(|c| down_advance_over(chain, c, size, orient) + opts.letter_spacing)
                 .sum()
         };
-        if acc + uw + ellipsis > max_down + 0.01 {
+        if exceeds(acc + uw + ellipsis, max_down) {
             break;
         }
         acc += uw;

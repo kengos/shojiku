@@ -6,6 +6,7 @@ use shojiku_core::{BindingScope, ContainerItem, ImageItem, Item, MAX_CONTAINER_D
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use crate::boxes::translate_boxes;
+use crate::engine::overflow::exceeds;
 use crate::tree::{ClipShape, Corners, LayoutItem};
 
 use super::{Atom, Basis, Ctx, placed_box, translate, with_vertical_margin};
@@ -102,7 +103,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             (Some(h), Some(content_h)) => {
                 // `overflow: hidden` clips instead of warning — the
                 // author opted in; `visible` keeps the draw-over + warn.
-                if bottom > content_h + 0.01 && computed.overflow == Overflow::Visible {
+                if exceeds(bottom, content_h) && computed.overflow == Overflow::Visible {
                     self.diags.push(
                         Diagnostic::new(Code::ContainerOverflow)
                             .arg("content", bottom)

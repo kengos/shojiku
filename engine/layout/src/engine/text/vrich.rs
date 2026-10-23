@@ -11,6 +11,7 @@
 //! `clip` is honored, `shrink`/`ellipsis` warn `span_overflow_unsupported`
 //! and behave like `visible`.
 
+use crate::engine::overflow::exceeds;
 use crate::style::ComputedStyle;
 use crate::tree::{LayoutItem, TextBlock, TextLine};
 use crate::wrap::{RichSpan, wrap_spans_hung};
@@ -122,7 +123,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let content_x = x + padding[3];
         let content_w = (w - padding[1] - padding[3]).max(0.0);
         let mut clip = false;
-        if columns.len() as f64 * col_width > content_w + 0.01 {
+        if exceeds(columns.len() as f64 * col_width, content_w) {
             match computed.text_overflow {
                 // In a direct flow region the layouter paginates this
                 // overflow at column boundaries instead, so the warning is
@@ -131,7 +132,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     // Suppressed only when pagination can actually take
                     // over: a column width no page can hold even one of
                     // (a hostile-huge font) keeps the warning.
-                    if !self.flow_text || col_width > content_w + 0.01 {
+                    if !self.flow_text || exceeds(col_width, content_w) {
                         self.warn_columns_overflow(columns.len(), col_width, content_w);
                     }
                 }

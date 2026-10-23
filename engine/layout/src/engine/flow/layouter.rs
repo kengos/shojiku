@@ -2,9 +2,10 @@
 //! placement (vertical fit + the horizontal-overflow check).
 
 use crate::boxes::translate_boxes;
+use crate::engine::overflow::exceeds;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
-use super::super::{Atom, Basis, H_OVERFLOW_EPS, PageBuild, translate};
+use super::super::{Atom, Basis, PageBuild, translate};
 
 /// Hard cap to keep a runaway template from looping forever. Shared with
 /// `char_grid`, whose cell-assignment cap derives from it.
@@ -74,11 +75,11 @@ impl FlowLayouter {
         // counterpart is `section_overflow`). Filling atoms (rb.w None)
         // can't overflow; auto-margin shifts only move atoms that fit.
         if let Some((rb, w)) = atom.rb.and_then(|rb| rb.w.map(|w| (rb, w))) {
-            let over = (rb.x - self.region_x) + w + rb.margin[1] - self.region_w;
-            if over > H_OVERFLOW_EPS {
+            let reach = (rb.x - self.region_x) + w + rb.margin[1];
+            if exceeds(reach, self.region_w) {
                 diags.push(
                     Diagnostic::new(Code::FlowItemOverflow)
-                        .arg("over", over)
+                        .arg("over", reach - self.region_w)
                         .arg("avail", self.region_w),
                 );
             }

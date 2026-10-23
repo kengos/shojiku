@@ -11,6 +11,7 @@ use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::super::super::{Atom, Basis, Ctx};
 use super::{Cell, MIN_RUBY_PT, fit, match_entries, push_ruby_items, slice_extent};
+use crate::engine::overflow::exceeds;
 use crate::font::RunOptions;
 use crate::style::ComputedStyle;
 use crate::tree::{LayoutItem, TextBlock, TextLine};
@@ -68,7 +69,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 size = fit(size, size * se.extent / read_ext);
                 read_ext = measure(size);
             }
-            overflowed |= read_ext > se.extent + 0.01;
+            overflowed |= exceeds(read_ext, se.extent);
             self.ruby_anchors.push(m.line);
             ruby_items.push(ruby_block(
                 &block,

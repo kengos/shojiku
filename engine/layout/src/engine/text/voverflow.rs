@@ -5,6 +5,7 @@
 //! [`super::overflow`] with the axes swapped; the caller
 //! ([`super::vblock`]) owns diagnostics and the final block assembly.
 
+use crate::engine::overflow::exceeds;
 use crate::font::{FontFace, RunOptions, down_advance_over};
 use crate::wrap::{WrappedLine, wrap_vertical};
 use shojiku_core::{HangingPunctuation, LineBreak, TextOrientation, TextSpacingTrim};
@@ -118,7 +119,7 @@ pub(super) fn fit_columns_size(
             v.hanging,
             v.combine,
         );
-        columns.len() as f64 * size * lh_mult <= content_w + 0.01
+        !exceeds(columns.len() as f64 * size * lh_mult, content_w)
     };
     if fits(base_size) {
         return base_size;
@@ -151,7 +152,7 @@ pub(super) fn ellipsize_column(
 ) -> String {
     let extent = column_extent(chain, text, size, orient, opts);
     let ellipsis = down_advance_over(chain, '…', size, orient) + opts.letter_spacing;
-    if extent + ellipsis <= max_down + 0.01 {
+    if !exceeds(extent + ellipsis, max_down) {
         let mut kept = text.to_string();
         kept.push('…');
         return kept;

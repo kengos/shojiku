@@ -16,6 +16,8 @@ use shojiku_core::{AlignItems, Bindings, EmptyBehavior, TableItem, VerticalAlign
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_layout_box::cross_offset;
 
+use crate::engine::overflow::exceeds;
+
 use super::decoration;
 use super::flow::FlowLayouter;
 use super::fragments::Fragments;
@@ -78,7 +80,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
 
         let widths = self.column_widths(&table.columns, region);
         let total_w: f64 = widths.iter().sum();
-        if total_w > region.w + 0.01 {
+        if exceeds(total_w, region.w) {
             self.diags.push(
                 Diagnostic::new(Code::TableTooWide)
                     .arg("total", total_w)

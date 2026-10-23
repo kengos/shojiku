@@ -3,6 +3,7 @@
 //! right (vertical, as a real vertical column the renderers shape with
 //! GSUB `vert`) — shrunk to fit the run's extent with a 4pt floor.
 
+use crate::engine::overflow::exceeds;
 use crate::font::{FontFace, RunOptions, run_width, vertical_extent};
 use crate::tree::{LayoutItem, TextLine};
 use shojiku_core::TextOrientation;
@@ -75,7 +76,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                         size = fit(size, size * extent / total);
                         total = vertical_extent(faces, &text, size, TextOrientation::Upright, opts);
                     }
-                    overflowed |= total > extent + 0.01;
+                    overflowed |= exceeds(total, extent);
                     let line = TextLine {
                         text,
                         x: origin_x + cx + geom.cell + ((geom.line_gap - size) / 2.0).max(0.0),
@@ -93,7 +94,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                         size = fit(size, size * extent / total);
                         total = run_width(faces, &text, size, RunOptions::spacing_only(0.0));
                     }
-                    overflowed |= total > extent + 0.01;
+                    overflowed |= exceeds(total, extent);
                     let line = TextLine {
                         text,
                         x: origin_x + cx + (extent - total) / 2.0,

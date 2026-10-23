@@ -9,6 +9,7 @@
 mod lines;
 mod resolve;
 
+use crate::engine::overflow::exceeds;
 use crate::style::ComputedStyle;
 use crate::tree::{DecorationSpec, LayoutItem, TextBlock, TextLine};
 use crate::wrap::{RichSpan, wrap_spans};
@@ -118,7 +119,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let avail = box_h.map(|h| content_avail(h, padding));
         let mut clip = false;
         if let Some(avail) = avail
-            && content_h > avail + 0.01
+            && exceeds(content_h, avail)
         {
             match computed.text_overflow {
                 TextOverflow::Visible => {}

@@ -34,6 +34,23 @@ fn an_absolute_item_past_the_sheet_edge_warns() {
 }
 
 #[test]
+fn a_few_hundredths_past_the_sheet_edge_warns() {
+    // Same 0.01pt slack as every other overflow check: sheet x 120 + w
+    // 80.03 ends 0.03pt off the paper; 80.005 is float noise.
+    let rect = |w: &str| {
+        absolute_body(&format!(
+            "{{ type: rect, style: {{ borderWidth: 1 }}, box: {{ x: 100, y: 0, w: {w}, h: 10 }} }}"
+        ))
+    };
+    let diags = rect("80.03");
+    let hit = only(&diags, "sheet_overflow");
+    let over = arg_num(&hit, "over").unwrap_or_default();
+    assert!((over - 0.03).abs() < 1e-9, "{hit:?}");
+    let diags = rect("80.005");
+    assert!(!overflows(&diags), "{diags:?}");
+}
+
+#[test]
 fn an_item_reaching_only_into_the_page_margin_stays_silent() {
     // The escape hatch: x 100 + w 80 = sheet x 200 exactly — it eats the
     // whole right margin and is still ON the paper. A rule written

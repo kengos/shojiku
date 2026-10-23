@@ -373,19 +373,19 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 132 files / 19572 lines; tests 270 files / 38037 lines
+### `layout` (L3) — 132 files / 19612 lines; tests 271 files / 38139 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
 - `src/color.rs` 32 — `#rrggbb` color parsing.
-- `src/engine.rs` 274 ▲ — Template + params -> positioned pages.
+- `src/engine.rs` 270 ▲ — Template + params -> positioned pages.
 - `src/engine/anchor.rs` 143 — Anchored line endpoints: the deferred record and its page resolution.
 - `src/engine/anchor/band.rs` 59 — The rectangle an anchored `ellipse` circles.
 - `src/engine/anchor/defer.rs` 85 — Deferral: the one place a [`PendingAnchor`] is made.
 - `src/engine/anchor/index.rs` 90 — The target index the drain resolves against: every anchorable placement, by page and id, built ONCE for the whole drain.
 - `src/engine/anchor/resolve.rs` 246 — The drain: every deferred item, resolved against the finished pages.
 - `src/engine/assemble.rs` 170 — The layout entry point: seeds the cascade root and the page basis, walks the body, then assembles each page as header + body + footer in sheet coordinates.
-- `src/engine/atoms.rs` 284 ▲ — Leaf item atoms: rect, image (contain/cover/stretch/none fit against the prepared asset store; cover/none clipped to the box, and every SVG clipped to it whatever the fit), and line.
+- `src/engine/atoms.rs` 285 ▲ — Leaf item atoms: rect, image (contain/cover/stretch/none fit against the prepared asset store; cover/none clipped to the box, and every SVG clipped to it whatever the fit), and line.
 - `src/engine/band.rs` 204 — Header/footer bands: per-page item placement and `page_number` substitution ({page}/{pages}).
 - `src/engine/cell.rs` 193 — The slot-filling, data-scoped cell: the ONE home for the container a `repeat` places per array element and a table column's `cell:` places per row.
 - `src/engine/char_grid.rs` 242 — `type: char_grid` — genkoyoshi/kanji workbooks/application-form fixed character cells: the engine assigns one char per cell (school kinsoku hang-back included), draws the cell grid as stroked rects, and lays ruby (furigana) along each base run.
@@ -398,9 +398,9 @@ first sentence of its `//!` header.
 - `src/engine/char_grid/geom.rs` 77 — Resolved `char_grid` geometry: the pure cell/block → page-coordinate math, writing-mode aware.
 - `src/engine/char_grid/glyph.rs` 114 — Per-cell / per-block glyph placement for a `char_grid` sheet: the pure geometry turning one [`CellChar`] into a positioned [`TextLine`] and its font size.
 - `src/engine/char_grid/markup.rs` 44 — `char_grid` content → ruby segments: the opt-in `markup: aozora` parse and the diagnostics its warnings become.
-- `src/engine/char_grid/ruby.rs` 158 — Ruby (furigana) placement for `char_grid`: each annotated base run gets its reading laid along the run — above it (horizontal) or to its right (vertical, as a real vertical column the renderers shape with GSUB `vert`) — shrunk to fit the run's extent with a 4pt floor.
+- `src/engine/char_grid/ruby.rs` 159 — Ruby (furigana) placement for `char_grid`: each annotated base run gets its reading laid along the run — above it (horizontal) or to its right (vertical, as a real vertical column the renderers shape with GSUB `vert`) — shrunk to fit the run's extent with a 4pt floor.
 - `src/engine/char_grid/sheet.rs` 249 — One `char_grid` sheet's atom: background fill, the stroked cell grid, and the per-cell text blocks.
-- `src/engine/container.rs` 287 ▲ — Containers: box resolution, the style cascade push/restore, and the absolutely-positioned child atoms of the shared box-children walk (the walk itself, with flex placement, lives in `super::flex`).
+- `src/engine/container.rs` 288 ▲ — Containers: box resolution, the style cascade push/restore, and the absolutely-positioned child atoms of the shared box-children walk (the walk itself, with flex placement, lives in `super::flex`).
 - `src/engine/decoration.rs` 159 — Box decoration: the `backgroundColor` fill and the border stroke, emitted over an item's border box using existing tree primitives so renderers never change.
 - `src/engine/decoration/dash.rs` 54 — Dash-pattern derivation for `borderStyle: dashed | dotted`.
 - `src/engine/decoration/paint.rs` 213 — Box decoration as DATA: a decorated box's fully resolved paint, plus the pure emitter over it.
@@ -410,12 +410,12 @@ first sentence of its `//!` header.
 - `src/engine/flex/child.rs` 64 — Placing and measuring ONE flex/grid child.
 - `src/engine/flex/column.rs` 229 — The column side of the flex walk: the main-axis `flexGrow` pre-pass (heights measured, then shared) and the per-item main/cross offsets.
 - `src/engine/flex/kind.rs` 66 — `FlexKind`: the classification of a box child into the atom kinds that participate in flex/grid placement, plus the authored-box accessor both the planning pre-pass and the walk read it through.
-- `src/engine/flex/offsets.rs` 236 — The row side of the flex walk: the main-axis pre-pass (slot bases from measured widths) and the cross-axis offsets, feeding the walk in the parent module.
+- `src/engine/flex/offsets.rs` 238 — The row side of the flex walk: the main-axis pre-pass (slot bases from measured widths) and the cross-axis offsets, feeding the walk in the parent module.
 - `src/engine/flex/slots.rs` 90 — Slot emission: the document-order tail every box-children walk (flex and grid) shares, plus the flow body's horizontal auto-margin shift.
 - `src/engine/flow.rs` 257 — Flow-section placement: the flow item walk and the absolute-body item walk; the paginating cursor lives in [`layouter`].
-- `src/engine/flow/layouter.rs` 101 — The paginating flow cursor: page breaks, the page cap, and atom placement (vertical fit + the horizontal-overflow check).
+- `src/engine/flow/layouter.rs` 102 — The paginating flow cursor: page breaks, the page cap, and atom placement (vertical fit + the horizontal-overflow check).
 - `src/engine/fragments.rs` 104 — Per-page vertical extents of a paginating item's placed atoms, emitted as the item's own `PlacedBox` fragments (one per page it spans).
-- `src/engine/grid.rs` 293 ▲ — Static grid child placement (box-model Phase 3, `box.type: grid`): children without authored `box.x`/`box.y` tile the column tracks in fill order (`direction`), rows are explicit tracks or sized by their tallest child, and `justifyContent` distributes leftover track space.
+- `src/engine/grid.rs` 294 ▲ — Static grid child placement (box-model Phase 3, `box.type: grid`): children without authored `box.x`/`box.y` tile the column tracks in fill order (`direction`), rows are explicit tracks or sized by their tallest child, and `justifyContent` distributes leftover track space.
 - `src/engine/grid/cells.rs` 189 — Cell assignment and `auto` column measurement.
 - `src/engine/grid/span.rs` 107 — Grid span placement: the occupancy map that assigns each grid child its `(column, row)` cell honoring `columnSpan`/`rowSpan`.
 - `src/engine/grid/tracks.rs` 254 — `TrackSpec` resolution: the wire form (count or track list) to per-track pt sizes, with the hostile-input caps — track counts and list lengths clamp to `MAX_GRID_TRACKS` with a diagnostic, negative tracks clamp to 0, and `rows: N` needs a definite height to split.
@@ -427,7 +427,7 @@ first sentence of its `//!` header.
 - `src/engine/marks.rs` 272 ▲ — Form marks (`ellipse`, `checkbox`): box-inscribed vector shapes whose *presence* is params-driven but whose *geometry* is template-fixed — an unmatched mark still reserves its box, so the blank↔filled one-template workflow never shifts layout between params sets.
 - `src/engine/marks/presence.rs` 59 — Form-mark presence: turns a `MarkBinding` into "draw / don't draw" against the current data scope, warning on the two params shapes the predicate cannot use.
 - `src/engine/meta.rs` 197 — Document-metadata resolution: interpolates the `document:` block against params, then gates every resolved value before it enters the tree — layout is the trust boundary here exactly as it is for `link.url` (see `engine/link.rs`); renderers write what the tree carries without judgment.
-- `src/engine/overflow.rs` 135 — The horizontal-overflow policy: the one home for every "does this reach past the box that holds it?" check, so the rules can be read against each other instead of being inferred from three call sites.
+- `src/engine/overflow.rs` 151 — The horizontal-overflow policy: the one home for every "does this reach past the box that holds it?" check, so the rules can be read against each other instead of being inferred from three call sites.
 - `src/engine/path.rs` 93 — The structural path stack: addresses every laid-out item in the validate-diagnostic grammar (`sections.body.items[3].items[0]`, `…cell.items[1]`, `…columns[2]`) so `inspect` emits a stable `PlacedBox.path` for id-less items too, not only id-carrying ones.
 - `src/engine/predicate.rs` 81 — Pure presence predicate shared by the declarative `{ key, equals?
 - `src/engine/qr.rs` 184 — QR code items: content is encoded at *layout* time and emitted as run-length-merged module [`RectShape`]s — no tree/renderer/asset change, which is what lets a `qr_code` work inside `repeat` cells with element-scoped bindings on day one.
@@ -439,9 +439,9 @@ first sentence of its `//!` header.
 - `src/engine/resolve.rs` 136 — Resolve-pass primitives: thin `Ctx` bridges to the box-model math in `shojiku-layout-box` (length/edge resolution, `ResolvedBox`), the page margin resolution, and the layered style resolver (engine default <- inherited <- named styles <- inline).
 - `src/engine/resolve/sane.rs` 157 — Sanity guards over the style scalars a template can set to anything: color, font size, line height, letter spacing, and the two stroke widths.
 - `src/engine/sheet.rs` 21 — Sheet-level placement: the one emit tail every band and absolute-body item goes through, and the page-edge overflow check it carries.
-- `src/engine/table.rs` 239 — Tables: row-by-row pagination, repeating headers, keep-together, and the id-addressable table fragments.
+- `src/engine/table.rs` 241 — Tables: row-by-row pagination, repeating headers, keep-together, and the id-addressable table fragments.
 - `src/engine/table/atom.rs` 117 — The bounded (non-paginating) table atom: a `table` rendered as ONE stacked block for every context that is not the flow body — a container child, an absolute body, a band, or a grid cell.
-- `src/engine/table/content.rs` 94 — Non-text cell rendering: `type: qr_code` / `type: image` columns draw into the cell box (decoration + centered media), scaling to the row height rather than driving it.
+- `src/engine/table/content.rs` 95 — Non-text cell rendering: `type: qr_code` / `type: image` columns draw into the cell box (decoration + centered media), scaling to the row height rather than driving it.
 - `src/engine/table/geom.rs` 98 — Table geometry resolution: `Length` column widths (with the unsized equal-share fallback) and the guarded row/header heights + cell padding, all resolved against the flow region.
 - `src/engine/table/rows.rs` 271 ▲ — Row and header atom building: measure/render-consistent cell text blocks (border-box cell padding, so cell decoration covers the full cell), the row-band decoration, the grid stroke, and the per-cell `PlacedBox`es.
 - `src/engine/table/rows/cell.rs` 97 — The `cell:` column arm: a table cell hosting freely placed items.
@@ -451,28 +451,28 @@ first sentence of its `//!` header.
 - `src/engine/table/style.rs` 155 — Table style resolution: the authored grid border (with the table's 0.5pt default), the zebra row cascade, and the authored-or-default folds for the non-inherited properties whose table defaults differ from the engine initial values.
 - `src/engine/table/style/conditional.rs` 88 — Per-row conditional style layers: which `row.conditionalStyles` entries a body row's own element selects, and the layers they add on top of the base/zebra row style.
 - `src/engine/text.rs` 198 — Text content and atoms: binding/interpolation resolution and the text-item atom (margins + padding); block building lives in [`block`] (plain) and [`rich`] (spans).
-- `src/engine/text/block.rs` 248 — Wrapped + aligned text-block building: border-box padding, vertical alignment, the box decoration (via `super::super::decoration`), and (via [`glyphs`]) the missing-glyph diagnostic.
+- `src/engine/text/block.rs` 249 — Wrapped + aligned text-block building: border-box padding, vertical alignment, the box decoration (via `super::super::decoration`), and (via [`glyphs`]) the missing-glyph diagnostic.
 - `src/engine/text/block/glyphs.rs` 70 — Missing-glyph (tofu) diagnostics: the capped distinct-offender scan shared by plain blocks and rich spans.
 - `src/engine/text/block/lines.rs` 115 — Plain-text line placement for [`super`]'s `text_block`: wrapping with the block's settings, then measuring and aligning each wrapped line (including the hanging-punctuation exclusion) into placed [`TextLine`]s.
 - `src/engine/text/chrome.rs` 84 — The assembly tail every text-block builder shares — decoration under the block, the `textOverflow: clip` wrapper around it — and the split channel it fills.
-- `src/engine/text/height.rs` 56 — Definite-height overflow bookkeeping shared by the plain ([`super::block`]) and rich ([`super::rich`]) block builders: available content height, the final reserved height under an overflow policy, and the post-policy overflow warning.
+- `src/engine/text/height.rs` 58 — Definite-height overflow bookkeeping shared by the plain ([`super::block`]) and rich ([`super::rich`]) block builders: available content height, the final reserved height under an overflow policy, and the post-policy overflow warning.
 - `src/engine/text/mark.rs` 168 — Text-anchored circled-text overlay: an oval auto-centered on a text item's glyph band, computed from the finished block's line geometry and the primary face's cap/ascent/descent metrics.
 - `src/engine/text/metrics.rs` 108 — Inspect text-metrics builder: per-line baseline + cap/em band for an id-carrying horizontal text item, per-column axis + em band for a vertical one — so the Designer (and an AI patch loop) can snap overlays to the glyph band instead of pixel-measuring a preview.
-- `src/engine/text/overflow.rs` 131 — Text overflow policies: `shrink` (fit-to-box font scaling) and `ellipsis` (line clamp + `…`) for definite-height boxes.
-- `src/engine/text/paginate.rs` 272 ▲ — Long-text pagination: a flow text item taller than the flow region splits at the last fitting line and continues page by page, like table rows — instead of warning (`section_overflow`) and drawing over.
-- `src/engine/text/paginate/vertical.rs` 170 — Vertical column pagination: a flow vertical-writing block needing more columns than its box width holds continues on the NEXT page (fragments of whole columns, right-to-left reading order preserved) instead of extending left past the box.
+- `src/engine/text/overflow.rs` 137 — Text overflow policies: `shrink` (fit-to-box font scaling) and `ellipsis` (line clamp + `…`) for definite-height boxes.
+- `src/engine/text/paginate.rs` 273 ▲ — Long-text pagination: a flow text item taller than the flow region splits at the last fitting line and continues page by page, like table rows — instead of warning (`section_overflow`) and drawing over.
+- `src/engine/text/paginate/vertical.rs` 171 — Vertical column pagination: a flow vertical-writing block needing more columns than its box width holds continues on the NEXT page (fragments of whole columns, right-to-left reading order preserved) instead of extending left past the box.
 - `src/engine/text/resolve.rs` 201 — Binding resolution: the ONE place a bound params value becomes a display string.
-- `src/engine/text/rich.rs` 197 — Rich text blocks: resolving `spans` into styled runs on a uniform line grid — one shared baseline and line height per block, so mixed sizes sit on a baseline grid and long-text pagination keeps its uniform-line capacity math.
+- `src/engine/text/rich.rs` 198 — Rich text blocks: resolving `spans` into styled runs on a uniform line grid — one shared baseline and line height per block, so mixed sizes sit on a baseline grid and long-text pagination keeps its uniform-line capacity math.
 - `src/engine/text/rich/lines.rs` 79 — Line positioning for rich blocks: alignment from summed run widths, then runs laid left to right on the block's shared baseline grid.
 - `src/engine/text/rich/resolve.rs` 142 — Span resolution for rich blocks: per-span style cascade, content binding, font chains, the MAX_SPANS layout guard, the shared missing-glyph budget, and the block-wide uniform grid.
 - `src/engine/text/ruby.rs` 219 — Ruby (furigana) readings on text items: template-authored `ruby: [{ base, text }]` pairs matched against the DRAWN text of a finished block (post-policy, so what the reader sees is what is annotated) and emitted as small ordinary [`crate::tree::TextBlock`]s — beside the base column (vertical, JLREQ) or above the base run (horizontal) — so the renderers need no ruby knowledge.
 - `src/engine/text/ruby/cells.rs` 152 — Per-line glyph-cell builders for the ruby matcher: one [`Cell`] per arranged/shaped glyph of a drawn line, with rich runs re-based into the line's joined text so base locating works across span boundaries.
-- `src/engine/text/ruby/horizontal.rs` 124 — The horizontal ruby applier: readings as small horizontal blocks centered ABOVE their base run's em band, shrunk to the run's shaped width with the print floor, split proportionally when the base wraps across lines.
-- `src/engine/text/ruby/vertical.rs` 119 — The vertical ruby applier: readings as small upright vertical columns just right of their base run (JLREQ), shrunk to the run's shaped extent with the print floor, split proportionally when the base wraps across columns.
-- `src/engine/text/vblock.rs` 267 — Vertical plain-text block building.
-- `src/engine/text/vcol.rs` 211 — Shared vertical-writing column geometry: per-column down-extent measurement, along-column `textAlign`, the logical `verticalAlign` column-stack shift, column-left stepping, and the down-extent `…` clamp.
-- `src/engine/text/voverflow.rs` 163 — Vertical `textOverflow` policy math: column measurement (wrap + shaped extents + the hung-char alignment basis), the `shrink` fit bisection, and the `ellipsis` end-column clamp.
-- `src/engine/text/vrich.rs` 226 — Vertical rich-text blocks: the `spans` counterpart of [`super::rich`] when `writingMode: vertical_rl`.
+- `src/engine/text/ruby/horizontal.rs` 125 — The horizontal ruby applier: readings as small horizontal blocks centered ABOVE their base run's em band, shrunk to the run's shaped width with the print floor, split proportionally when the base wraps across lines.
+- `src/engine/text/ruby/vertical.rs` 120 — The vertical ruby applier: readings as small upright vertical columns just right of their base run (JLREQ), shrunk to the run's shaped extent with the print floor, split proportionally when the base wraps across columns.
+- `src/engine/text/vblock.rs` 268 — Vertical plain-text block building.
+- `src/engine/text/vcol.rs` 212 — Shared vertical-writing column geometry: per-column down-extent measurement, along-column `textAlign`, the logical `verticalAlign` column-stack shift, column-left stepping, and the down-extent `…` clamp.
+- `src/engine/text/voverflow.rs` 164 — Vertical `textOverflow` policy math: column measurement (wrap + shaped extents + the hung-char alignment basis), the `shrink` fit bisection, and the `ellipsis` end-column clamp.
+- `src/engine/text/vrich.rs` 227 — Vertical rich-text blocks: the `spans` counterpart of [`super::rich`] when `writingMode: vertical_rl`.
 - `src/engine/text/vrich/place.rs` 87 — Vertical rich column positioning: one wrapped column's pieces into stacked [`TextRun`]s with the shaped extent / hung-exclusion bases.
 - `src/engine/translate.rs` 82 — Whole-item translation over the layout tree: shifting positioned items vertically (flow cursor, margins) and horizontally (flex placement), recursing into clip groups.
 - `src/engine/visibility.rs` 218 — Params-conditional item visibility: turns an item's `visible:` binding into one of three placement verdicts, and blanks the atom of a hidden one.

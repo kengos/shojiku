@@ -10,6 +10,7 @@
 //! unrelated overflow landing in the same window cannot trip it.
 
 use crate::boxes::PlacedBox;
+use crate::engine::overflow::exceeds;
 use crate::tree::{LayoutItem, TextBlock, TextLine};
 use shojiku_diagnostics::DiagnosticCode as Code;
 use shojiku_layout_box::ResolvedBox;
@@ -45,7 +46,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let handled = self.diags.items[mark..]
             .iter()
             .any(|d| d.code == Code::VerticalTextOverflow);
-        if needed <= content_w + 0.01 || handled {
+        if !exceeds(needed, content_w) || handled {
             layouter.place(h_auto_margin(atom, region), &mut self.diags);
             return;
         }
