@@ -47,6 +47,7 @@
 //! inside it, so every failure leg is reachable from a synthetic pair.
 
 use serde_json::Value;
+use shojiku_core::yaml::YamlError;
 use std::collections::BTreeMap;
 use std::fmt;
 
@@ -109,12 +110,10 @@ impl fmt::Display for Problem {
 ///
 /// # Errors
 ///
-/// Returns the YAML error when the file is not a flat map of string to string,
-/// or when the YAML door ([`shojiku_core::yaml`]) refuses it; the door's
-/// refusal carries its message and where it happened, and no `location()`.
-pub fn parse(src: &str) -> Result<BTreeMap<String, String>, serde_yaml::Error> {
+/// Returns the YAML door's ([`shojiku_core::yaml`]) refusal when the file is
+/// not a flat map of string to string, or is not a document the door reads.
+pub fn parse(src: &str) -> Result<BTreeMap<String, String>, YamlError> {
     shojiku_core::yaml::from_str(src)
-        .map_err(|err| <serde_yaml::Error as serde::de::Error>::custom(err.located_message()))
 }
 
 /// Every node the catalog expects prose for, in catalog order.

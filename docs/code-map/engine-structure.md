@@ -180,7 +180,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 94 files / 11784 lines; tests 109 files / 15498 lines
+### `core` (L1) — 94 files / 11796 lines; tests 109 files / 15501 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -188,7 +188,7 @@ first sentence of its `//!` header.
 - `src/definitions/schema.rs` 279 ▲ — The OpenAPI-style schema node: types, constraints, the Shojiku authoring keys, and the `(type, format)` → field-type mapping.
 - `src/definitions/shape.rs` 165 — Structural checks over a definitions schema: the root must be an object, nesting/node/enum caps hold, and structural keys sit on the right base types (serde can't express those conditionals).
 - `src/edges.rs` 262 — Box-edge insets: per-side `margin` / `padding` values on item boxes.
-- `src/error.rs` 190 — The crate error type for parsing untrusted input artifacts.
+- `src/error.rs` 184 — The crate error type for parsing untrusted input artifacts.
 - `src/facts.rs` 54 — The engine's per-key facts about the style wire, as data.
 - `src/facts/inherit.rs` 34 — Which style keys inherit: the CSS split, as the layout cascade applies it.
 - `src/facts/initial.rs` 103 — The value each style key takes when nothing authors it — the CSS "initial" value every cascade starts from at the document root.
@@ -270,12 +270,12 @@ first sentence of its `//!` header.
 - `src/validate/styles.rs` 156 — `styleNames` cross-checks against the named-style registry, with the MAX_STYLES / MAX_STYLE_NAMES sanity caps.
 - `src/validate/tables.rs` 232 — Table checks: the bound array group, per-column content shape (`data` vs `cell` exclusivity), row-relative column keys, the row `conditionalStyles` predicates (and the `scope` they ignore), and the array-scoped bindings inside a `cell:` column's sub-template.
 - `src/yaml.rs` 132 — The one door YAML (and JSON, a subset of it) enters the engine through, and the one it is written out through ([`to_string`]).
-- `src/yaml/build.rs` 222 — Reads a document into a [`Value`], refusing what the door refuses at the node that breaks the rule rather than in a walk afterwards.
+- `src/yaml/build.rs` 227 — Reads a document into a [`Value`], refusing what the door refuses at the node that breaks the rule rather than in a walk afterwards.
 - `src/yaml/build/key.rs` 83 — The visitor for a mapping key: a string is the key, anything else is refused as the key of the mapping that holds it.
-- `src/yaml/error.rs` 108 — What the YAML door reports when it refuses a document, or cannot write a value out.
-- `src/yaml/read.rs` 152 — Typed reads: from a document's source, and from a [`Value`] subtree.
+- `src/yaml/error.rs` 112 — What the YAML door reports when it refuses a document, or cannot write a value out.
+- `src/yaml/read.rs` 157 — Typed reads: from a document's source, and from a [`Value`] subtree.
 - `src/yaml/value.rs` 68 — The tree a YAML document is read into, owned by the engine rather than by the parser.
-- `src/yaml/write.rs` 9 — Writes a value as YAML, through the same parser crate the door reads with.
+- `src/yaml/write.rs` 13 — Writes a value as YAML, through the same parser crate the door reads with.
 
 ### `verify` (L1) — 14 files / 1576 lines; tests 20 files / 2455 lines
 
@@ -294,7 +294,7 @@ first sentence of its `//!` header.
 - `src/testkit.rs` 204 — Test-only fixtures: minimal signable documents, and signed ones.
 - `src/testkit/keys.rs` 65 — Test key material, generated fresh for every test process.
 
-### `formatter` (L2) — 17 files / 2082 lines; tests 22 files / 4014 lines
+### `formatter` (L2) — 17 files / 2068 lines; tests 22 files / 4017 lines
 
 - `src/format.rs` 235 — `format(value, type, locale, options) -> string`
 - `src/format/dated.rs` 121 — Resolving a date/datetime pick: which tables a dated field reads, and whether a name is one it can already resolve.
@@ -302,10 +302,10 @@ first sentence of its `//!` header.
 - `src/format/money.rs` 125 — Currency and quantity rendering: the three currency variants (`default` = bare amount, `symbol`, `name`), the CLDR fractions precision chain, and semantic-unit quantities with plural words from the pack.
 - `src/format/number.rs` 70 — Number rendering shared by every numeric type: precision clamping, trailing-zero trimming, and locale-separator grouping.
 - `src/format/text.rs` 77 — The text arm: values that draw as words — plain strings, booleans and image references — plus the `enum` display-label lookup layered over them.
-- `src/lang.rs` 198 — Locale packs: builtin (CLDR-generated, compiled in) + the `packs/locale/<id>.yml` per-key overlay, era tables, and font-pack resolution.
+- `src/lang.rs` 192 — Locale packs: builtin (CLDR-generated, compiled in) + the `packs/locale/<id>.yml` per-key overlay, era tables, and font-pack resolution.
 - `src/lang/builtin.rs` 128 — Builtin locale packs (CLDR-generated YAML, compiled in via `include_str!`) and the per-key overlay merge over them.
 - `src/lang/era.rs` 104 — Era tables (wareki): the `eras:` wire types and the date→era lookup.
-- `src/lang/fonts.rs` 196 — Font-pack manifest + locale font-policy wire types.
+- `src/lang/fonts.rs` 188 — Font-pack manifest + locale font-policy wire types.
 - `src/lang/fonts/pack_id.rs` 45 — What a font pack id may be.
 - `src/lang/packs.rs` 144 — Font-pack resolution: find each `uses` pack's `manifest.yml` across the font search dirs, confine face paths to the pack dir, and merge faces into one ordered list.
 - `src/lang/packs/bytes.rs` 192 — Bytes-first font-pack resolution: the host injects each `uses` pack's `manifest.yml` source plus the bytes of the face files it declares (browser/Workers WASM, the MCP server), and this parses/confines/dedupes them into loadable specs exactly like the filesystem resolver — no directory walk, no file reads.
@@ -526,7 +526,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 42 files / 5163 lines; tests 44 files / 6035 lines
+### `authoring` (L5) — 42 files / 5161 lines; tests 44 files / 6056 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -550,7 +550,7 @@ first sentence of its `//!` header.
 - `src/reference.rs` 87 — `reference` — the key catalog: the machine-readable facts of the authorable wire, held ONCE so every surface that describes a key renders the same source.
 - `src/reference/address.rs` 77 — Node addresses: the dotted names (`Style.fontSize`, `Item.text.data`, `PointSpec.item`) the annotation layer and the engine's fact tables use to name a node of the catalog, resolved onto the subschema they name.
 - `src/reference/annotate.rs` 45 — Merging the annotation layer into the derived catalog.
-- `src/reference/annotations.rs` 296 ▲ — The annotation layer's RULE: every catalog node carries prose, and every annotation names a real node.
+- `src/reference/annotations.rs` 295 ▲ — The annotation layer's RULE: every catalog node carries prose, and every annotation names a real node.
 - `src/reference/annotations/closed.rs` 90 — Which shapes have a CLOSED value set, and what those values are.
 - `src/reference/facts.rs` 165 — The engine's fact tables, written into the catalog as JSON Schema keywords so a reader of the artifact — the Designer's generic property panel, an agent — learns them from the same document as the shapes.
 - `src/reference/facts/capabilities.rs` 230 — Which catalog nodes an older engine may not carry, and the capability key that says this one does — so a panel built from the catalog can leave out a field the engine it talks to would refuse.
@@ -566,7 +566,7 @@ first sentence of its `//!` header.
 - `src/reference/tables/generate.rs` 80 — Generating every page's tables, and putting them back.
 - `src/reference/tables/registry.rs` 39 — The code→severity map, and the one place it is assembled.
 - `src/reference/tables/render.rs` 117 — Rendering a spec into GFM table markdown.
-- `src/reference/tables/spec.rs` 166 — The table spec: the editorial half of a generated table.
+- `src/reference/tables/spec.rs` 165 — The table spec: the editorial half of a generated table.
 - `src/reference/tables/splice.rs` 103 — Putting a generated table back into its page, between markers.
 - `src/sources.rs` 73 — Parsing + validation of the three source strings.
 - `src/test_support.rs` 63 — Shared fixtures for the crate's unit tests: the builtin ja pack, its filesystem-loaded font store (cached — sha256-verifying the ~47MB IPAmj fallback per test is far too slow), and a known-good single-page run.

@@ -137,7 +137,7 @@ pub fn run(job: &Job<'_>) -> Result<Outcome, Refusal> {
     // vocabulary is compile-time regardless. Without that, reading the pages
     // BEFORE regenerating them would be auditing a stale tree.
     let audited = audit_pages(job.docs)?;
-    let spec = parse_spec(job.tables).map_err(|error| Refusal::Spec(error.to_string()))?;
+    let spec = parse_spec(job.tables).map_err(|error| Refusal::Spec(error.located_message()))?;
     let registry = tables::registry();
     let inputs = Inputs {
         spec: &spec,

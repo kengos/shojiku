@@ -58,7 +58,7 @@ fn record(name: &str, text: &str) -> String {
                 manifest.license,
                 manifest.faces.len()
             ),
-            Err(err) => format!("error\nmessage: {err}"),
+            Err(err) => format!("error\nmessage: {}", err.located_message()),
         },
         _ => panic!("{name}: a case is named after its door (lang-, overlay-, manifest-)"),
     }

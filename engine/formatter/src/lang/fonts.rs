@@ -6,6 +6,7 @@
 //! pack is only physical grouping + integrity/license metadata.
 
 use serde::{Deserialize, Serialize};
+use shojiku_core::yaml::YamlError;
 use shojiku_core::{FontStyle, FontWeight};
 use std::path::PathBuf;
 
@@ -145,28 +146,19 @@ impl PackManifest {
     /// here so a generator round-trips through the same pair the resolver
     /// parses with instead of carrying its own YAML dependency.
     ///
-    /// Oversize input is refused unparsed, by the same `ensure_pack_size`
-    /// every other pack door goes through — a manifest arrives from a host
-    /// exactly the way a locale pack does. This is the ONE manifest door:
-    /// the filesystem resolver, injected packs, the wasm session and the CLI
-    /// all parse through it, and none checks the size of the text it hands
-    /// over. The two that read
-    /// a manifest from disk (the resolver and the CLI) read it through
+    /// This is the ONE manifest door: the filesystem resolver, injected
+    /// packs, the wasm session and the CLI all parse through it, and none
+    /// checks the size of the text it hands over. It is read through the
+    /// YAML door ([`shojiku_core::yaml`]), which refuses oversize input
+    /// unread on the same bound every other pack door uses
+    /// ([`shojiku_core::MAX_INPUT_BYTES`]). The two that read a manifest
+    /// from disk (the resolver and the CLI) read it through
     /// [`crate::read_pack_file`], which holds the same bound at the read and
-    /// refuses a path that is not a regular file, so text in hand is the only
-    /// thing this door ever has to refuse. The rest is read through the YAML
-    /// door ([`shojiku_core::yaml`]). Every refusal comes back as a
-    /// `serde_yaml::Error` (built with `de::Error::custom`, since serde_yaml
-    /// has no public constructor) because that is this signature's error
-    /// type: it carries the message and where it happened
-    /// ([`shojiku_core::yaml::YamlError::located_message`]), and no
-    /// `location()`; the size refusal's
-    /// message names the two numbers only.
-    pub fn from_yaml(text: &str) -> Result<Self, serde_yaml::Error> {
-        crate::lang::ensure_pack_size(text)
-            .map_err(<serde_yaml::Error as serde::de::Error>::custom)?;
+    /// refuses a path that is not a regular file. A caller whose error is
+    /// one string renders the refusal with
+    /// [`YamlError::located_message`], which says where it happened.
+    pub fn from_yaml(text: &str) -> Result<Self, YamlError> {
         shojiku_core::yaml::from_str(text)
-            .map_err(|err| <serde_yaml::Error as serde::de::Error>::custom(err.located_message()))
     }
 
     /// Resolved faces of this pack, files joined onto `pack_dir` and

@@ -75,7 +75,7 @@ pub(super) fn read_manifest(dir: &Path) -> Result<Option<PackManifest>, FontPack
         .map(Some)
         .map_err(|err| FontPackError::ParseExisting {
             path: Echo::from(path.as_path()),
-            detail: Echo::from(err.to_string()),
+            detail: Echo::from(err.located_message()),
         })
 }
 

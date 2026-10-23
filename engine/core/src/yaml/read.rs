@@ -13,6 +13,11 @@ use super::value::Value;
 use serde::de::value::{Error as DeError, MapAccessDeserializer, MapDeserializer, SeqDeserializer};
 use serde::de::{DeserializeOwned, Deserializer, Error as _, IntoDeserializer, Visitor};
 
+#[expect(
+    clippy::disallowed_methods,
+    clippy::disallowed_types,
+    reason = "the door itself: the one place a typed read meets the parser"
+)]
 pub(super) fn typed<T: DeserializeOwned>(source: &str) -> Result<T, YamlError> {
     let de = serde_yaml::Deserializer::from_str(source);
     serde_path_to_error::deserialize(de).map_err(|err| {

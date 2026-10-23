@@ -105,10 +105,10 @@ impl Session {
             .iter()
             .find(|p| p.id == pack_id)
             .ok_or_else(|| WasmError::UnknownFontPack(pack_id.to_string()))?;
-        // Through `from_yaml`, not `serde_yaml::from_str`: that is the one
-        // door carrying the input-size bound, and `add_font_pack(id,
-        // manifest)` takes this string straight from JS.
-        PackManifest::from_yaml(&pack.manifest).map_err(|e| WasmError::Fonts(e.to_string()))
+        // Through `from_yaml`, the one manifest door, which carries the
+        // input-size bound: `add_font_pack(id, manifest)` takes this string
+        // straight from JS.
+        PackManifest::from_yaml(&pack.manifest).map_err(|e| WasmError::Fonts(e.located_message()))
     }
 
     /// Adds one face file's bytes to a previously declared pack, keyed by the

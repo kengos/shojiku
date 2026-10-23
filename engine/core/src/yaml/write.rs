@@ -3,6 +3,10 @@
 use super::error::{YamlError, YamlErrorKind};
 use serde::Serialize;
 
+#[expect(
+    clippy::disallowed_methods,
+    reason = "the door itself: the one place a value is written as YAML"
+)]
 pub(super) fn to_string<T: Serialize + ?Sized>(value: &T) -> Result<String, YamlError> {
     serde_yaml::to_string(value)
         .map_err(|err| YamlError::new(YamlErrorKind::Write, err.to_string()))

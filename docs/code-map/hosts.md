@@ -148,13 +148,15 @@ false`), no clap.
   `nodes()`, `branches()`, `anonymous_branches()`, `audit() -> Vec<Problem>`,
   plus `annotations/closed.rs` (`closed_values`/`closed_union`, the two
   spellings a closed value set reaches the catalog in); `parse()` reads the
-  annotation file as `node: "prose"` pairs (`BTreeMap<String, String>`).
+  annotation file as `node: "prose"` pairs (`BTreeMap<String, String>`),
+  through the YAML door, returning its `YamlError`.
   `reference/tables.rs` + `tables/` (DEFAULT feature) — the reference's
   markdown tables: assembled from a spec, AUDITED against the catalog and the
   code registry. **Only a `Severity` cell reads the engine (the code
   registry); every other cell is the row's own key or authored text.** The
   row SET, the column-count invariant and the refusals are what is derived.
-  `spec.rs` (`Table`/`Row`/`Column`/`Cell`/`Coverage`/`Source`, `parse()`),
+  `spec.rs` (`Table`/`Row`/`Column`/`Cell`/`Coverage`/`Source`, `parse()`
+  → `YamlError`),
   `render.rs` (spec + catalog → GFM, and the `Registry` type = code →
   severity, whose entries `registry.rs` supplies), `splice.rs`
   (the marker pair and its four refusals), `audit.rs` (the completeness

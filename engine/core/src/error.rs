@@ -12,7 +12,7 @@ use thiserror::Error;
 /// the key comes from a document nobody vetted. The serde failures keep the
 /// message rather than the error value because nothing in the workspace
 /// walks the source chain, and an [`Echo`] cannot smuggle an escape sequence
-/// onto a terminal the way a raw `serde_yaml::Error` rendering can.
+/// onto a terminal the way a raw parser error's rendering can.
 #[derive(Debug, Error)]
 pub enum CoreError {
     #[error("failed to parse YAML/JSON: {0}")]
@@ -65,12 +65,6 @@ pub enum CoreError {
     /// holder (the item, or the table column) that validation would.
     #[error("template containers nest deeper than {max} levels at `{path}`")]
     ContainerDepth { path: Echo, max: usize },
-}
-
-impl From<serde_yaml::Error> for CoreError {
-    fn from(err: serde_yaml::Error) -> Self {
-        CoreError::Parse(Echo::from(err.to_string()))
-    }
 }
 
 impl From<serde_json::Error> for CoreError {

@@ -98,6 +98,10 @@ impl YamlError {
     }
 
     /// Takes the parser's location, when it has one.
+    #[expect(
+        clippy::disallowed_types,
+        reason = "the door itself: the parser's error is read for its location here"
+    )]
     pub(super) fn located(mut self, err: &serde_yaml::Error) -> Self {
         if let Some(loc) = err.location() {
             self.line = loc.line();

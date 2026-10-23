@@ -67,9 +67,10 @@ the manifest wire's key list) lives in `docs/engine/`
   `era_year_one` + `era_for()`; locale-fonts accessors
   `font_pack_ids()`/`default_font()`/`font_fallback()`. **every pack door
   refuses an oversize input unread** on the core bound
-  (`shojiku_core::MAX_INPUT_BYTES`, read rather than re-declared) through
-  the shared `ensure_pack_size` — `LangPackError::TooLarge`. That is
-  `from_yaml_str` AND the builtin OVERLAY arm, which does not go through it
+  (`shojiku_core::MAX_INPUT_BYTES`, read rather than re-declared). The two
+  locale-pack doors refuse it through the shared `ensure_pack_size` —
+  `LangPackError::TooLarge`: `from_yaml_str` AND the builtin OVERLAY arm,
+  which does not go through `from_yaml_str`
   and is the arm every host takes for a builtin id (`ja-JP` is the default,
   reachable from a browser via `set_locale`). A pack is host-supplied data,
   so it is parsed under the same posture as a template: past the size
@@ -85,7 +86,7 @@ the manifest wire's key list) lives in `docs/engine/`
   `font add`, and the MCP server's `*Path` source arguments): refuses a path that is not a regular file after symlinks
   (`/dev/zero`, a FIFO, a dir → `InvalidInput`) BEFORE opening it, refuses
   a recorded size over the core cap, and reads through `take(cap + 1)` —
-  so the cap holds at the read, not only at `ensure_pack_size`. Oversize →
+  so the cap holds at the read, not only at the door the text is handed to. Oversize →
   `InvalidData` (an I/O error at the read, not `TooLarge`).
 - `lang/specs.rs` — pack value specs: **`NumberSpec`** (separators +
   group sizes; the Indian `#,##,##0` rule is pack DATA, not code),
@@ -107,17 +108,16 @@ the manifest wire's key list) lives in `docs/engine/`
 - `lang/fonts.rs` — pack-manifest + locale-fonts wire.
   **`PackManifest`** (`packs/fonts/<pack>/manifest.yml`; camelCase,
   `deny_unknown`) — the manifest wire has ONE parse door, `from_yaml`, which
-  refuses an oversize input through the shared `ensure_pack_size` and
-  reads the rest through `shojiku_core::yaml` (each refusal as a
-  `serde_yaml::Error` carrying the message, the door's with its
-  `located_message()`); filesystem pack
+  is `shojiku_core::yaml::from_str` and returns its `YamlError` (the size
+  refusal included, the door's own `TooLarge`); every caller renders it with
+  `located_message()`; filesystem pack
   resolution (`packs.rs`), the injected bytes-first path (`packs/bytes.rs`),
   the wasm session's re-parse (`add_font_pack` takes the string from JS) and
   the CLI's `font add` all call it and wrap its message in their own error —
   with **`to_yaml`/`from_yaml`** kept BESIDE the wire
   type so a generator (`shojiku font add`) round-trips through the same
   pair the resolver parses with (`to_yaml` infallible by construction —
-  only shapes serde_yaml cannot refuse). **`FontFaceDecl`** (`id`/`file`/
+  only shapes the YAML door's writer cannot refuse). **`FontFaceDecl`** (`id`/`file`/
   `sha256` + variant keys + optional `url` — a fetch HINT for the
   host-side `shojiku-fetch`; `sha256` stays the guarantee).
   **`LocaleFonts`** (`uses: [pack-id]` + `default` + `fallback`,
