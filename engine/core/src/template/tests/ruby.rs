@@ -54,7 +54,7 @@ fn unset_ruby_keys_do_not_serialize() {
     let Body::Flow(flow) = &tpl.sections.body else { panic!("expected flow") };
     // Serialize the ITEM node alone (older wire structs inject defaults
     // at the template level).
-    let yaml = serde_yaml::to_string(&flow.items[0]).expect("yaml");
+    let yaml = crate::yaml::to_string(&flow.items[0]).expect("yaml");
     assert!(!yaml.contains("ruby"), "got: {yaml}");
     assert!(!yaml.contains("rubySize"), "got: {yaml}");
 }

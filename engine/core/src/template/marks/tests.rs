@@ -5,7 +5,7 @@ use super::*;
 use crate::template::Item;
 
 fn item(yaml: &str) -> Item {
-    serde_yaml::from_str(yaml).expect("parse item")
+    crate::yaml::from_str(yaml).expect("parse item")
 }
 
 #[test]
@@ -62,7 +62,7 @@ fn equals_rejects_non_scalar() {
         let yaml =
             format!("type: ellipse\nbox: {{ x: 0, y: 0, w: 8, h: 8 }}\ndata: {{ key: k, {bad} }}");
         assert!(
-            serde_yaml::from_str::<Item>(&yaml).is_err(),
+            crate::yaml::from_str::<Item>(&yaml).is_err(),
             "should reject {bad}"
         );
     }
@@ -95,11 +95,11 @@ fn mark_binding_without_equals() {
 #[test]
 fn rejects_unknown_field() {
     assert!(
-        serde_yaml::from_str::<Item>("type: ellipse\nbox: { x: 0, y: 0, w: 8, h: 8 }\nbogus: 1")
+        crate::yaml::from_str::<Item>("type: ellipse\nbox: { x: 0, y: 0, w: 8, h: 8 }\nbogus: 1")
             .is_err()
     );
     assert!(
-        serde_yaml::from_str::<Item>(
+        crate::yaml::from_str::<Item>(
             "type: checkbox\nbox: { x: 0, y: 0, w: 8, h: 8 }\ndata: { key: k, nope: 1 }"
         )
         .is_err()
@@ -130,9 +130,9 @@ fn id_is_exposed_via_the_item_accessor() {
 #[test]
 fn number_equals_round_trips_as_integer() {
     let e: EllipseItem =
-        serde_yaml::from_str("box: { x: 0, y: 0, w: 8, h: 8 }\ndata: { key: k, equals: 0 }")
+        crate::yaml::from_str("box: { x: 0, y: 0, w: 8, h: 8 }\ndata: { key: k, equals: 0 }")
             .expect("parse");
-    let out = serde_yaml::to_string(&e).expect("serialize");
+    let out = crate::yaml::to_string(&e).expect("serialize");
     assert!(out.contains("equals: 0"), "got: {out}");
     assert!(!out.contains("equals: 0.0"), "got: {out}");
 }
@@ -161,14 +161,14 @@ fn a_mark_with_no_data_or_padding_injects_no_defaults() {
     let mark = t.mark.expect("mark");
     assert!(mark.data.is_none() && mark.padding.is_none() && mark.style.is_empty());
     // Only the set key round-trips — an empty mark serializes as `{}`.
-    let out = serde_yaml::to_string(&mark).expect("serialize");
+    let out = crate::yaml::to_string(&mark).expect("serialize");
     assert!(!out.contains("data"), "got: {out}");
     assert!(!out.contains("padding"), "got: {out}");
 }
 
 #[test]
 fn a_marks_unknown_key_is_a_parse_error() {
-    assert!(serde_yaml::from_str::<Item>("type: text\ntext: hi\nmark: { zzz: 1 }").is_err());
+    assert!(crate::yaml::from_str::<Item>("type: text\ntext: hi\nmark: { zzz: 1 }").is_err());
 }
 
 #[test]
@@ -197,7 +197,7 @@ fn an_ellipse_parses_an_anchor_and_stays_unchanged_without_one() {
         panic!("ellipse");
     };
     assert!(e.anchor.is_none());
-    let yaml = serde_yaml::to_string(&e).expect("serialize");
+    let yaml = crate::yaml::to_string(&e).expect("serialize");
     assert!(!yaml.contains("anchor"), "injected anchor: {yaml}");
 }
 
@@ -216,12 +216,12 @@ fn an_ellipse_may_now_omit_its_box_because_an_anchor_supplies_the_geometry() {
     };
     assert!(e.box_.is_none() && e.anchor.is_none());
     // An omitted box is not serialized back as an empty map.
-    let yaml = serde_yaml::to_string(&e).expect("serialize");
+    let yaml = crate::yaml::to_string(&e).expect("serialize");
     assert!(!yaml.contains("box"), "injected box: {yaml}");
 }
 
 #[test]
 fn an_ellipses_anchor_must_be_a_scalar_and_the_key_must_be_spelled_right() {
-    assert!(serde_yaml::from_str::<Item>("type: ellipse\nanchor: { item: a }").is_err());
-    assert!(serde_yaml::from_str::<Item>("type: ellipse\nanchors: total").is_err());
+    assert!(crate::yaml::from_str::<Item>("type: ellipse\nanchor: { item: a }").is_err());
+    assert!(crate::yaml::from_str::<Item>("type: ellipse\nanchors: total").is_err());
 }

@@ -11,7 +11,7 @@ use super::{AnchorEdge, AnchorOffset, PointSpec};
 use crate::length::Length;
 
 fn point(yaml: &str) -> PointSpec {
-    serde_yaml::from_str(yaml).expect("point should parse")
+    crate::yaml::from_str(yaml).expect("point should parse")
 }
 
 fn xy(yaml: &str) -> (Length, Length) {
@@ -19,7 +19,7 @@ fn xy(yaml: &str) -> (Length, Length) {
 }
 
 fn err(yaml: &str) -> String {
-    serde_yaml::from_str::<PointSpec>(yaml)
+    crate::yaml::from_str::<PointSpec>(yaml)
         .expect_err("must reject")
         .to_string()
 }
@@ -43,12 +43,12 @@ fn a_bare_number_endpoint_stays_pt_and_round_trips_as_a_number() {
     let (x, y) = xy("{ x: 0, y: 28.5 }");
     assert_eq!(x, Length::Pt(0.0));
     assert_eq!(y, Length::Pt(28.5));
-    let yaml = serde_yaml::to_string(&point("{ x: 0, y: 28.5 }")).expect("serialize");
+    let yaml = crate::yaml::to_string(&point("{ x: 0, y: 28.5 }")).expect("serialize");
     assert!(yaml.contains("x: 0"), "got: {yaml}");
     assert!(yaml.contains("y: 28.5"), "got: {yaml}");
     assert!(!yaml.contains("pt"), "unit injected: {yaml}");
     // The authored `%` form round-trips as the string it was written as.
-    let yaml = serde_yaml::to_string(&point("{ x: \"50%\", y: 0 }")).expect("serialize");
+    let yaml = crate::yaml::to_string(&point("{ x: \"50%\", y: 0 }")).expect("serialize");
     assert!(yaml.contains("x: 50%"), "got: {yaml}");
 }
 
@@ -158,7 +158,7 @@ fn the_two_arms_are_mutually_exclusive_and_neither_may_be_empty() {
 
 #[test]
 fn each_arm_serializes_only_its_own_keys() {
-    let yaml = serde_yaml::to_string(&point("{ item: a, edge: top }")).expect("serialize");
+    let yaml = crate::yaml::to_string(&point("{ item: a, edge: top }")).expect("serialize");
     assert!(yaml.contains("item: a"), "got: {yaml}");
     assert!(yaml.contains("edge: top"), "got: {yaml}");
     assert!(
@@ -171,10 +171,10 @@ fn each_arm_serializes_only_its_own_keys() {
     );
     // An unauthored edge stays unwritten, so `serialize(parse(src))` is
     // byte-identical for the shortest authored form.
-    let yaml = serde_yaml::to_string(&point("{ item: a }")).expect("serialize");
+    let yaml = crate::yaml::to_string(&point("{ item: a }")).expect("serialize");
     assert_eq!(yaml.trim(), "item: a");
     // And the coordinate arm never gains anchor keys.
-    let yaml = serde_yaml::to_string(&point("{ x: 1, y: 2 }")).expect("serialize");
+    let yaml = crate::yaml::to_string(&point("{ x: 1, y: 2 }")).expect("serialize");
     assert!(!yaml.contains("item"), "got: {yaml}");
     assert!(!yaml.contains("edge"), "got: {yaml}");
 }
@@ -183,12 +183,12 @@ fn each_arm_serializes_only_its_own_keys() {
 fn an_offset_serializes_only_the_axis_that_was_authored() {
     // A zero axis is skipped, so `offset: { y: -4 }` round-trips as written
     // rather than gaining an `x: 0` the author never typed.
-    let yaml = serde_yaml::to_string(&point("{ item: a, offset: { y: -4 } }")).expect("serialize");
+    let yaml = crate::yaml::to_string(&point("{ item: a, offset: { y: -4 } }")).expect("serialize");
     assert!(yaml.contains("y: -4"), "got: {yaml}");
     assert!(!yaml.contains("x:"), "injected a zero x: {yaml}");
     // Both axes authored come back as both.
     let yaml =
-        serde_yaml::to_string(&point("{ item: a, offset: { x: 4, y: -2 } }")).expect("serialize");
+        crate::yaml::to_string(&point("{ item: a, offset: { x: 4, y: -2 } }")).expect("serialize");
     assert!(
         yaml.contains("x: 4") && yaml.contains("y: -2"),
         "got: {yaml}"

@@ -49,7 +49,7 @@ fn document_rejects_unknown_keys_and_non_scalars() {
 fn document_round_trips_and_unset_never_serializes() {
     let authored =
         parse_template(&with_document("document:\n  title: 見積書\n")).expect("authored");
-    let yaml = serde_yaml::to_string(&authored).expect("yaml");
+    let yaml = crate::yaml::to_string(&authored).expect("yaml");
     assert!(yaml.contains("title: 見積書"), "{yaml}");
     // Only the authored key: no empty description/keywords/language/authors.
     assert!(!yaml.contains("description"), "{yaml}");
@@ -57,7 +57,7 @@ fn document_round_trips_and_unset_never_serializes() {
 
     let bare = parse_template(&with_document("")).expect("bare");
     assert!(bare.document.is_empty());
-    let bare_yaml = serde_yaml::to_string(&bare).expect("yaml");
+    let bare_yaml = crate::yaml::to_string(&bare).expect("yaml");
     assert!(!bare_yaml.contains("document"), "{bare_yaml}");
 }
 
@@ -75,7 +75,7 @@ fn is_empty_is_false_for_each_field_alone() {
         let template =
             parse_template(&with_document(&format!("document:\n{block}"))).expect("template");
         assert!(!template.document.is_empty(), "{block}");
-        let yaml = serde_yaml::to_string(&template).expect("yaml");
+        let yaml = crate::yaml::to_string(&template).expect("yaml");
         assert!(yaml.contains("document:"), "{block} -> {yaml}");
     }
 }

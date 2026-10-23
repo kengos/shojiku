@@ -3,11 +3,11 @@
 use super::*;
 
 fn parse(yaml: &str) -> PageMargin {
-    serde_yaml::from_str(yaml).expect("page margin should parse")
+    crate::yaml::from_str(yaml).expect("page margin should parse")
 }
 
 fn parse_err(yaml: &str) -> String {
-    serde_yaml::from_str::<PageMargin>(yaml)
+    crate::yaml::from_str::<PageMargin>(yaml)
         .expect_err("page margin should be rejected")
         .to_string()
 }
@@ -144,7 +144,7 @@ fn authored_form_round_trips() {
         ("{ top: 10 }", "top: 10.0"),
         ("{ right: \"10mm\" }", "right: 10mm"),
     ] {
-        let out = serde_yaml::to_string(&parse(yaml)).expect("serialize");
+        let out = crate::yaml::to_string(&parse(yaml)).expect("serialize");
         assert_eq!(out.trim(), expected, "round-trip of {yaml}");
     }
 }

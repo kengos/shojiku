@@ -7,9 +7,9 @@ use super::writing::{TextCombine, TextCombineUpright};
 
 #[test]
 fn text_combine_upright_parses_and_round_trips_the_all_keyword() {
-    let s: Style = serde_yaml::from_str("textCombineUpright: all\n").expect("parse");
+    let s: Style = crate::yaml::from_str("textCombineUpright: all\n").expect("parse");
     assert_eq!(s.text_combine_upright, Some(TextCombineUpright::All));
-    let yaml = serde_yaml::to_string(&s).expect("yaml");
+    let yaml = crate::yaml::to_string(&s).expect("yaml");
     assert!(yaml.contains("textCombineUpright: all"), "got: {yaml}");
 }
 

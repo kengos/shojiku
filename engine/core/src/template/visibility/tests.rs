@@ -6,7 +6,7 @@ use super::*;
 use crate::template::Item;
 
 fn item(yaml: &str) -> Item {
-    serde_yaml::from_str(yaml).expect("parse item")
+    crate::yaml::from_str(yaml).expect("parse item")
 }
 
 fn visible(yaml: &str) -> VisibleBinding {
@@ -39,7 +39,7 @@ fn an_unknown_key_inside_visible_is_a_parse_error() {
     // The reason `#[serde(flatten)]` was not used to share `MarkBinding`'s
     // three fields: flatten silently disables `deny_unknown_fields`, and a
     // misspelling would then parse as an accepted unknown key.
-    let err = serde_yaml::from_str::<Item>(
+    let err = crate::yaml::from_str::<Item>(
         "type: rect\nbox: { x: 0, y: 0, w: 1, h: 1 }\nvisible: { key: k, zzz: 1 }",
     )
     .expect_err("unknown key must be rejected");
@@ -48,7 +48,7 @@ fn an_unknown_key_inside_visible_is_a_parse_error() {
 
 #[test]
 fn a_sequence_equals_is_a_parse_error() {
-    let err = serde_yaml::from_str::<Item>(
+    let err = crate::yaml::from_str::<Item>(
         "type: rect\nbox: { x: 0, y: 0, w: 1, h: 1 }\nvisible: { key: k, equals: [1, 2] }",
     )
     .expect_err("a sequence `equals` must be rejected");
@@ -57,7 +57,7 @@ fn a_sequence_equals_is_a_parse_error() {
 
 #[test]
 fn a_missing_key_is_a_parse_error() {
-    serde_yaml::from_str::<Item>("type: page_break\nvisible: { collapse: true }")
+    crate::yaml::from_str::<Item>("type: page_break\nvisible: { collapse: true }")
         .expect_err("`key` is required");
 }
 
@@ -66,7 +66,7 @@ fn round_trips_without_injecting_defaults() {
     // Serialize the ITEM NODE alone: older structs still inject defaults at
     // the template level, which would trip a whole-template `contains`.
     let node = item("type: page_break\nvisible: { key: long_form }");
-    let out = serde_yaml::to_string(&node).expect("serialize");
+    let out = crate::yaml::to_string(&node).expect("serialize");
     assert!(out.contains("key: long_form"), "{out}");
     assert!(
         !out.contains("collapse"),
@@ -109,7 +109,7 @@ fn every_item_variant_carries_the_key() {
     let mut bad = Vec::new();
     for case in cases {
         let yaml = format!("{case}\nvisible: {{ key: k }}");
-        match serde_yaml::from_str::<Item>(&yaml) {
+        match crate::yaml::from_str::<Item>(&yaml) {
             Ok(parsed) if parsed.visible().map(|v| v.key.as_str()) == Some("k") => {}
             Ok(_) => bad.push(format!("{case} => parsed but carries no `visible`")),
             Err(e) => bad.push(format!("{case} => {e}")),

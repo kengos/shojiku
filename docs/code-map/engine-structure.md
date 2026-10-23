@@ -180,7 +180,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 93 files / 11757 lines; tests 108 files / 15461 lines
+### `core` (L1) — 94 files / 11784 lines; tests 109 files / 15498 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -269,12 +269,13 @@ first sentence of its `//!` header.
 - `src/validate/spans.rs` 65 — Structural checks for rich-text `spans`: content exclusivity, the MAX_SPANS cap, and span-inapplicable style keys.
 - `src/validate/styles.rs` 156 — `styleNames` cross-checks against the named-style registry, with the MAX_STYLES / MAX_STYLE_NAMES sanity caps.
 - `src/validate/tables.rs` 232 — Table checks: the bound array group, per-column content shape (`data` vs `cell` exclusivity), row-relative column keys, the row `conditionalStyles` predicates (and the `scope` they ignore), and the array-scoped bindings inside a `cell:` column's sub-template.
-- `src/yaml.rs` 118 — The one door YAML (and JSON, a subset of it) enters the engine through.
+- `src/yaml.rs` 132 — The one door YAML (and JSON, a subset of it) enters the engine through, and the one it is written out through ([`to_string`]).
 - `src/yaml/build.rs` 222 — Reads a document into a [`Value`], refusing what the door refuses at the node that breaks the rule rather than in a walk afterwards.
 - `src/yaml/build/key.rs` 83 — The visitor for a mapping key: a string is the key, anything else is refused as the key of the mapping that holds it.
-- `src/yaml/error.rs` 104 — What the YAML door reports when it refuses a document.
+- `src/yaml/error.rs` 108 — What the YAML door reports when it refuses a document, or cannot write a value out.
 - `src/yaml/read.rs` 152 — Typed reads: from a document's source, and from a [`Value`] subtree.
 - `src/yaml/value.rs` 68 — The tree a YAML document is read into, owned by the engine rather than by the parser.
+- `src/yaml/write.rs` 9 — Writes a value as YAML, through the same parser crate the door reads with.
 
 ### `verify` (L1) — 14 files / 1576 lines; tests 20 files / 2455 lines
 
@@ -293,7 +294,7 @@ first sentence of its `//!` header.
 - `src/testkit.rs` 204 — Test-only fixtures: minimal signable documents, and signed ones.
 - `src/testkit/keys.rs` 65 — Test key material, generated fresh for every test process.
 
-### `formatter` (L2) — 17 files / 2081 lines; tests 22 files / 4008 lines
+### `formatter` (L2) — 17 files / 2082 lines; tests 22 files / 4014 lines
 
 - `src/format.rs` 235 — `format(value, type, locale, options) -> string`
 - `src/format/dated.rs` 121 — Resolving a date/datetime pick: which tables a dated field reads, and whether a name is one it can already resolve.
@@ -304,7 +305,7 @@ first sentence of its `//!` header.
 - `src/lang.rs` 198 — Locale packs: builtin (CLDR-generated, compiled in) + the `packs/locale/<id>.yml` per-key overlay, era tables, and font-pack resolution.
 - `src/lang/builtin.rs` 128 — Builtin locale packs (CLDR-generated YAML, compiled in via `include_str!`) and the per-key overlay merge over them.
 - `src/lang/era.rs` 104 — Era tables (wareki): the `eras:` wire types and the date→era lookup.
-- `src/lang/fonts.rs` 195 — Font-pack manifest + locale font-policy wire types.
+- `src/lang/fonts.rs` 196 — Font-pack manifest + locale font-policy wire types.
 - `src/lang/fonts/pack_id.rs` 45 — What a font pack id may be.
 - `src/lang/packs.rs` 144 — Font-pack resolution: find each `uses` pack's `manifest.yml` across the font search dirs, confine face paths to the pack dir, and merge faces into one ordered list.
 - `src/lang/packs/bytes.rs` 192 — Bytes-first font-pack resolution: the host injects each `uses` pack's `manifest.yml` source plus the bytes of the face files it declares (browser/Workers WASM, the MCP server), and this parses/confines/dedupes them into loadable specs exactly like the filesystem resolver — no directory walk, no file reads.
@@ -372,7 +373,7 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 132 files / 19572 lines; tests 270 files / 38035 lines
+### `layout` (L3) — 132 files / 19572 lines; tests 270 files / 38037 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.

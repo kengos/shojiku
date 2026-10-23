@@ -1,9 +1,10 @@
-//! What the YAML door reports when it refuses a document.
+//! What the YAML door reports when it refuses a document, or cannot write
+//! a value out.
 
 use shojiku_diagnostics::Echo;
 use thiserror::Error;
 
-/// Why the door refused a document.
+/// Why the door refused a document, or could not write a value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum YamlErrorKind {
@@ -27,6 +28,9 @@ pub enum YamlErrorKind {
     Tag,
     /// Well-formed, but not the shape the typed read expects.
     Shape,
+    /// A value [`super::to_string`] could not write: one whose `Serialize`
+    /// reports an error, or a shape YAML cannot hold.
+    Write,
 }
 
 /// A refusal, located as far as the door can locate it.

@@ -2,6 +2,7 @@
 
 mod checks;
 mod reads;
+mod writes;
 
 use super::{YamlError, YamlErrorKind, parse};
 

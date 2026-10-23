@@ -33,7 +33,7 @@ const ONE_VALUE_EACH: [(&str, &str); 24] = [
 ];
 
 fn one_key(name: &str, value: &str) -> Style {
-    serde_yaml::from_str(&format!("{{ {name}: {value} }}"))
+    crate::yaml::from_str(&format!("{{ {name}: {value} }}"))
         .unwrap_or_else(|e| panic!("`{name}: {value}`: {e}"))
 }
 

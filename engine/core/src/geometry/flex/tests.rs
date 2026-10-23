@@ -4,11 +4,11 @@
 use crate::geometry::{AlignItems, BoxType, FlexDirection, JustifyContent, OptBox};
 
 fn parse(yaml: &str) -> OptBox {
-    serde_yaml::from_str(yaml).expect("box should parse")
+    crate::yaml::from_str(yaml).expect("box should parse")
 }
 
 fn parse_err(yaml: &str) -> String {
-    serde_yaml::from_str::<OptBox>(yaml)
+    crate::yaml::from_str::<OptBox>(yaml)
         .expect_err("box should be rejected")
         .to_string()
 }
@@ -31,7 +31,7 @@ fn flex_keys_parse_with_camel_case_keys_and_snake_case_values() {
 fn align_items_baseline_parses_and_round_trips() {
     let b = parse("{ alignItems: baseline }");
     assert_eq!(b.align_items, Some(AlignItems::Baseline));
-    let out = serde_yaml::to_string(&b).expect("serialize");
+    let out = crate::yaml::to_string(&b).expect("serialize");
     assert!(out.contains("alignItems: baseline"), "got: {out}");
 }
 
@@ -70,7 +70,7 @@ fn unknown_variants_and_keys_are_rejected() {
 #[test]
 fn flex_keys_round_trip_and_unset_keys_are_skipped() {
     let b = parse("{ direction: row, justifyContent: space_around }");
-    let out = serde_yaml::to_string(&b).expect("serialize");
+    let out = crate::yaml::to_string(&b).expect("serialize");
     assert!(out.contains("direction: row"), "{out}");
     assert!(out.contains("justifyContent: space_around"), "{out}");
     assert!(!out.contains("type"), "unset type serialized: {out}");

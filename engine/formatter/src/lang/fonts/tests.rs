@@ -20,7 +20,7 @@ faces:
 
 #[test]
 fn manifest_face_specs_apply_variant_defaults_and_join_paths() {
-    let m: PackManifest = serde_yaml::from_str(MANIFEST).expect("parse");
+    let m: PackManifest = shojiku_core::yaml::from_str(MANIFEST).expect("parse");
     assert_eq!(m.version, 1);
     assert_eq!(m.license, "OFL-1.1");
     assert!(m.redistributable);
@@ -44,7 +44,7 @@ fn manifest_face_specs_apply_variant_defaults_and_join_paths() {
 
 #[test]
 fn embedding_attested_propagates_to_every_face() {
-    let m: PackManifest = serde_yaml::from_str(
+    let m: PackManifest = shojiku_core::yaml::from_str(
         "version: 1\nlicense: X\nembeddingAttested: true\n\
          faces:\n  - id: a\n    file: a.ttf\n    sha256: aa\n",
     )
@@ -59,29 +59,29 @@ fn embedding_attested_propagates_to_every_face() {
 #[test]
 fn manifest_rejects_unknown_keys() {
     let bad = "version: 1\nlicense: X\nfaces: []\nbogus: 1\n";
-    assert!(serde_yaml::from_str::<PackManifest>(bad).is_err());
+    assert!(shojiku_core::yaml::from_str::<PackManifest>(bad).is_err());
 }
 
 #[test]
 fn face_variant_keys_round_trip_and_skip_when_unset() {
-    let m: PackManifest = serde_yaml::from_str(MANIFEST).expect("parse");
-    let out = serde_yaml::to_string(&m).expect("serialize");
+    let m: PackManifest = shojiku_core::yaml::from_str(MANIFEST).expect("parse");
+    let out = shojiku_core::yaml::to_string(&m).expect("serialize");
     assert!(out.contains("family: sans"), "got: {out}");
     assert!(out.contains("weight: bold"), "got: {out}");
     assert!(out.contains("sha256: aa"), "got: {out}");
     // A plain face injects no variant keys.
-    let plain: PackManifest = serde_yaml::from_str(
+    let plain: PackManifest = shojiku_core::yaml::from_str(
         "version: 1\nlicense: X\nfaces:\n  - id: s\n    file: s.ttf\n    sha256: aa\n",
     )
     .expect("parse");
-    let out2 = serde_yaml::to_string(&plain).expect("serialize");
+    let out2 = shojiku_core::yaml::to_string(&plain).expect("serialize");
     assert!(!out2.contains("weight:"), "injected weight: {out2}");
     assert!(!out2.contains("family:"), "injected family: {out2}");
 }
 
 #[test]
 fn face_url_parses_and_rides_the_spec_as_a_hint() {
-    let m: PackManifest = serde_yaml::from_str(
+    let m: PackManifest = shojiku_core::yaml::from_str(
         "version: 1\nlicense: X\nfaces:\n  - id: s\n    file: s.ttf\n    sha256: aa\n    \
          url: https://fonts.example/s.ttf\n",
     )
@@ -93,7 +93,7 @@ fn face_url_parses_and_rides_the_spec_as_a_hint() {
     let specs = m.face_specs("p", Path::new("/p"));
     assert_eq!(specs[0].url.as_deref(), Some("https://fonts.example/s.ttf"));
     // The hint round-trips verbatim.
-    let out = serde_yaml::to_string(&m).expect("serialize");
+    let out = shojiku_core::yaml::to_string(&m).expect("serialize");
     assert!(
         out.contains("url: https://fonts.example/s.ttf"),
         "got: {out}"
@@ -102,11 +102,11 @@ fn face_url_parses_and_rides_the_spec_as_a_hint() {
 
 #[test]
 fn manifest_without_optional_keys_injects_none_of_them() {
-    let plain: PackManifest = serde_yaml::from_str(
+    let plain: PackManifest = shojiku_core::yaml::from_str(
         "version: 1\nlicense: X\nfaces:\n  - id: s\n    file: s.ttf\n    sha256: aa\n",
     )
     .expect("parse");
-    let out = serde_yaml::to_string(&plain).expect("serialize");
+    let out = shojiku_core::yaml::to_string(&plain).expect("serialize");
     // Unset keys stay unwritten, so a generated manifest carries only what
     // its author wrote (the Designer's "only touched keys change" policy).
     for key in ["url:", "redistributable:", "embeddingAttested:"] {
@@ -116,12 +116,12 @@ fn manifest_without_optional_keys_injects_none_of_them() {
 
 #[test]
 fn manifest_true_flags_still_serialize() {
-    let m: PackManifest = serde_yaml::from_str(
+    let m: PackManifest = shojiku_core::yaml::from_str(
         "version: 1\nlicense: X\nredistributable: true\nembeddingAttested: true\n\
          faces:\n  - id: s\n    file: s.ttf\n    sha256: aa\n",
     )
     .expect("parse");
-    let out = serde_yaml::to_string(&m).expect("serialize");
+    let out = shojiku_core::yaml::to_string(&m).expect("serialize");
     assert!(out.contains("redistributable: true"), "got: {out}");
     assert!(out.contains("embeddingAttested: true"), "got: {out}");
 }
@@ -204,12 +204,12 @@ fn from_yaml_refuses_a_manifest_it_cannot_read() {
 fn face_rejects_unknown_keys() {
     let bad = "version: 1\nlicense: X\nfaces:\n  - id: s\n    file: s.ttf\n    \
                sha256: aa\n    hover: x\n";
-    assert!(serde_yaml::from_str::<PackManifest>(bad).is_err());
+    assert!(shojiku_core::yaml::from_str::<PackManifest>(bad).is_err());
 }
 
 #[test]
 fn locale_fonts_parses_uses_default_fallback() {
-    let lf: LocaleFonts = serde_yaml::from_str(
+    let lf: LocaleFonts = shojiku_core::yaml::from_str(
         "uses: [biz-ud, ipamj-mincho]\ndefault: biz-udp-gothic\nfallback: [ipamj-mincho]\n",
     )
     .expect("parse");
@@ -217,14 +217,20 @@ fn locale_fonts_parses_uses_default_fallback() {
     assert_eq!(lf.default, "biz-udp-gothic");
     assert_eq!(lf.fallback, ["ipamj-mincho"]);
     // fallback omitted → empty, and does not serialize back.
-    let none: LocaleFonts = serde_yaml::from_str("uses: [x]\ndefault: d\n").expect("parse");
+    let none: LocaleFonts = shojiku_core::yaml::from_str("uses: [x]\ndefault: d\n").expect("parse");
     assert!(none.fallback.is_empty());
-    assert!(!serde_yaml::to_string(&none).unwrap().contains("fallback"));
+    assert!(
+        !shojiku_core::yaml::to_string(&none)
+            .unwrap()
+            .contains("fallback")
+    );
 }
 
 #[test]
 fn locale_fonts_rejects_unknown_keys() {
-    assert!(serde_yaml::from_str::<LocaleFonts>("uses: [x]\ndefault: d\nbogus: 1\n").is_err());
+    assert!(
+        shojiku_core::yaml::from_str::<LocaleFonts>("uses: [x]\ndefault: d\nbogus: 1\n").is_err()
+    );
 }
 
 #[test]
@@ -236,7 +242,7 @@ fn locale_fonts_rejects_a_uses_entry_that_is_not_a_pack_id() {
     for bad in ["../evil", "/etc", "a/b", ".", "", &over_long] {
         let yaml = format!("uses: [\"{bad}\"]\ndefault: d\n");
         assert!(
-            serde_yaml::from_str::<LocaleFonts>(&yaml).is_err(),
+            shojiku_core::yaml::from_str::<LocaleFonts>(&yaml).is_err(),
             "accepted `{bad}` as a pack id"
         );
     }
@@ -244,7 +250,7 @@ fn locale_fonts_rejects_a_uses_entry_that_is_not_a_pack_id() {
     for good in ["biz-ud", "noto_sans", "Gf-Lato2"] {
         let yaml = format!("uses: [\"{good}\"]\ndefault: d\n");
         assert!(
-            serde_yaml::from_str::<LocaleFonts>(&yaml).is_ok(),
+            shojiku_core::yaml::from_str::<LocaleFonts>(&yaml).is_ok(),
             "rejected `{good}`"
         );
     }

@@ -26,7 +26,7 @@ fn named_sizes_parse_and_round_trip() {
         let yaml =
             format!("page:\n  size: {name}\nsections:\n  body:\n    type: flow\n    items: []\n");
         let tpl = parse_template(&yaml).expect("named size should parse");
-        let out = serde_yaml::to_string(&tpl.page).expect("serialize");
+        let out = crate::yaml::to_string(&tpl.page).expect("serialize");
         assert!(out.contains(&format!("size: {name}")), "{out}");
     }
 }

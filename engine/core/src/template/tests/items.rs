@@ -33,7 +33,7 @@ sections:
         Some(crate::style::BorderWidth::All(1.5))
     );
     assert_eq!(styled.style.background_color.as_deref(), Some("#eeeeee"));
-    let yaml = serde_yaml::to_string(&tpl).expect("yaml");
+    let yaml = crate::yaml::to_string(&tpl).expect("yaml");
     assert!(yaml.contains("borderWidth: 1.5"), "got: {yaml}");
     // The unstyled image serializes no style keys.
     assert_eq!(yaml.matches("styleNames").count(), 1, "got: {yaml}");
@@ -67,7 +67,7 @@ sections:
     let Item::QrCode(second) = &flow.items[1] else { panic!("expected qr_code") };
     assert_eq!(second.error_correction(), EcLevel::High);
     assert_eq!(second.style_names, vec!["backing".to_string()]);
-    let yaml = serde_yaml::to_string(&tpl).expect("yaml");
+    let yaml = crate::yaml::to_string(&tpl).expect("yaml");
     assert!(yaml.contains("errorCorrection: high"), "got: {yaml}");
     // The defaulted level does not serialize on the first item:
     // only the authored `high` appears.
@@ -116,7 +116,7 @@ sections:
     let Item::List(second) = &flow.items[1] else { panic!("expected list") };
     assert!(second.overflow_text.is_none(), "default is engine-side");
     assert!(second.text.is_none());
-    let yaml = serde_yaml::to_string(&tpl).expect("yaml");
+    let yaml = crate::yaml::to_string(&tpl).expect("yaml");
     assert!(yaml.contains("overflowText:"), "got: {yaml}");
     assert_eq!(yaml.matches("overflowText").count(), 1, "got: {yaml}");
 }
@@ -140,7 +140,7 @@ sections:
     assert!(first.id.is_none());
     assert_eq!(flow.items[1].id(), Some("chapter_end"));
     // Round-trip: the bare break serializes to just its type tag.
-    let yaml = serde_yaml::to_string(&tpl).expect("yaml");
+    let yaml = crate::yaml::to_string(&tpl).expect("yaml");
     assert_eq!(yaml.matches("page_break").count(), 2, "got: {yaml}");
 }
 
@@ -168,10 +168,10 @@ sections:
     );
     // Serialize the item node alone — a template-wide check would trip on
     // neighbors' injected defaults, not this key.
-    let node = serde_yaml::to_string(&flow.items[0]).expect("yaml");
+    let node = crate::yaml::to_string(&flow.items[0]).expect("yaml");
     assert!(node.contains("placeholder:"), "got: {node}");
     // The unset binding serializes no placeholder key.
-    let bare = serde_yaml::to_string(&flow.items[1]).expect("yaml");
+    let bare = crate::yaml::to_string(&flow.items[1]).expect("yaml");
     assert!(!bare.contains("placeholder"), "got: {bare}");
 }
 

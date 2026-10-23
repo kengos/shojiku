@@ -53,11 +53,13 @@ pub fn run(template_yaml: &str, params: Value) -> (LayoutDocument, Diagnostics) 
     (out.document, out.diagnostics)
 }
 
-/// [`run`] over a template deserialized WITHOUT the parse door's nesting
-/// bound — the only way one nested past `MAX_CONTAINER_DEPTH` still reaches
-/// layout, whose own, independent cap is what the callers pin.
+/// [`run`] over a template deserialized WITHOUT `parse_template`'s container
+/// nesting bound — the only way one nested past `MAX_CONTAINER_DEPTH` still
+/// reaches layout, whose own, independent cap is what the callers pin. It
+/// still goes through the YAML door, so the document has to stay inside the
+/// door's `MAX_DEPTH`.
 pub fn run_unguarded(template_yaml: &str, params: Value) -> (LayoutDocument, Diagnostics) {
-    let template: Template = serde_yaml::from_str(template_yaml).expect("template");
+    let template: Template = shojiku_core::yaml::from_str(template_yaml).expect("template");
     let out = layout_template(&template, params, None);
     (out.document, out.diagnostics)
 }

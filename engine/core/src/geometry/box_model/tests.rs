@@ -7,7 +7,7 @@ use super::OptBox;
 use crate::length::Length;
 
 fn parse(yaml: &str) -> OptBox {
-    serde_yaml::from_str(yaml).expect("box should parse")
+    crate::yaml::from_str(yaml).expect("box should parse")
 }
 
 #[test]
@@ -29,7 +29,7 @@ fn min_max_keys_default_to_none() {
 #[test]
 fn min_max_round_trip_in_authored_form_and_skip_when_unset() {
     let b = parse("{ w: 10, maxWidth: 200 }");
-    let yaml = serde_yaml::to_string(&b).expect("serialize");
+    let yaml = crate::yaml::to_string(&b).expect("serialize");
     assert!(yaml.contains("maxWidth: 200"), "got: {yaml}");
     // Unset bounds are skipped, not injected as null.
     assert!(!yaml.contains("minWidth"), "injected minWidth: {yaml}");
@@ -42,7 +42,7 @@ fn min_max_typos_are_rejected_under_deny_unknown_fields() {
     // A CSS spelling we do not use, and a near-miss camelCase, must be
     // parse errors — never silently unset.
     for yaml in ["{ min-width: 10 }", "{ minwidth: 10 }", "{ maxW: 10 }"] {
-        let e = serde_yaml::from_str::<OptBox>(yaml).expect_err("must reject");
+        let e = crate::yaml::from_str::<OptBox>(yaml).expect_err("must reject");
         assert!(e.to_string().contains("unknown field"), "got: {e}");
     }
 }
@@ -51,7 +51,7 @@ fn min_max_typos_are_rejected_under_deny_unknown_fields() {
 fn min_max_percent_string_is_finite_checked_by_length_parser() {
     // Non-finite percent strings are rejected at the Length boundary,
     // same as w/h.
-    let e = serde_yaml::from_str::<OptBox>("{ maxWidth: \"1e309%\" }").expect_err("must reject");
+    let e = crate::yaml::from_str::<OptBox>("{ maxWidth: \"1e309%\" }").expect_err("must reject");
     assert!(!e.to_string().is_empty());
 }
 
@@ -66,10 +66,10 @@ fn flex_grow_effective_default_is_zero_and_round_trips() {
     assert_eq!(b.flex_grow, Some(2.0));
     assert_eq!(b.flex_grow(), 2.0);
     // Round-trips in authored form; unset is skipped, not injected.
-    let yaml = serde_yaml::to_string(&b).expect("serialize");
+    let yaml = crate::yaml::to_string(&b).expect("serialize");
     assert!(yaml.contains("flexGrow: 2"), "got: {yaml}");
     assert!(
-        !serde_yaml::to_string(&parse("{ w: 10 }"))
+        !crate::yaml::to_string(&parse("{ w: 10 }"))
             .unwrap()
             .contains("flexGrow"),
         "injected flexGrow"
@@ -77,7 +77,7 @@ fn flex_grow_effective_default_is_zero_and_round_trips() {
     // A mis-cased near-miss is a parse error, never a silently-unset key
     // (the North star: authoring typos surface, they don't default).
     for typo in ["{ flexgrow: 1 }", "{ flex_grow: 1 }", "{ grow: 1 }"] {
-        let e = serde_yaml::from_str::<OptBox>(typo).expect_err("must reject");
+        let e = crate::yaml::from_str::<OptBox>(typo).expect_err("must reject");
         assert!(e.to_string().contains("unknown field"), "got: {e}");
     }
 }
@@ -102,16 +102,16 @@ fn flex_basis_parses_its_variants_and_stays_unset_when_unwritten() {
     // injected. Asserted on the BOX alone — serializing a whole template
     // would let the older structs around it supply defaults and hide an
     // injection here.
-    let yaml = serde_yaml::to_string(&zero).expect("serialize");
+    let yaml = crate::yaml::to_string(&zero).expect("serialize");
     assert!(yaml.contains("flexBasis"), "got: {yaml}");
     // Both variants round-trip, so a re-serialized template stays
     // re-parseable whichever one the author wrote.
-    let content = serde_yaml::to_string(&parse("{ flexBasis: content }")).expect("serialize");
+    let content = crate::yaml::to_string(&parse("{ flexBasis: content }")).expect("serialize");
     assert!(content.contains("content"), "got: {content}");
-    let again: OptBox = serde_yaml::from_str(&content).expect("re-parse");
+    let again: OptBox = crate::yaml::from_str(&content).expect("re-parse");
     assert_eq!(again.flex_basis, Some(FlexBasis::Content));
     assert!(
-        !serde_yaml::to_string(&parse("{ w: 10 }"))
+        !crate::yaml::to_string(&parse("{ w: 10 }"))
             .unwrap()
             .contains("flexBasis"),
         "injected flexBasis"
@@ -128,6 +128,6 @@ fn an_unknown_flex_basis_is_a_parse_error() {
         "{ flexBasis: 1 }",
         "{ flexBasis: \"\" }",
     ] {
-        serde_yaml::from_str::<OptBox>(bad).expect_err("must reject");
+        crate::yaml::from_str::<OptBox>(bad).expect_err("must reject");
     }
 }

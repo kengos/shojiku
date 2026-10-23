@@ -2,8 +2,8 @@
 
 use super::*;
 
-fn parse(yaml: &str) -> Result<Length, serde_yaml::Error> {
-    serde_yaml::from_str(yaml)
+fn parse(yaml: &str) -> Result<Length, crate::yaml::YamlError> {
+    crate::yaml::from_str(yaml)
 }
 
 #[test]
@@ -139,9 +139,13 @@ fn error_messages_truncate_hostile_strings() {
 
 #[test]
 fn non_finite_bare_number_is_rejected() {
-    // `parse_template` already blocks `.inf` at the YAML door; this
-    // guards direct deserialization too.
+    // The YAML door refuses `.inf` before `Length` sees it, so hand the
+    // number over directly to reach `Length`'s own guard.
     assert!(parse(".inf").is_err());
+    let infinite: serde::de::value::F64Deserializer<serde::de::value::Error> =
+        serde::de::IntoDeserializer::into_deserializer(f64::INFINITY);
+    let err = <Length as serde::Deserialize>::deserialize(infinite).expect_err("refused");
+    assert!(err.to_string().contains("not finite"), "{err}");
 }
 
 #[test]
@@ -155,13 +159,13 @@ fn resolve_pt_ignores_basis_and_percent_scales() {
 #[test]
 fn serializes_back_to_wire_form() {
     assert_eq!(
-        serde_yaml::to_string(&Length::Pt(25.0))
+        crate::yaml::to_string(&Length::Pt(25.0))
             .expect("yaml")
             .trim(),
         "25.0"
     );
     assert_eq!(
-        serde_yaml::to_string(&Length::Percent(50.0))
+        crate::yaml::to_string(&Length::Percent(50.0))
             .expect("yaml")
             .trim(),
         "50%"
@@ -181,7 +185,7 @@ fn physical_units_round_trip_their_authored_form() {
     ] {
         let parsed = parse(yaml).expect("parse");
         assert_eq!(
-            serde_yaml::to_string(&parsed).expect("yaml").trim(),
+            crate::yaml::to_string(&parsed).expect("yaml").trim(),
             expected
         );
     }

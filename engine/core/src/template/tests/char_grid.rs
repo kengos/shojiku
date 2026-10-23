@@ -182,7 +182,7 @@ sections:
         grid: { charsPerLine: 2, lines: 1 }
 "#,
     );
-    let yaml = serde_yaml::to_string(&grid).expect("serialize");
+    let yaml = crate::yaml::to_string(&grid).expect("serialize");
     // Only the authored keys appear: no writingMode/kinsoku/markup/
     // rubySize/cellSize/gaps injected. (`id:` would be shadowed by the
     // `grid:` substring, so it is asserted via the line-start form.)

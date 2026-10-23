@@ -6,7 +6,7 @@ use crate::geometry::{GridTrack, OptBox, TrackSpec};
 use crate::length::Length;
 
 fn tracks(yaml: &str) -> Vec<GridTrack> {
-    let b: OptBox = serde_yaml::from_str(yaml).expect("box should parse");
+    let b: OptBox = crate::yaml::from_str(yaml).expect("box should parse");
     let Some(TrackSpec::Tracks(list)) = b.columns else {
         panic!("columns should be a track list");
     };
@@ -14,7 +14,7 @@ fn tracks(yaml: &str) -> Vec<GridTrack> {
 }
 
 fn parse_err(yaml: &str) -> String {
-    serde_yaml::from_str::<OptBox>(yaml)
+    crate::yaml::from_str::<OptBox>(yaml)
         .expect_err("box should be rejected")
         .to_string()
 }
@@ -40,8 +40,8 @@ fn zero_fr_weight_parses() {
 #[test]
 fn fr_tracks_round_trip_in_authored_form() {
     let b: OptBox =
-        serde_yaml::from_str("{ type: grid, columns: [\"1fr\", \"2fr\", 90] }").expect("parse");
-    let out = serde_yaml::to_string(&b).expect("serialize");
+        crate::yaml::from_str("{ type: grid, columns: [\"1fr\", \"2fr\", 90] }").expect("parse");
+    let out = crate::yaml::to_string(&b).expect("serialize");
     assert!(out.contains("- 1fr") && out.contains("- 2fr"), "{out}");
     assert!(out.contains("- 90"), "{out}");
 }

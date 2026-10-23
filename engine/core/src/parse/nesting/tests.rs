@@ -36,7 +36,7 @@ fn refusal(yaml: &str) -> Diagnostic {
 /// What validation says about the same document read WITHOUT the bound —
 /// the only way a too-deep template can still reach it.
 fn validated(yaml: &str) -> Diagnostic {
-    let template: Template = serde_yaml::from_str(yaml).expect("unguarded");
+    let template: Template = crate::yaml::from_str(yaml).expect("unguarded");
     validate(None, &template, None)
         .iter()
         .find(|d| d.code == "container_depth_exceeded")

@@ -175,7 +175,7 @@ fn each_enum_member_round_trips_in_its_authored_form() {
     // write policy reaches inside the list.
     let src = "type: object\nproperties:\n  status:\n    type: string\n    enum:\n    - value: backorder\n      label: 入荷待ち\n    - arrived\n";
     let defs = parse_definitions(src).expect("parse");
-    let yaml = serde_yaml::to_string(&defs).expect("serialize");
+    let yaml = crate::yaml::to_string(&defs).expect("serialize");
     assert!(yaml.contains("- arrived"), "bare member changed: {yaml}");
     assert!(yaml.contains("label: 入荷待ち"), "label lost: {yaml}");
     assert_eq!(yaml.matches("value:").count(), 1, "got: {yaml}");
@@ -218,9 +218,9 @@ fn round_trips_without_injected_nulls() {
         parse_definitions("type: object\nproperties:\n  a:\n    type: string\n").expect("parse");
     // Serialize the leaf node ALONE: unset optionals are skipped — no
     // `title: null`, no `minLength: null` (the Designer write policy).
-    let yaml = serde_yaml::to_string(&defs.properties["a"]).expect("serialize");
+    let yaml = crate::yaml::to_string(&defs.properties["a"]).expect("serialize");
     assert!(!yaml.contains("null"), "unexpected null in: {yaml}");
-    let doc = serde_yaml::to_string(&defs).expect("serialize");
+    let doc = crate::yaml::to_string(&defs).expect("serialize");
     assert!(!doc.contains("version"), "version leaked: {doc}");
     let again = parse_definitions(&doc).expect("reparse");
     assert_eq!(again.properties.len(), 1);
@@ -237,6 +237,6 @@ fn placeholder_parses_and_round_trips() {
         Some("　年　月　日")
     );
     assert!(defs.properties["name"].placeholder.is_none());
-    let yaml = serde_yaml::to_string(&defs).expect("serialize");
+    let yaml = crate::yaml::to_string(&defs).expect("serialize");
     assert_eq!(yaml.matches("placeholder:").count(), 1, "got: {yaml}");
 }

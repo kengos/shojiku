@@ -67,8 +67,8 @@ fn link_round_trips_and_unset_never_serializes() {
         "      - type: text\n",
         "        text: b\n",
     )));
-    let linked = serde_yaml::to_string(&items[0]).expect("yaml");
+    let linked = crate::yaml::to_string(&items[0]).expect("yaml");
     assert!(linked.contains("url: https://example.com"), "{linked}");
-    let plain = serde_yaml::to_string(&items[1]).expect("yaml");
+    let plain = crate::yaml::to_string(&items[1]).expect("yaml");
     assert!(!plain.contains("link"), "{plain}");
 }

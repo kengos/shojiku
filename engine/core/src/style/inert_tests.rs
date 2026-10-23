@@ -9,7 +9,7 @@ const RECT: Surface = Surface::Item(crate::ItemKind::Rect);
 
 /// Parses a bare `style:` map into a [`Style`].
 fn style(yaml: &str) -> Style {
-    serde_yaml::from_str(yaml).expect("style parses")
+    crate::yaml::from_str(yaml).expect("style parses")
 }
 
 #[test]

@@ -18,7 +18,8 @@ platform binaries.
   While it reads a document it refuses an oversize input, nesting past 120
   levels, a mapping key that is not a string or appears twice, a NaN or
   infinite number, an integer from 65 to 128 bits wide and a local YAML
-  tag (`!name`), and it hands back the engine's own `Value` tree.
+  tag (`!name`), and it hands back the engine's own `Value` tree. Its
+  `to_string` writes a value out as YAML.
 
 - **The key catalog now says what each style key does, not only what it
   accepts.** `catalog.schema.json` states each `Style` key's initial value,

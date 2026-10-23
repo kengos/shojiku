@@ -63,9 +63,9 @@ fn a_cell_column_round_trips_without_injected_defaults() {
     );
     // Inspect the COLUMN's own keys: an item inside the cell carries its
     // own `type:` tag, which a substring check would trip over.
-    let value: serde_yaml::Value = serde_yaml::to_value(&column).expect("serialize");
-    let map = value.as_mapping().expect("a column is a map");
-    let keys: Vec<&str> = map.keys().filter_map(|k| k.as_str()).collect();
+    let value = serde_json::to_value(&column).expect("serialize");
+    let map = value.as_object().expect("a column is a map");
+    let keys: Vec<&str> = map.keys().map(String::as_str).collect();
     // Only what the author wrote (the Designer's "only touched keys
     // change" write policy).
     assert_eq!(keys, vec!["cell"], "injected defaults: {keys:?}");

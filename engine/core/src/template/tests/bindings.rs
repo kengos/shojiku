@@ -76,7 +76,7 @@ fn a_declaration_round_trips_every_option() {
     assert_eq!(decl.format.as_deref(), Some("currency"));
     assert_eq!(decl.placeholder.as_deref(), Some("—"));
     assert_eq!(decl.scope(), BindingScope::Document);
-    let yaml = serde_yaml::to_string(first(&template)).expect("yaml");
+    let yaml = crate::yaml::to_string(first(&template)).expect("yaml");
     for key in ["bindings:", "key:", "format:", "placeholder:", "scope:"] {
         assert!(yaml.contains(key), "{key} missing from: {yaml}");
     }
@@ -86,7 +86,7 @@ fn a_declaration_round_trips_every_option() {
 fn an_item_without_declarations_serializes_no_bindings_key() {
     let template = one("      - type: text\n        text: plain\n").expect("template");
     // The ITEM node alone: older structs still inject defaults higher up.
-    let yaml = serde_yaml::to_string(first(&template)).expect("yaml");
+    let yaml = crate::yaml::to_string(first(&template)).expect("yaml");
     assert!(!yaml.contains("bindings"), "got: {yaml}");
 }
 

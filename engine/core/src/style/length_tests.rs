@@ -7,25 +7,25 @@ use crate::length::PhysicalUnit;
 
 #[test]
 fn font_size_takes_every_length_unit() {
-    let s: Style = serde_yaml::from_str(
+    let s: Style = crate::yaml::from_str(
         "{ fontSize: \"1.2em\" }
 ",
     )
     .expect("em");
     assert_eq!(s.font_size, Some(Length::Em(1.2)));
-    let s: Style = serde_yaml::from_str("fontSize: \"1.5rem\"").expect("rem");
+    let s: Style = crate::yaml::from_str("fontSize: \"1.5rem\"").expect("rem");
     assert_eq!(s.font_size, Some(Length::Rem(1.5)));
-    let s: Style = serde_yaml::from_str("fontSize: \"120%\"").expect("pct");
+    let s: Style = crate::yaml::from_str("fontSize: \"120%\"").expect("pct");
     assert_eq!(s.font_size, Some(Length::Percent(120.0)));
-    let s: Style = serde_yaml::from_str("fontSize: \"3mm\"").expect("mm");
+    let s: Style = crate::yaml::from_str("fontSize: \"3mm\"").expect("mm");
     assert_eq!(s.font_size, Some(Length::Physical(3.0, PhysicalUnit::Mm)));
 }
 
 #[test]
 fn letter_spacing_takes_em_and_rem() {
-    let s: Style = serde_yaml::from_str("letterSpacing: \"0.1em\"").expect("em");
+    let s: Style = crate::yaml::from_str("letterSpacing: \"0.1em\"").expect("em");
     assert_eq!(s.letter_spacing, Some(Length::Em(0.1)));
-    let s: Style = serde_yaml::from_str("letterSpacing: \"0.2rem\"").expect("rem");
+    let s: Style = crate::yaml::from_str("letterSpacing: \"0.2rem\"").expect("rem");
     assert_eq!(s.letter_spacing, Some(Length::Rem(0.2)));
 }
 
@@ -33,7 +33,7 @@ fn letter_spacing_takes_em_and_rem() {
 fn letter_spacing_rejects_percent_at_parse() {
     // CSS letter-spacing has no percentage form; a parse error beats
     // silently misresolving the value.
-    let err = serde_yaml::from_str::<Style>("letterSpacing: \"10%\"")
+    let err = crate::yaml::from_str::<Style>("letterSpacing: \"10%\"")
         .expect_err("rejected")
         .to_string();
     assert!(
@@ -52,8 +52,8 @@ fn font_lengths_round_trip_their_authored_form() {
         ("letterSpacing: \"0.1em\"", "letterSpacing: 0.1em"),
         ("letterSpacing: -0.5", "letterSpacing: -0.5"),
     ] {
-        let s: Style = serde_yaml::from_str(yaml).expect("parse");
-        let out = serde_yaml::to_string(&s).expect("yaml");
+        let s: Style = crate::yaml::from_str(yaml).expect("parse");
+        let out = crate::yaml::to_string(&s).expect("yaml");
         assert!(out.contains(expected), "{yaml} serialized to: {out}");
     }
 }
