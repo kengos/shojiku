@@ -130,8 +130,11 @@ Wire types stay in core; content measurement stays in layout.
   `flex.rs`'s `kinds` pre-pass AND its loop, `grid.rs`'s `n_grid` +
   `plan_cells`, and `intrinsic/leaf.rs`'s container measurement (a collapsed
   child adds no width and no gap).
-- `engine/overflow.rs` — the horizontal-overflow POLICY, all three bounds
-  in one file so they read against each other. Each emits its OWN
+- `engine/overflow.rs` — `OVERFLOW_EPS` + `exceeds(extent, limit)`, the
+  slack-aware comparison an overflow warning or a "does it still fit?"
+  policy decision calls (a fit check is `!exceeds`). Also the
+  horizontal-overflow POLICY, all three bounds in one file so they read
+  against each other. Each emits its OWN
   number-only code (`sheet_overflow` / `child_overflow` /
   `grid_column_overflow`) rather than a free-text `{detail}` arg, which
   would hand a translating consumer a whole English sentence it can only

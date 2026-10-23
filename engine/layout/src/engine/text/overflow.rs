@@ -13,6 +13,7 @@
 //! threading `line_start` here would couple the probe loop to line
 //! identity it does not have.
 
+use crate::engine::overflow::exceeds;
 use crate::font::{FontFace, RunOptions, run_width};
 use crate::wrap::{no_line_end, wrap_text_chain};
 use shojiku_core::LineBreak;
@@ -44,7 +45,7 @@ pub(in crate::engine) fn fit_font_size(
 ) -> f64 {
     let fits = |size: f64| {
         let lines = wrap_text_chain(chain, content, size, content_w, line_break, letter_spacing);
-        lines.len() as f64 * size * lh_mult <= avail_h + 0.01
+        !exceeds(lines.len() as f64 * size * lh_mult, avail_h)
     };
     if fits(base_size) {
         return base_size;
@@ -91,13 +92,15 @@ pub(in crate::engine) fn clamp_with_ellipsis(
     );
     loop {
         let trimmed = last.trim_end();
-        let fits = run_width(
-            chain,
-            trimmed,
-            size,
-            RunOptions::spacing_only(letter_spacing),
-        ) + ellipsis_w
-            <= content_w + 0.01;
+        let fits = !exceeds(
+            run_width(
+                chain,
+                trimmed,
+                size,
+                RunOptions::spacing_only(letter_spacing),
+            ) + ellipsis_w,
+            content_w,
+        );
         let ends_prohibited = trimmed.chars().next_back().is_some_and(no_line_end);
         if (fits && !ends_prohibited) || trimmed.is_empty() {
             let mut clamped = trimmed.to_string();
@@ -119,7 +122,10 @@ pub(in crate::engine) fn clamp_line(
     letter_spacing: f64,
     content_w: f64,
 ) -> String {
-    if run_width(chain, &text, size, RunOptions::spacing_only(letter_spacing)) <= content_w + 0.01 {
+    if !exceeds(
+        run_width(chain, &text, size, RunOptions::spacing_only(letter_spacing)),
+        content_w,
+    ) {
         return text;
     }
     clamp_with_ellipsis(chain, vec![text], size, letter_spacing, content_w, 1)

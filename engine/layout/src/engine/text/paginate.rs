@@ -12,6 +12,7 @@
 mod vertical;
 
 use crate::boxes::PlacedBox;
+use crate::engine::overflow::exceeds;
 use crate::tree::{LayoutItem, TextBlock, TextLine};
 use shojiku_core::TextItem;
 use shojiku_layout_box::ResolvedBox;
@@ -121,7 +122,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let anchors = std::mem::take(&mut self.ruby_anchors);
         let chrome = std::mem::take(&mut self.split_chrome);
         let region_h = layouter.region_bottom - layouter.region_top;
-        let splitting = !definite_h && atom.height > region_h + 0.01;
+        let splitting = !definite_h && exceeds(atom.height, region_h);
         // Readings ride fragments via the anchors channel; a mismatch
         // between the channel and the atom's extra text items (which
         // cannot happen today) declines splitting rather than dropping

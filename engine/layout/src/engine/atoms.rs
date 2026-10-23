@@ -2,6 +2,7 @@
 //! the prepared asset store; cover/none clipped to the box, and every SVG
 //! clipped to it whatever the fit), and line.
 
+use crate::engine::overflow::exceeds;
 use crate::tree::{ClipShape, ImageShape, LayoutItem, LineShape};
 use shojiku_core::{BorderStyleKind, ImageFit, ImageItem, Length, RectItem};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
@@ -169,7 +170,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // (no needless clip node) — but an SVG is clipped either way: its
         // paths may sit outside the `viewBox` the fit math measured, and
         // the viewport clips them (`Asset::clips_to_viewport`).
-        if clips_to_viewport || dw > cw + 0.01 || dh > ch + 0.01 {
+        if clips_to_viewport || exceeds(dw, cw) || exceeds(dh, ch) {
             items.push(LayoutItem::Clip(ClipShape {
                 x: rb.content_x(),
                 y: rb.padding[0],

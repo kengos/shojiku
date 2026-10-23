@@ -8,6 +8,8 @@
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_layout_box::clamp_size;
 
+use crate::engine::overflow::exceeds;
+
 use super::super::Ctx;
 
 /// Content-box height available inside a definite border-box height `h`:
@@ -43,7 +45,7 @@ impl Ctx<'_, '_> {
     /// boxes (they grow, never overflow).
     pub(super) fn warn_block_overflow(&mut self, avail: Option<f64>, content_h: f64, clip: bool) {
         if let Some(avail) = avail
-            && content_h > avail + 0.01
+            && exceeds(content_h, avail)
             && !clip
         {
             self.diags.push(

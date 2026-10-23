@@ -1,6 +1,7 @@
 //! The horizontal-overflow policy: the one home for every "does this
 //! reach past the box that holds it?" check, so the rules can be read
 //! against each other instead of being inferred from three call sites.
+//! Also [`exceeds`], the slack-aware comparison an overflow check calls.
 //!
 //! Three bounds, one per placement context:
 //!
@@ -40,6 +41,17 @@
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::{Atom, Basis, Ctx, H_OVERFLOW_EPS};
+
+/// Slack for overflow verdicts, in pt: an excess at or below this
+/// is float noise from `%`/physical-unit resolution and text measuring,
+/// not an authoring error.
+pub(in crate::engine) const OVERFLOW_EPS: f64 = 0.01;
+
+/// Whether `extent` reaches past `limit` by more than [`OVERFLOW_EPS`].
+/// A fit check is its negation.
+pub(in crate::engine) fn exceeds(extent: f64, limit: f64) -> bool {
+    extent > limit + OVERFLOW_EPS
+}
 
 impl<'a, 'b> Ctx<'a, 'b> {
     /// Warns when a definite-width band / absolute-body item reaches past
@@ -133,3 +145,6 @@ impl<'a, 'b> Ctx<'a, 'b> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

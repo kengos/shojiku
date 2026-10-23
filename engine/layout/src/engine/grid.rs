@@ -17,6 +17,7 @@ use shojiku_core::{FlexDirection, Item, OptBox};
 use shojiku_layout_box::{cross_offset, main_spacing, track_offsets};
 
 use crate::boxes::PlacedBox;
+use crate::engine::overflow::exceeds;
 use crate::tree::LayoutItem;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
@@ -251,7 +252,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             }
             match explicit_rows[cell.row] {
                 Some(h) => {
-                    if atom.height > h + 0.01 {
+                    if exceeds(atom.height, h) {
                         self.diags.push(
                             Diagnostic::new(Code::GridRowOverflow)
                                 .arg("child", atom.height)
@@ -271,7 +272,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 row_hs[cell.row..=last].iter().sum::<f64>() + row_gap * (cell.rows - 1) as f64;
             match explicit_rows[last] {
                 Some(_) => {
-                    if atom.height > spanned + 0.01 {
+                    if exceeds(atom.height, spanned) {
                         self.diags.push(
                             Diagnostic::new(Code::GridSpanOverflow)
                                 .arg("child", atom.height)

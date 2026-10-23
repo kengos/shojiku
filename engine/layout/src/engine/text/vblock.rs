@@ -9,6 +9,7 @@
 //! convention), and `textSpacingTrim` in the arrangement itself. Kinsoku
 //! (`lineBreak`) shares the horizontal prohibition sets.
 
+use crate::engine::overflow::exceeds;
 use crate::style::ComputedStyle;
 use crate::tree::{LayoutItem, TextBlock, TextLine};
 use shojiku_core::{FontWeight, TextAlign, TextOverflow};
@@ -78,7 +79,7 @@ impl Ctx<'_, '_> {
         let content_x = x + padding[3];
         let content_w = (w - padding[1] - padding[3]).max(0.0);
         let mut clip = false;
-        if cols.len() as f64 * col_width > content_w + 0.01 {
+        if exceeds(cols.len() as f64 * col_width, content_w) {
             match computed.text_overflow {
                 // In a direct flow region the layouter paginates this
                 // overflow at column boundaries instead, so the warning is
@@ -87,7 +88,7 @@ impl Ctx<'_, '_> {
                     // Suppressed only when pagination can actually take
                     // over: a column width no page can hold even one of
                     // (a hostile-huge font) keeps the warning.
-                    if !self.flow_text || col_width > content_w + 0.01 {
+                    if !self.flow_text || exceeds(col_width, content_w) {
                         self.warn_columns_overflow(cols.len(), col_width, content_w);
                     }
                 }
@@ -98,7 +99,7 @@ impl Ctx<'_, '_> {
                     size = fit_columns_size(&v, content, size, lh_mult, content_w, max_down);
                     col_width = size * lh_mult;
                     cols = measure_columns(&v, content, size, max_down);
-                    if cols.len() as f64 * col_width > content_w + 0.01 {
+                    if exceeds(cols.len() as f64 * col_width, content_w) {
                         self.warn_columns_overflow(cols.len(), col_width, content_w);
                     }
                 }

@@ -2,6 +2,7 @@
 //! draw into the cell box (decoration + centered media), scaling to the
 //! row height rather than driving it.
 
+use crate::engine::overflow::exceeds;
 use crate::tree::{ClipShape, ImageShape, LayoutItem};
 use shojiku_core::{EcLevel, ImageFit};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
@@ -78,7 +79,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             opacity,
             link: None,
         });
-        if clips_to_viewport || dw > cw + 0.01 || dh > ch + 0.01 {
+        if clips_to_viewport || exceeds(dw, cw) || exceeds(dh, ch) {
             items.push(LayoutItem::Clip(ClipShape {
                 x: cx + padding,
                 y: padding,
