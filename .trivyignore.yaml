@@ -12,9 +12,10 @@ vulnerabilities:
       defect. The runtime never reads the timezone database: the only date code
       is the `time` crate, built with parsing/formatting/macros and no
       local-offset feature, so no /usr/share/zoneinfo lookup happens. There is
-      nothing to upgrade to either — the current gcr.io/distroless/cc-debian12
-      :nonroot tag still carries 2026b, so pinning the newest digest reports the
-      same row. Drop this entry once distroless rebuilds on 2026c.
+      nothing to upgrade to either — the current
+      gcr.io/distroless/base-nossl-debian12:nonroot tag still carries 2026b,
+      so pinning the newest digest reports the same row. Drop this entry once
+      distroless rebuilds on 2026c.
     expired_at: 2026-12-31
   - id: DLA-4845-1
     statement: >-
@@ -26,4 +27,15 @@ vulnerabilities:
       gcr.io/distroless/base-nossl-debian12:nonroot tag still has the pinned
       digest, so pinning the newest digest reports the same row.
       Drop this entry once distroless rebuilds on ~deb12u2.
+    expired_at: 2026-12-31
+  - id: DLA-4854-1
+    statement: >-
+      A tzdata data refresh (2026b -> 2026e) in the distroless base, not a
+      code defect. The runtime never reads the timezone database: the only
+      date code is the `time` crate, built with parsing/formatting/macros and
+      no local-offset feature, so no /usr/share/zoneinfo lookup happens. There
+      is nothing to upgrade to either — the current
+      gcr.io/distroless/base-nossl-debian12:nonroot tag still resolves to the
+      pinned digest, so pinning the newest digest reports the same row. Drop
+      this entry once distroless rebuilds on 2026e.
     expired_at: 2026-12-31
