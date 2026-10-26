@@ -7,7 +7,7 @@ mod lines;
 pub(in crate::engine) use glyphs::collect_missing;
 use lines::wrap_plain;
 
-use crate::engine::overflow::exceeds;
+use crate::engine::overflow::{exceeds, fit_count};
 use crate::style::ComputedStyle;
 use crate::tree::{DecorationSpec, LayoutItem, TextBlock};
 use crate::wrap::WrappedLine;
@@ -104,8 +104,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 TextOverflow::Ellipsis => {
                     // `line_height > 0` (both factors sanity-guarded),
                     // and `avail` is capped by MAX_RESOLVED_PT, so the
-                    // cast is finite and bounded.
-                    let max_lines = (avail / line_height).floor() as usize;
+                    // count is finite and bounded.
+                    let max_lines = fit_count(avail, line_height);
                     if max_lines == 0 {
                         self.diags.push(
                             Diagnostic::new(Code::TextOverflow)

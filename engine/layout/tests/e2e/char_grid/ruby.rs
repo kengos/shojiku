@@ -183,3 +183,33 @@ fn a_vertical_reading_shrinks_to_fit_and_warns_at_the_floor() {
     assert_eq!(ruby.lines[0].text, "ふねふねふね");
     assert!(diags.iter().any(|d| d.code == "ruby_overflow"));
 }
+
+#[test]
+fn a_reading_over_by_float_noise_only_keeps_its_size() {
+    // ふねふね at rubySize s is 4s along the one 20pt 船 cell, on both
+    // axes.
+    for mode in ["", "        writingMode: vertical_rl\n"] {
+        let at = |size: &str| {
+            let yaml = grid_template(
+                200.0,
+                200.0,
+                &format!(
+                    "        text: 船《ふねふね》\n        grid: {{ charsPerLine: 2, lines: 1, cellSize: 20, lineGap: 10 }}\n{mode}        markup: aozora\n        rubySize: {size}\n        box: {{ padding: {{ top: 10 }} }}\n"
+                ),
+            );
+            let (doc, diags) = run(&yaml, json!({}));
+            let size = text_blocks(&doc.pages[0])
+                .into_iter()
+                .find(|b| b.lines.first().is_some_and(|l| l.text == "ふねふね"))
+                .expect("ruby block")
+                .font_size;
+            (size, diags.iter().any(|d| d.code == "ruby_overflow"))
+        };
+        // 0.005pt over the cell is inside the overflow slack: no shrink.
+        assert_eq!(at("5.00125"), (5.00125, false), "mode {mode:?}");
+        // 0.012pt over is a real excess: shrunk back onto the cell.
+        let (size, warned) = at("5.003");
+        assert!((size - 5.0).abs() < 1e-9, "mode {mode:?} size {size}");
+        assert!(!warned, "mode {mode:?}");
+    }
+}

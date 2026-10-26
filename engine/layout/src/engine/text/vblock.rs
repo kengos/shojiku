@@ -9,7 +9,7 @@
 //! convention), and `textSpacingTrim` in the arrangement itself. Kinsoku
 //! (`lineBreak`) shares the horizontal prohibition sets.
 
-use crate::engine::overflow::exceeds;
+use crate::engine::overflow::{exceeds, fit_count};
 use crate::style::ComputedStyle;
 use crate::tree::{LayoutItem, TextBlock, TextLine};
 use shojiku_core::{FontWeight, TextAlign, TextOverflow};
@@ -105,8 +105,8 @@ impl Ctx<'_, '_> {
                 }
                 TextOverflow::Ellipsis => {
                     // `col_width > 0` (both factors sanity-guarded) and
-                    // `content_w` is finite, so the cast is bounded.
-                    let cap = (content_w / col_width).floor() as usize;
+                    // `content_w` is finite, so the count is bounded.
+                    let cap = fit_count(content_w, col_width);
                     if cap == 0 {
                         self.warn_columns_overflow(cols.len(), col_width, content_w);
                     }

@@ -3,7 +3,8 @@
 //! against each other instead of being inferred from three call sites.
 //! Also [`exceeds`] and its [`OVERFLOW_EPS`]: an overflow comparison
 //! that allows a slack calls it rather than writing its own, so the
-//! engine has one tolerance.
+//! engine has one tolerance; [`fit_count`] is the same slack for a count
+//! of lines or columns.
 //!
 //! Three bounds, one per placement context:
 //!
@@ -53,6 +54,14 @@ pub(in crate::engine) const OVERFLOW_EPS: f64 = 0.01;
 /// A fit check is its negation.
 pub(in crate::engine) fn exceeds(extent: f64, limit: f64) -> bool {
     extent > limit + OVERFLOW_EPS
+}
+
+/// How many whole `pitch`-sized steps fit in `avail`, with the same
+/// slack as [`exceeds`]: `n` steps count when their total ends at most
+/// [`OVERFLOW_EPS`] past `avail`. `pitch` must be positive; a negative
+/// `avail` saturates the count to 0.
+pub(in crate::engine) fn fit_count(avail: f64, pitch: f64) -> usize {
+    ((avail + OVERFLOW_EPS) / pitch).floor() as usize
 }
 
 impl<'a, 'b> Ctx<'a, 'b> {

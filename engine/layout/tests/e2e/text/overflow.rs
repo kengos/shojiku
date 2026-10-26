@@ -209,3 +209,31 @@ sections:
     let visible_next_y = text_blocks(&doc.pages[0])[1].lines[0].y;
     assert!(visible_next_y > 20.0, "visible grows: {visible_next_y}");
 }
+
+#[test]
+fn ellipsis_counts_a_line_short_by_float_noise_only() {
+    let at = |h: &str| {
+        let yaml =
+            overflowing_text(", textOverflow: ellipsis").replace("h: 20", &format!("h: {h}"));
+        run(&yaml, json!({}))
+    };
+    // 0.005pt short of two lines is inside the overflow slack: both
+    // lines stay, and nothing warns.
+    let (doc, diags) = at("19.995");
+    assert_eq!(text_blocks(&doc.pages[0])[0].lines.len(), 2);
+    assert!(
+        !diags.iter().any(|d| d.code == "text_overflow"),
+        "{diags:?}"
+    );
+    // The one-line case stays silent too: no `text_overflow` for a box
+    // short of one line by the same noise.
+    let (doc, diags) = at("9.995");
+    assert_eq!(text_blocks(&doc.pages[0])[0].lines.len(), 1);
+    assert!(
+        !diags.iter().any(|d| d.code == "text_overflow"),
+        "{diags:?}"
+    );
+    // 0.02pt short is a real shortfall: the second line goes.
+    let (doc, _) = at("19.98");
+    assert_eq!(text_blocks(&doc.pages[0])[0].lines.len(), 1);
+}
