@@ -371,21 +371,21 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 133 files / 19480 lines; tests 271 files / 38271 lines
+### `layout` (L3) — 133 files / 19470 lines; tests 271 files / 38271 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
 - `src/color.rs` 32 — `#rrggbb` color parsing.
 - `src/engine.rs` 271 ▲ — Template + params -> positioned pages.
-- `src/engine/absolute.rs` 171 — The one absolute-placement dispatch: an item laid out at its authored `box.y` in a band, the absolute body, or a container.
+- `src/engine/absolute.rs` 214 — The one absolute-placement dispatch: an item laid out at its authored `box.y` in a band, the absolute body, or a container — plus the one item walk the band and the absolute body share.
 - `src/engine/anchor.rs` 143 — Anchored line endpoints: the deferred record and its page resolution.
 - `src/engine/anchor/band.rs` 59 — The rectangle an anchored `ellipse` circles.
 - `src/engine/anchor/defer.rs` 85 — Deferral: the one place a [`PendingAnchor`] is made.
 - `src/engine/anchor/index.rs` 90 — The target index the drain resolves against: every anchorable placement, by page and id, built ONCE for the whole drain.
 - `src/engine/anchor/resolve.rs` 246 — The drain: every deferred item, resolved against the finished pages.
-- `src/engine/assemble.rs` 173 — The layout entry point: seeds the cascade root and the page basis, walks the body, then assembles each page as header + body + footer in sheet coordinates.
+- `src/engine/assemble.rs` 149 — The layout entry point: seeds the cascade root and the page basis, walks the body, then assembles each page as header + body + footer in sheet coordinates.
 - `src/engine/atoms.rs` 285 ▲ — Leaf item atoms: rect, image (contain/cover/stretch/none fit against the prepared asset store; cover/none clipped to the box, and every SVG clipped to it whatever the fit), and line.
-- `src/engine/band.rs` 105 — Header/footer bands: per-page item placement and `page_number` substitution ({page}/{pages}).
+- `src/engine/band.rs` 76 — Header/footer bands: which pages a band repeats on, its items placed per page through the shared absolute walk, and `page_number` substitution ({page}/{pages}).
 - `src/engine/cell.rs` 193 — The slot-filling, data-scoped cell: the ONE home for the container a `repeat` places per array element and a table column's `cell:` places per row.
 - `src/engine/char_grid.rs` 242 — `type: char_grid` — genkoyoshi/kanji workbooks/application-form fixed character cells: the engine assigns one char per cell (school kinsoku hang-back included), draws the cell grid as stroked rects, and lays ruby (furigana) along each base run.
 - `src/engine/char_grid/cells.rs` 208 — Cell assignment for `char_grid`: sequential fill with the school kinsoku rule set, `［＃改ページ］` sheet breaks, large-writing span blocks, and the per-line placement notes.

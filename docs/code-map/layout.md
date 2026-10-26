@@ -108,17 +108,20 @@ Wire types stay in core; content measurement stays in layout.
   runaway cap, atom placement = vertical fit + horizontal-overflow check).
 - `engine/absolute.rs` — `absolute_atom`, the ONE per-kind dispatch for an
   item placed at its authored `box.y`: band items, absolute-body items and
-  container children with `box.x`/`box.y` (called from `band.rs`,
-  `assemble.rs`, `flex.rs`, `grid.rs`). `Placement` (`Band` / `Body` /
+  container children with `box.x`/`box.y` (called from
+  `place_absolute_items` below, `flex.rs`, `grid.rs`). `Placement` (`Band` / `Body` /
   `Container { depth }`) carries the only differences: `page_number`
   draws only in a band, each placement raises its OWN rejection code for
   `page_number` / `repeat` / `repeat_flow` / `page_break`, and a nested
   container lays out one level deeper. Returns `(atom, dy)`; the caller
-  emits it.
-- `engine/band.rs` — header/footer walk + `page_number_atom`
-  (vertical_rl routes to `vertical_text_block`); hands each atom from
-  `absolute_atom` to `sheet.rs`'s `emit_placed` rather than translating
-  it inline.
+  emits it. Also `place_absolute_items`, the ONE item walk a band and the
+  absolute body share (`child_visibility` verdicts, `items[i]` path
+  segments, a hidden item blanked via `draw_mark`/`blank_since`), handing
+  each atom to `sheet.rs`'s `emit_placed`; flex and grid walk their own.
+- `engine/band.rs` — header/footer band (`repeat` page filter, the band's
+  path segment, pinning its deferred anchors to the page) over
+  `place_absolute_items`, + `page_number_atom` (vertical_rl routes to
+  `vertical_text_block`).
 - `engine/sheet.rs` — `emit_placed`, the ONE tail EVERY band and
   absolute-body item goes through (translate onto the page + the
   sheet-edge check). No arm emits by hand, `line` included.
