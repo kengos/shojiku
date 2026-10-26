@@ -10,7 +10,6 @@ use shojiku_core::Body;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
 
 use super::absolute::Placement;
-use super::visibility::{self, Visibility};
 use super::{Basis, Ctx, LayoutInput, LayoutOutput, PageBuild, translate};
 
 /// Lays out the template into pages.
@@ -75,30 +74,7 @@ pub fn layout(input: &LayoutInput) -> LayoutOutput {
         Body::Flow(flow) => ctx.layout_flow(flow, &page_basis),
         Body::Absolute(abs) => {
             let body_mark = ctx.enter_item("sections.body".to_string());
-            let mut page = PageBuild::default();
-            let visibility = ctx.child_visibility(&abs.items);
-            for (i, item) in abs.items.iter().enumerate() {
-                if visibility[i].is_collapsed() {
-                    continue;
-                }
-                // Absolutely placed, so hiding and collapsing look the same
-                // on the page; only the reported `PlacedBox` differs.
-                let mark = (visibility[i] == Visibility::Hidden).then(|| {
-                    visibility::draw_mark(std::slice::from_ref(&page), ctx.pending_anchors.len())
-                });
-                let item_mark = ctx.enter_item(format!("items[{i}]"));
-                if let Some((atom, dy)) = ctx.absolute_atom(item, &page_basis, Placement::Body) {
-                    ctx.emit_placed(&mut page, atom, dy, &page_basis);
-                }
-                ctx.leave_item(item_mark);
-                if let Some(mark) = mark {
-                    visibility::blank_since(
-                        std::slice::from_mut(&mut page),
-                        &mark,
-                        &mut ctx.pending_anchors,
-                    );
-                }
-            }
+            let page = ctx.place_absolute_items(&abs.items, &page_basis, Placement::Body);
             ctx.leave_item(body_mark);
             vec![page]
         }

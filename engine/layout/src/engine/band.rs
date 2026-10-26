@@ -1,10 +1,10 @@
-//! Header/footer bands: per-page item placement and `page_number`
+//! Header/footer bands: which pages a band repeats on, its items placed
+//! per page through the shared absolute walk, and `page_number`
 //! substitution ({page}/{pages}).
 
 use shojiku_core::{Band, PageNumberItem, WritingMode};
 
 use super::absolute::Placement;
-use super::visibility::{self, Visibility};
 use super::{Atom, Basis, Ctx, PageBuild, placed_box, with_vertical_margin};
 
 impl<'a, 'b> Ctx<'a, 'b> {
@@ -19,38 +19,9 @@ impl<'a, 'b> Ctx<'a, 'b> {
         if !band.repeat().applies_to(page_no, total) {
             return PageBuild::default();
         }
-        let mut out = PageBuild::default();
         let band_mark = self.enter_item(base.to_string());
         let anchors = self.pending_anchors.len();
-        let visibility = self.child_visibility(&band.items);
-        for (i, item) in band.items.iter().enumerate() {
-            if visibility[i].is_collapsed() {
-                continue;
-            }
-            // A band item is absolutely placed, so hiding and collapsing
-            // look identical on the page; they differ only in whether a
-            // `PlacedBox` is reported for the Designer to ghost.
-            let mark = (visibility[i] == Visibility::Hidden).then(|| {
-                visibility::draw_mark(std::slice::from_ref(&out), self.pending_anchors.len())
-            });
-            let item_mark = self.enter_item(format!("items[{i}]"));
-            // `emit_placed` is the one tail that translates the atom onto
-            // the page AND checks the sheet edge — a band item is placed
-            // straight onto paper, so nothing else would catch it running
-            // off the sheet.
-            let placement = Placement::Band { page_no, total };
-            if let Some((atom, dy)) = self.absolute_atom(item, basis, placement) {
-                self.emit_placed(&mut out, atom, dy, basis);
-            }
-            self.leave_item(item_mark);
-            if let Some(mark) = mark {
-                visibility::blank_since(
-                    std::slice::from_mut(&mut out),
-                    &mark,
-                    &mut self.pending_anchors,
-                );
-            }
-        }
+        let out = self.place_absolute_items(&band.items, basis, Placement::Band { page_no, total });
         self.leave_item(band_mark);
         // Every anchored item this band deferred is a copy for THIS page.
         self.pin_to_band_page(anchors, page_no - 1);

@@ -1,5 +1,6 @@
 //! The one absolute-placement dispatch: an item laid out at its authored
-//! `box.y` in a band, the absolute body, or a container.
+//! `box.y` in a band, the absolute body, or a container — plus the one
+//! item walk the band and the absolute body share.
 //!
 //! These are the three contexts that place an item where it says rather
 //! than where a flow cursor or a flex/grid track puts it. They take the
@@ -11,7 +12,8 @@
 use shojiku_core::Item;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
-use super::{Atom, Basis, Ctx, marks::box_y};
+use super::visibility::{self, Visibility};
+use super::{Atom, Basis, Ctx, PageBuild, marks::box_y};
 
 /// Where an absolutely placed item sits.
 #[derive(Debug, Clone, Copy)]
@@ -48,6 +50,47 @@ impl Placement {
 }
 
 impl<'a, 'b> Ctx<'a, 'b> {
+    /// Places a band's or the absolute body's items onto one page, each
+    /// under its own `items[i]` path segment. The caller has entered the
+    /// list's own segment (`sections.header`, `sections.body`, ...).
+    ///
+    /// The items are absolutely placed, so hiding and collapsing look
+    /// identical on the page; they differ only in whether a `PlacedBox` is
+    /// reported for the Designer to ghost. `emit_placed` is the one tail
+    /// that translates the atom onto the page AND checks the sheet edge —
+    /// the item is placed straight onto paper, so nothing else would catch
+    /// it running off the sheet.
+    pub(super) fn place_absolute_items(
+        &mut self,
+        items: &[Item],
+        basis: &Basis,
+        placement: Placement,
+    ) -> PageBuild {
+        let mut out = PageBuild::default();
+        let visibility = self.child_visibility(items);
+        for (i, item) in items.iter().enumerate() {
+            if visibility[i].is_collapsed() {
+                continue;
+            }
+            let mark = (visibility[i] == Visibility::Hidden).then(|| {
+                visibility::draw_mark(std::slice::from_ref(&out), self.pending_anchors.len())
+            });
+            let item_mark = self.enter_item(format!("items[{i}]"));
+            if let Some((atom, dy)) = self.absolute_atom(item, basis, placement) {
+                self.emit_placed(&mut out, atom, dy, basis);
+            }
+            self.leave_item(item_mark);
+            if let Some(mark) = mark {
+                visibility::blank_since(
+                    std::slice::from_mut(&mut out),
+                    &mark,
+                    &mut self.pending_anchors,
+                );
+            }
+        }
+        out
+    }
+
     /// Lays out one absolutely placed item against `basis` and returns
     /// its atom plus its `box.y` offset, or `None` when the item draws
     /// nothing (a builder declined it, or `placement` does not take its
