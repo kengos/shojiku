@@ -78,7 +78,7 @@ function coordinateOps(
  * The two owners differ in WHY, and only one of them ignores the keys. In the
  * flow BODY an authored `x`/`y` is the `flowPositioned` dead end — the engine
  * does not read it and the panel has to explain that. A CONTAINER honours it
- * (`layout`'s `absolute_child_atom`, the escape hatch every pre-flex template
+ * (`layout`'s `absolute_atom`, the escape hatch every pre-flex template
  * uses), so clearing there is a deliberate choice, not a tidy-up: the numbers
  * were measured against a DIFFERENT parent's origin, so keeping them would
  * land the item somewhere the user did not drop it, and "put this inside the

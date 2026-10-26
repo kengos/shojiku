@@ -56,8 +56,7 @@ variant shows.
 | 15/15 | `core/src/validate/bindings.rs` |  |
 | 15/15 | `core/src/validate/box_keys.rs` |  |
 | 15/15 | `core/src/validate/styles.rs` |  |
-| 15/15 | `layout/src/engine/band.rs` |  |
-| 15/15 | `layout/src/engine/container.rs` |  |
+| 15/15 | `layout/src/engine/absolute.rs` |  |
 | 15/15 | `layout/src/engine/flow.rs` |  |
 | 10/15 | `layout/src/engine/flex/kind.rs` | Line, PageNumber, Repeat, RepeatFlow, PageBreak |
 | 6/15 | `core/src/validate/bindings/decl/surfaces.rs` |  |
@@ -76,15 +75,14 @@ variant shows.
 `Vec<Item>`) — every file that matches it, with occurrence count:
 
 - 2 `core/src/template.rs`
-- 2 `layout/src/engine/flow.rs`
 - 1 `core/src/template/children.rs`
 - 1 `core/src/template/kind.rs`
 - 1 `core/src/validate/bindings.rs`
 - 1 `core/src/validate/box_keys.rs`
 - 1 `core/src/validate/styles.rs`
-- 1 `layout/src/engine/band.rs`
-- 1 `layout/src/engine/container.rs`
+- 1 `layout/src/engine/absolute.rs`
 - 1 `layout/src/engine/flex/kind.rs`
+- 1 `layout/src/engine/flow.rs`
 
 ### `LayoutItem` — the layout tree (layout↔renderer contract)
 
@@ -373,20 +371,21 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 132 files / 19612 lines; tests 271 files / 38139 lines
+### `layout` (L3) — 133 files / 19471 lines; tests 271 files / 38139 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
 - `src/color.rs` 32 — `#rrggbb` color parsing.
-- `src/engine.rs` 270 ▲ — Template + params -> positioned pages.
+- `src/engine.rs` 271 ▲ — Template + params -> positioned pages.
+- `src/engine/absolute.rs` 171 — The one absolute-placement dispatch: an item laid out at its authored `box.y` in a band, the absolute body, or a container.
 - `src/engine/anchor.rs` 143 — Anchored line endpoints: the deferred record and its page resolution.
 - `src/engine/anchor/band.rs` 59 — The rectangle an anchored `ellipse` circles.
 - `src/engine/anchor/defer.rs` 85 — Deferral: the one place a [`PendingAnchor`] is made.
 - `src/engine/anchor/index.rs` 90 — The target index the drain resolves against: every anchorable placement, by page and id, built ONCE for the whole drain.
 - `src/engine/anchor/resolve.rs` 246 — The drain: every deferred item, resolved against the finished pages.
-- `src/engine/assemble.rs` 170 — The layout entry point: seeds the cascade root and the page basis, walks the body, then assembles each page as header + body + footer in sheet coordinates.
+- `src/engine/assemble.rs` 173 — The layout entry point: seeds the cascade root and the page basis, walks the body, then assembles each page as header + body + footer in sheet coordinates.
 - `src/engine/atoms.rs` 285 ▲ — Leaf item atoms: rect, image (contain/cover/stretch/none fit against the prepared asset store; cover/none clipped to the box, and every SVG clipped to it whatever the fit), and line.
-- `src/engine/band.rs` 204 — Header/footer bands: per-page item placement and `page_number` substitution ({page}/{pages}).
+- `src/engine/band.rs` 105 — Header/footer bands: per-page item placement and `page_number` substitution ({page}/{pages}).
 - `src/engine/cell.rs` 193 — The slot-filling, data-scoped cell: the ONE home for the container a `repeat` places per array element and a table column's `cell:` places per row.
 - `src/engine/char_grid.rs` 242 — `type: char_grid` — genkoyoshi/kanji workbooks/application-form fixed character cells: the engine assigns one char per cell (school kinsoku hang-back included), draws the cell grid as stroked rects, and lays ruby (furigana) along each base run.
 - `src/engine/char_grid/cells.rs` 208 — Cell assignment for `char_grid`: sequential fill with the school kinsoku rule set, `［＃改ページ］` sheet breaks, large-writing span blocks, and the per-line placement notes.
@@ -400,22 +399,22 @@ first sentence of its `//!` header.
 - `src/engine/char_grid/markup.rs` 44 — `char_grid` content → ruby segments: the opt-in `markup: aozora` parse and the diagnostics its warnings become.
 - `src/engine/char_grid/ruby.rs` 159 — Ruby (furigana) placement for `char_grid`: each annotated base run gets its reading laid along the run — above it (horizontal) or to its right (vertical, as a real vertical column the renderers shape with GSUB `vert`) — shrunk to fit the run's extent with a 4pt floor.
 - `src/engine/char_grid/sheet.rs` 249 — One `char_grid` sheet's atom: background fill, the stroked cell grid, and the per-cell text blocks.
-- `src/engine/container.rs` 288 ▲ — Containers: box resolution, the style cascade push/restore, and the absolutely-positioned child atoms of the shared box-children walk (the walk itself, with flex placement, lives in `super::flex`).
+- `src/engine/container.rs` 177 — Containers: box resolution and the style cascade push/restore (the box-children walk, with flex placement, lives in `super::flex`; its absolutely positioned children go through `super::absolute`).
 - `src/engine/decoration.rs` 159 — Box decoration: the `backgroundColor` fill and the border stroke, emitted over an item's border box using existing tree primitives so renderers never change.
 - `src/engine/decoration/dash.rs` 54 — Dash-pattern derivation for `borderStyle: dashed | dotted`.
 - `src/engine/decoration/paint.rs` 213 — Box decoration as DATA: a decorated box's fully resolved paint, plus the pure emitter over it.
 - `src/engine/decoration/radius.rs` 89 — `borderRadius` resolution: an authored [`Length`] plus the box's own size become the concrete [`Corners`] the tree carries.
-- `src/engine/flex.rs` 272 ▲ — Flex child placement (box-model Phase 2): the shared box-children walk.
+- `src/engine/flex.rs` 274 ▲ — Flex child placement (box-model Phase 2): the shared box-children walk.
 - `src/engine/flex/baseline.rs` 40 — Row baseline alignment (`alignItems: baseline`): per-atom first-text baselines and the cross shifts that line them up.
 - `src/engine/flex/child.rs` 64 — Placing and measuring ONE flex/grid child.
 - `src/engine/flex/column.rs` 229 — The column side of the flex walk: the main-axis `flexGrow` pre-pass (heights measured, then shared) and the per-item main/cross offsets.
 - `src/engine/flex/kind.rs` 66 — `FlexKind`: the classification of a box child into the atom kinds that participate in flex/grid placement, plus the authored-box accessor both the planning pre-pass and the walk read it through.
 - `src/engine/flex/offsets.rs` 238 — The row side of the flex walk: the main-axis pre-pass (slot bases from measured widths) and the cross-axis offsets, feeding the walk in the parent module.
 - `src/engine/flex/slots.rs` 90 — Slot emission: the document-order tail every box-children walk (flex and grid) shares, plus the flow body's horizontal auto-margin shift.
-- `src/engine/flow.rs` 257 — Flow-section placement: the flow item walk and the absolute-body item walk; the paginating cursor lives in [`layouter`].
+- `src/engine/flow.rs` 147 — Flow-section placement: the flow item walk; the paginating cursor lives in [`layouter`].
 - `src/engine/flow/layouter.rs` 102 — The paginating flow cursor: page breaks, the page cap, and atom placement (vertical fit + the horizontal-overflow check).
 - `src/engine/fragments.rs` 104 — Per-page vertical extents of a paginating item's placed atoms, emitted as the item's own `PlacedBox` fragments (one per page it spans).
-- `src/engine/grid.rs` 294 ▲ — Static grid child placement (box-model Phase 3, `box.type: grid`): children without authored `box.x`/`box.y` tile the column tracks in fill order (`direction`), rows are explicit tracks or sized by their tallest child, and `justifyContent` distributes leftover track space.
+- `src/engine/grid.rs` 296 ▲ — Static grid child placement (box-model Phase 3, `box.type: grid`): children without authored `box.x`/`box.y` tile the column tracks in fill order (`direction`), rows are explicit tracks or sized by their tallest child, and `justifyContent` distributes leftover track space.
 - `src/engine/grid/cells.rs` 189 — Cell assignment and `auto` column measurement.
 - `src/engine/grid/span.rs` 107 — Grid span placement: the occupancy map that assigns each grid child its `(column, row)` cell honoring `columnSpan`/`rowSpan`.
 - `src/engine/grid/tracks.rs` 254 — `TrackSpec` resolution: the wire form (count or track list) to per-track pt sizes, with the hostile-input caps — track counts and list lengths clamp to `MAX_GRID_TRACKS` with a diagnostic, negative tracks clamp to 0, and `rows: N` needs a definite height to split.
