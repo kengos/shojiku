@@ -65,7 +65,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             };
             let mut size = preferred;
             let mut read_ext = measure(size);
-            if read_ext > se.extent && read_ext > 0.0 {
+            if exceeds(read_ext, se.extent) && read_ext > 0.0 {
                 size = fit(size, size * se.extent / read_ext);
                 read_ext = measure(size);
             }

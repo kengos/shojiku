@@ -371,7 +371,7 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 133 files / 19471 lines; tests 271 files / 38139 lines
+### `layout` (L3) — 133 files / 19480 lines; tests 271 files / 38271 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -426,7 +426,7 @@ first sentence of its `//!` header.
 - `src/engine/marks.rs` 272 ▲ — Form marks (`ellipse`, `checkbox`): box-inscribed vector shapes whose *presence* is params-driven but whose *geometry* is template-fixed — an unmatched mark still reserves its box, so the blank↔filled one-template workflow never shifts layout between params sets.
 - `src/engine/marks/presence.rs` 59 — Form-mark presence: turns a `MarkBinding` into "draw / don't draw" against the current data scope, warning on the two params shapes the predicate cannot use.
 - `src/engine/meta.rs` 197 — Document-metadata resolution: interpolates the `document:` block against params, then gates every resolved value before it enters the tree — layout is the trust boundary here exactly as it is for `link.url` (see `engine/link.rs`); renderers write what the tree carries without judgment.
-- `src/engine/overflow.rs` 151 — The horizontal-overflow policy: the one home for every "does this reach past the box that holds it?" check, so the rules can be read against each other instead of being inferred from three call sites.
+- `src/engine/overflow.rs` 160 — The horizontal-overflow policy: the one home for every "does this reach past the box that holds it?" check, so the rules can be read against each other instead of being inferred from three call sites.
 - `src/engine/path.rs` 93 — The structural path stack: addresses every laid-out item in the validate-diagnostic grammar (`sections.body.items[3].items[0]`, `…cell.items[1]`, `…columns[2]`) so `inspect` emits a stable `PlacedBox.path` for id-less items too, not only id-carrying ones.
 - `src/engine/predicate.rs` 81 — Pure presence predicate shared by the declarative `{ key, equals?
 - `src/engine/qr.rs` 184 — QR code items: content is encoded at *layout* time and emitted as run-length-merged module [`RectShape`]s — no tree/renderer/asset change, which is what lets a `qr_code` work inside `repeat` cells with element-scoped bindings on day one.

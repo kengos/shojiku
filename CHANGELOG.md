@@ -44,6 +44,14 @@ platform binaries.
 
 ### Changed
 
+- **Ruby readings and `textOverflow: ellipsis` now let an excess of up to
+  0.01pt pass, as the overflow warnings already do.** A reading that ran
+  past its base run by that little used to shrink to fit, and a box that
+  fell that little short of a whole line (a whole column, in vertical
+  text) dropped that line and ended the one before with `…`, warning
+  `text_overflow` or `vertical_text_overflow` when no line was left. The
+  reading now keeps its size and the line stays. A box that holds its
+  lines exactly renders as before.
 - **Every YAML the engine reads goes through that door**: templates,
   definitions, params, locale packs and their overlays, and font-pack
   manifests. Some documents read before are now refused:

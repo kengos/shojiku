@@ -148,3 +148,24 @@ sections:
     assert_eq!(rubies.len(), 1);
     assert_eq!(rubies[0].lines[0].text, "よ");
 }
+
+#[test]
+fn a_reading_over_by_float_noise_only_keeps_its_size() {
+    // わがはい at rubySize s is 4s long beside the 20pt 吾輩 run.
+    let at = |size: &str| {
+        let yaml = tmpl(
+            "吾輩は猫",
+            "          - { base: 吾輩, text: わがはい }",
+            &format!("\n        rubySize: {size}"),
+        );
+        let (doc, diags) = run(&yaml, json!({}));
+        let size = ruby_blocks(&doc.pages[0])[0].font_size;
+        (size, diags.iter().any(|d| d.code == "ruby_overflow"))
+    };
+    // 0.005pt over the run is inside the overflow slack: no shrink.
+    assert_eq!(at("5.00125"), (5.00125, false));
+    // 0.012pt over is a real excess: shrunk back onto the run.
+    let (size, warned) = at("5.003");
+    assert!((size - 5.0).abs() < 1e-9, "size {size}");
+    assert!(!warned);
+}

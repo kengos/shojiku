@@ -264,3 +264,26 @@ sections:
     let needed = block.lines.len() as f64 * block.line_height;
     assert!(needed <= 25.01, "still overflows: {needed}");
 }
+
+#[test]
+fn ellipsis_counts_a_column_short_by_float_noise_only() {
+    let at = |w: &str| {
+        let yaml = tmpl(
+            "あいうえおかきくけこさしすせそたちつてと",
+            &format!("w: {w}, h: 30"),
+            ", textOverflow: ellipsis",
+        );
+        run(&yaml, json!({}))
+    };
+    // 0.005pt short of two columns is inside the overflow slack.
+    let (doc, diags) = at("19.995");
+    assert_eq!(text_blocks(&doc.pages[0])[0].lines.len(), 2);
+    assert_eq!(count_code(&diags, "vertical_text_overflow"), 0);
+    // The one-column case stays silent too.
+    let (doc, diags) = at("9.995");
+    assert_eq!(text_blocks(&doc.pages[0])[0].lines.len(), 1);
+    assert_eq!(count_code(&diags, "vertical_text_overflow"), 0);
+    // 0.02pt short is a real shortfall: the second column goes.
+    let (doc, _) = at("19.98");
+    assert_eq!(text_blocks(&doc.pages[0])[0].lines.len(), 1);
+}

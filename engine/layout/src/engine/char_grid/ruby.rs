@@ -72,7 +72,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                     let opts = RunOptions::spacing_only(0.0);
                     let mut total =
                         vertical_extent(faces, &text, size, TextOrientation::Upright, opts);
-                    if total > extent && total > 0.0 {
+                    if exceeds(total, extent) && total > 0.0 {
                         size = fit(size, size * extent / total);
                         total = vertical_extent(faces, &text, size, TextOrientation::Upright, opts);
                     }
@@ -88,7 +88,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 } else {
                     let mut size = geom.ruby_size;
                     let mut total = run_width(faces, &text, size, RunOptions::spacing_only(0.0));
-                    if total > extent && total > 0.0 {
+                    if exceeds(total, extent) && total > 0.0 {
                         // Width is linear in size, so one rescale fits
                         // exactly (subject to the readability floor).
                         size = fit(size, size * extent / total);
