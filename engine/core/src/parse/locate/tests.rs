@@ -237,3 +237,14 @@ fn nesting_at_the_container_depth_cap_is_located_to_the_deepest_item() {
     assert!(path.ends_with('…'), "{path}");
     assert_eq!(key.as_deref(), Some("styleNames"));
 }
+
+#[test]
+fn a_key_whose_removal_leaves_a_different_failure_is_still_named() {
+    // Without `styleNames` the line still fails, on its missing ends — a
+    // different fault, so the unknown key is the item's own.
+    let (_, key, ..) = fault(&flow("{ type: line, styleNames: [ a ] }"));
+    assert_eq!(key.as_deref(), Some("styleNames"));
+    let (path, key, ..) = fault(&flow("{ type: line }"));
+    assert_eq!(path, "sections.body.items[0]");
+    assert_eq!(key, None);
+}

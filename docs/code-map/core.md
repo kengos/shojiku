@@ -210,10 +210,10 @@ injected at parse). The template model splits along CSS lines.
   item holders share), follows the first element that fails
   `yaml::from_value::<Item>` down to the deepest failing item, and — only
   when that item's own error is part of serde's UNCLIPPED message
-  (`YamlError.full`; the `message` Echo is clipped at 200) — reports the item's path, `key` (one of its own
-  top-level keys the message quotes, CONFIRMED by the item without it no longer
-  making that complaint — the message alone cannot tell an inner struct's
-  `box.style` from the item's own `style`) and no line/column
+  (`YamlError.full`; the `message` Echo is clipped at 200) — reports the item's path, `key` (the item's own
+  top-level key named by the item's `Fault::UnknownField`, CONFIRMED by the item
+  without it no longer failing with that fault — the fault alone cannot tell an
+  inner struct's `box.style` from the item's own `style`) and no line/column
   (`CoreError::Located.key`).
 - `params.rs` — params parse (the door's tree → `serde_json`) +
   `resolve_path` dotted lookup + `is_blank`
@@ -394,9 +394,11 @@ injected at parse). The template model splits along CSS lines.
   `&Value` (strict: a scalar is the type it was read as, except that a
   `null` where a list or mapping is wanted reads as an empty one, as
   serde_yaml's `from_value` did — an overlay clears a table that way; path,
-  no location). `YamlError { kind: YamlErrorKind, path, line, column, message }`
+  no location; its error is `yaml/fault.rs`'s `TreeError`, which keeps what
+  serde failed on as a `Fault` — unknown field, wrong type, … with the names
+  serde gave — beside serde's own wording). `YamlError { kind: YamlErrorKind, path, line, column, message }`
   (`yaml/error.rs`, `#[non_exhaustive]`, Echo fields, plus the crate-private
-  unclipped `full`); `located_message()` renders a refusal as one string
+  unclipped `full` and `fault`, set only by `from_value`); `located_message()` renders a refusal as one string
   with its path and line/column after the message (a typed read's and a
   syntax error's message already carry theirs) — what every door with a
   one-string error uses. **Alias resolutions are NOT bounded by it**: the

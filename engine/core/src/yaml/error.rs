@@ -1,6 +1,7 @@
 //! What the YAML door reports when it refuses a document, or cannot write
 //! a value out.
 
+use super::fault::Fault;
 use shojiku_diagnostics::Echo;
 use thiserror::Error;
 
@@ -56,6 +57,12 @@ pub struct YamlError {
     /// template parse matches it against an item's own error). Never shown:
     /// [`YamlError::message`] is the bounded copy.
     pub(crate) full: String,
+    /// What a typed read of a [`super::Value`] failed on, for comparing two
+    /// failures without matching their text. `None` for every other error,
+    /// so two errors alike in every shown field still differ when only one
+    /// came from a tree.
+    /// Boxed: it is rare, and the error is returned by value everywhere.
+    pub(crate) fault: Option<Box<Fault>>,
 }
 
 impl YamlError {
@@ -89,7 +96,13 @@ impl YamlError {
             column: 0,
             message: Echo::from(message.as_ref()),
             full: message.as_ref().to_owned(),
+            fault: None,
         }
+    }
+
+    pub(super) fn with_fault(mut self, fault: Fault) -> Self {
+        self.fault = Some(Box::new(fault));
+        self
     }
 
     pub(super) fn at_path(mut self, path: String) -> Self {

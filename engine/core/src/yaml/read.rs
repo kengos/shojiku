@@ -6,11 +6,13 @@
 //! `Deserializer` over [`Value`], which is strict the way a tree is: a scalar
 //! is the type it was read as. A `null` where a list or a mapping (a struct
 //! included) is wanted reads as an empty one, as the read it replaced did —
-//! a locale overlay clears a table that way.
+//! a locale overlay clears a table that way. Its error keeps what `serde`
+//! failed on as a [`Fault`](super::fault::Fault), beside the message.
 
 use super::error::{YamlError, YamlErrorKind};
+use super::fault::TreeError;
 use super::value::Value;
-use serde::de::value::{Error as DeError, MapAccessDeserializer, MapDeserializer, SeqDeserializer};
+use serde::de::value::{MapAccessDeserializer, MapDeserializer, SeqDeserializer};
 use serde::de::{DeserializeOwned, Deserializer, Error as _, IntoDeserializer, Visitor};
 
 #[expect(
@@ -32,20 +34,23 @@ pub(super) fn typed<T: DeserializeOwned>(source: &str) -> Result<T, YamlError> {
 pub(super) fn from_value<T: DeserializeOwned>(value: &Value) -> Result<T, YamlError> {
     serde_path_to_error::deserialize(value).map_err(|err| {
         let path = err.path().to_string();
-        YamlError::new(YamlErrorKind::Shape, err.into_inner().to_string()).at_path(path)
+        let inner = err.into_inner();
+        YamlError::new(YamlErrorKind::Shape, inner.message)
+            .at_path(path)
+            .with_fault(inner.fault)
     })
 }
 
 fn entries(
     entries: &[(String, Value)],
-) -> MapDeserializer<'_, impl Iterator<Item = (&str, &Value)>, DeError> {
+) -> MapDeserializer<'_, impl Iterator<Item = (&str, &Value)>, TreeError> {
     MapDeserializer::new(entries.iter().map(|(key, value)| (key.as_str(), value)))
 }
 
 impl<'de> Deserializer<'de> for &'de Value {
-    type Error = DeError;
+    type Error = TreeError;
 
-    fn deserialize_any<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, DeError> {
+    fn deserialize_any<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, TreeError> {
         match self {
             Value::Null => visitor.visit_unit(),
             Value::Bool(b) => visitor.visit_bool(*b),
@@ -68,7 +73,7 @@ impl<'de> Deserializer<'de> for &'de Value {
         }
     }
 
-    fn deserialize_option<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, DeError> {
+    fn deserialize_option<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, TreeError> {
         match self {
             Value::Null => visitor.visit_none(),
             _ => visitor.visit_some(self),
@@ -82,19 +87,19 @@ impl<'de> Deserializer<'de> for &'de Value {
         _name: &'static str,
         _variants: &'static [&'static str],
         visitor: V,
-    ) -> Result<V::Value, DeError> {
+    ) -> Result<V::Value, TreeError> {
         match self {
             Value::String(s) => visitor.visit_enum(s.as_str().into_deserializer()),
             Value::Mapping(pairs) if pairs.len() == 1 => {
                 visitor.visit_enum(MapAccessDeserializer::new(entries(pairs)))
             }
-            _ => Err(DeError::custom(
+            _ => Err(TreeError::custom(
                 "expected a variant name, or a mapping with the variant name as its one key",
             )),
         }
     }
 
-    fn deserialize_seq<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, DeError> {
+    fn deserialize_seq<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, TreeError> {
         match self {
             Value::Null => visitor.visit_seq(SeqDeserializer::new(std::iter::empty::<&Value>())),
             _ => self.deserialize_any(visitor),
@@ -105,7 +110,7 @@ impl<'de> Deserializer<'de> for &'de Value {
         self,
         _len: usize,
         visitor: V,
-    ) -> Result<V::Value, DeError> {
+    ) -> Result<V::Value, TreeError> {
         self.deserialize_seq(visitor)
     }
 
@@ -114,11 +119,11 @@ impl<'de> Deserializer<'de> for &'de Value {
         _name: &'static str,
         _len: usize,
         visitor: V,
-    ) -> Result<V::Value, DeError> {
+    ) -> Result<V::Value, TreeError> {
         self.deserialize_seq(visitor)
     }
 
-    fn deserialize_map<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, DeError> {
+    fn deserialize_map<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, TreeError> {
         match self {
             Value::Null => visitor.visit_map(entries(&[])),
             _ => self.deserialize_any(visitor),
@@ -130,7 +135,7 @@ impl<'de> Deserializer<'de> for &'de Value {
         _name: &'static str,
         _fields: &'static [&'static str],
         visitor: V,
-    ) -> Result<V::Value, DeError> {
+    ) -> Result<V::Value, TreeError> {
         self.deserialize_map(visitor)
     }
 
@@ -138,7 +143,7 @@ impl<'de> Deserializer<'de> for &'de Value {
         self,
         _name: &'static str,
         visitor: V,
-    ) -> Result<V::Value, DeError> {
+    ) -> Result<V::Value, TreeError> {
         visitor.visit_newtype_struct(self)
     }
 
@@ -148,7 +153,7 @@ impl<'de> Deserializer<'de> for &'de Value {
     }
 }
 
-impl<'de> IntoDeserializer<'de, DeError> for &'de Value {
+impl<'de> IntoDeserializer<'de, TreeError> for &'de Value {
     type Deserializer = Self;
 
     fn into_deserializer(self) -> Self {
