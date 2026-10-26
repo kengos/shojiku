@@ -44,6 +44,11 @@ platform binaries.
 
 ### Changed
 
+- **A `shojiku_core::yaml::Value` read as a Rust type fails with
+  `shojiku_core::yaml::TreeError`**, where it failed with
+  `serde::de::value::Error`. The message is word for word the same. Only
+  Rust code that names the error type of `&Value`'s `Deserializer` has to
+  change; `yaml::from_value` still returns a `YamlError`.
 - **Ruby readings and `textOverflow: ellipsis` now let an excess of up to
   0.01pt pass, as the overflow warnings already do.** A reading that ran
   past its base run by that little used to shrink to fit, and a box that

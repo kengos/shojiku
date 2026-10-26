@@ -15,8 +15,8 @@
 //! The refinement is applied only when that item's own error is part of the
 //! original message, so a document whose FIRST failure lies elsewhere keeps
 //! the error serde reported. The work is one deserialize per sibling along a
-//! single failing chain, plus one per candidate key — O(size × depth), on the
-//! error path only. It is NOT bounded by how far the typed parse got: a
+//! single failing chain, plus at most one to confirm the key — O(size ×
+//! depth), on the error path only. It is NOT bounded by how far the typed parse got: a
 //! document that fails at a top-level key is still walked to the items below
 //! it. What bounds its recursion is the nesting check that ran before the
 //! typed parse ([`super::nesting`]), which counts every `items:` sequence
@@ -25,6 +25,7 @@
 
 use super::trail::Trail;
 use crate::template::Item;
+use crate::yaml::fault::Fault;
 use crate::yaml::{Value, from_value};
 
 /// Where an in-item failure really is: the item's path, and the item's own
@@ -35,10 +36,12 @@ pub(crate) struct ItemFault {
     pub(crate) key: Option<String>,
 }
 
-/// The failing item: its path, the error it raises alone, and the mapping.
+/// The failing item: its path, the error it raises alone (as text, and as
+/// what serde failed on), and the mapping.
 struct Culprit<'a> {
     path: String,
     message: String,
+    fault: Option<Box<Fault>>,
     node: &'a Value,
 }
 
@@ -49,7 +52,7 @@ struct Culprit<'a> {
 pub(crate) fn item_fault(raw: &Value, message: &str) -> Option<ItemFault> {
     let found = walk(raw, &mut Trail::default())?;
     message.contains(&found.message).then(|| ItemFault {
-        key: unknown_key(found.node, &found.message),
+        key: unknown_key(found.node, found.fault.as_deref()),
         path: found.path,
     })
 }
@@ -85,6 +88,7 @@ fn failing_item<'a>(items: &'a [Value], trail: &mut Trail<'a>) -> Option<Culprit
         let found = walk(node, trail).unwrap_or_else(|| Culprit {
             path: trail.spell(),
             message: err.full,
+            fault: err.fault,
             node,
         });
         trail.pop();
@@ -92,32 +96,24 @@ fn failing_item<'a>(items: &'a [Value], trail: &mut Trail<'a>) -> Option<Culprit
     })
 }
 
-/// The item's own top-level key the error rejects as unknown. The message
-/// alone cannot say at what DEPTH the unknown field sits — a `style` rejected
-/// inside `box` reads exactly like one rejected on the item — nor where a key
-/// that contains serde's own quoting ends. So each of the mapping's real keys
-/// the message quotes is only a candidate, and it is the answer only if the
-/// item without it no longer makes that complaint: removing a key an inner
-/// struct rejected leaves the complaint standing, and no key is named.
-fn unknown_key(node: &Value, message: &str) -> Option<String> {
-    let Value::Mapping(map) = node else {
+/// The item's own top-level key the error rejects as unknown. The fault
+/// names the field but not at what DEPTH it sits — a `style` rejected inside
+/// `box` is the same fault as one rejected on the item. So a real key of the
+/// mapping with that name is only a candidate, and it is the answer only if
+/// the item without it no longer fails that way: removing a key an inner
+/// struct rejected leaves the fault standing, and no key is named — unless
+/// that struct sits under the key of the same name, which goes with it, and
+/// then that key is named.
+fn unknown_key(node: &Value, fault: Option<&Fault>) -> Option<String> {
+    let (Value::Mapping(map), Some(Fault::UnknownField(field))) = (node, fault) else {
         return None;
     };
-    map.iter()
-        .map(|(key, _)| key.as_str())
-        .filter(|key| message.contains(&complaint(key)))
-        .find(|key| {
-            let without = map.iter().filter(|(name, _)| name != key).cloned();
-            from_value::<Item>(&Value::Mapping(without.collect()))
-                .err()
-                .is_none_or(|err| !err.full.contains(&complaint(key)))
-        })
-        .map(str::to_owned)
-}
-
-/// serde's wording for an unknown field, through its closing "`,".
-fn complaint(key: &str) -> String {
-    format!("unknown field `{key}`,")
+    map.iter().find(|(key, _)| key == field)?;
+    let without = map.iter().filter(|(key, _)| key != field).cloned();
+    from_value::<Item>(&Value::Mapping(without.collect()))
+        .err()
+        .is_none_or(|err| err.fault.as_deref() != fault)
+        .then(|| field.clone())
 }
 
 #[cfg(test)]

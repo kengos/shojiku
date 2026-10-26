@@ -63,6 +63,7 @@ pub const MAX_DEPTH: usize = 120;
 pub const MAX_INPUT_BYTES: usize = 16 * 1024 * 1024;
 
 pub use error::{YamlError, YamlErrorKind};
+pub use fault::TreeError;
 pub use value::Value;
 
 /// A document that passed every check of this door: its tree, and the source
@@ -125,6 +126,7 @@ pub fn from_value<T: DeserializeOwned>(value: &Value) -> Result<T, YamlError> {
 
 mod build;
 mod error;
+pub(crate) mod fault;
 mod read;
 #[cfg(test)]
 mod tests;

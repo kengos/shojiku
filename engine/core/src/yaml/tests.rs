@@ -1,6 +1,7 @@
 //! Unit tests for the YAML door, grouped by concern.
 
 mod checks;
+mod faults;
 mod reads;
 mod writes;
 
