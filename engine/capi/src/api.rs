@@ -1,7 +1,9 @@
 //! The C entry points.
 //!
 //! Every one of them has the same skeleton and it is worth stating once: check
-//! `out`, blank it, run the operation inside the panic shield, write whatever
+//! `out`, blank it, run the operation inside the panic shield (on a thread of
+//! a known stack, so the host's thread size does not decide how deep a
+//! document may nest), write whatever
 //! came back — a result on success, the failure rendered as a result on
 //! anything else — and return a status. That uniformity is what lets an SDK
 //! write one call wrapper and reuse it for the whole surface.
@@ -255,9 +257,9 @@ unsafe fn deliver(out: *mut *mut ShojikuResult, work: Work) -> i32 {
     // unconditionally frees null rather than a stale value.
     unsafe { *out = std::ptr::null_mut() };
 
-    // SAFETY: `work` carries the caller's pointers unchanged; `Work::run`
-    // states the same contract.
-    let mut body = || unsafe { work.run() };
+    // SAFETY: `work` carries the caller's pointers unchanged;
+    // `Work::on_engine_stack` states the same contract.
+    let mut body = || unsafe { work.on_engine_stack() };
     let (status, result) = match shield_result(&mut body) {
         Ok(result) => (SHOJIKU_OK, result),
         Err(failure) => (failure.status(), failure.into_result()),

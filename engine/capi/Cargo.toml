@@ -38,5 +38,10 @@ shojiku-verify = { workspace = true }
 # socket-free, so a missing font face is a structured failure rather than a
 # download nobody asked for.
 
+[dev-dependencies]
+# The YAML door's depth bound, so the small-stack test reads a document at
+# exactly the bound the engine enforces rather than a copy of the number.
+shojiku-core = { workspace = true }
+
 [lints]
 workspace = true

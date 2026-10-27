@@ -138,9 +138,12 @@ platform binaries.
 - **Reading a document nested as deep as the reader allows takes more
   stack.** At 120 levels it needs about 3 MiB in a debug build; the
   Designer's WASM build reads 119 levels on its 1 MiB stack, and a release
-  build of the native library is not measured. An application calling the
-  engine library from a thread with a small stack and handing it hostile
-  input should give that thread more. The Rust crate gains
+  build of the native library about 450 KiB. The C library, and through it
+  every in-process SDK and the npm package, now runs each call on a thread
+  of its own with an 8 MiB stack, so the stack of the thread you call from
+  no longer matters. A Rust program calling the engine crates directly from
+  a thread with a small stack and handing them hostile input should give
+  that thread more. The Rust crate gains
   `shojiku_core::yaml::MAX_ALIAS_EVENTS` and `DEEP_DOCUMENT_STACK` (the
   4 MiB the tests use), and `YamlErrorKind::OutOfRange` is gone.
 

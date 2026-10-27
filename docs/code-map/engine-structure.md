@@ -29,7 +29,7 @@ drop the `shojiku-` prefix; a crate depends only on lower layers.
 | 4 | `render-pdf` | image, layout | core, formatter |
 | 4 | `render-png` | image, layout | core, formatter |
 | 5 | `authoring` | core, diagnostics, formatter, image, layout, render-png | — |
-| 6 | `capi` | authoring, diagnostics, formatter, image, layout, render-pdf, render-png, signing, verify | — |
+| 6 | `capi` | authoring, diagnostics, formatter, image, layout, render-pdf, render-png, signing, verify | core |
 | 6 | `cli` | authoring, core, diagnostics, fetch, formatter, image, layout, render-pdf, render-png, signing, verify | — |
 | 6 | `mcp` | authoring, core, diagnostics, formatter, image, layout | — |
 | 6 | `wasm` | authoring, core, diagnostics, formatter, image, layout, render-pdf, render-png | — |
@@ -178,7 +178,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 96 files / 12086 lines; tests 110 files / 15833 lines
+### `core` (L1) — 96 files / 12087 lines; tests 110 files / 15833 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -267,7 +267,7 @@ first sentence of its `//!` header.
 - `src/validate/spans.rs` 65 — Structural checks for rich-text `spans`: content exclusivity, the MAX_SPANS cap, and span-inapplicable style keys.
 - `src/validate/styles.rs` 156 — `styleNames` cross-checks against the named-style registry, with the MAX_STYLES / MAX_STYLE_NAMES sanity caps.
 - `src/validate/tables.rs` 232 — Table checks: the bound array group, per-column content shape (`data` vs `cell` exclusivity), row-relative column keys, the row `conditionalStyles` predicates (and the `scope` they ignore), and the array-scoped bindings inside a `cell:` column's sub-template.
-- `src/yaml.rs` 163 — The one door YAML (and JSON, a subset of it) enters the engine through, and the one it is written out through ([`to_string`]).
+- `src/yaml.rs` 164 — The one door YAML (and JSON, a subset of it) enters the engine through, and the one it is written out through ([`to_string`]).
 - `src/yaml/build.rs` 190 — Reads a document into a [`Value`], refusing what the door refuses at the node that breaks the rule rather than in a walk afterwards.
 - `src/yaml/build/key.rs` 79 — The visitor for a mapping key: a string is the key, unless the mapping already holds it; anything else is refused as the key of the mapping that holds it.
 - `src/yaml/error.rs` 144 — What the YAML door reports when it refuses a document, or cannot write a value out.
@@ -572,10 +572,10 @@ first sentence of its `//!` header.
 - `src/sources.rs` 73 — Parsing + validation of the three source strings.
 - `src/test_support.rs` 63 — Shared fixtures for the crate's unit tests: the builtin ja pack, its filesystem-loaded font store (cached — sha256-verifying the ~47MB IPAmj fallback per test is far too slow), and a known-good single-page run.
 
-### `capi` (L6) — 17 files / 1942 lines; tests 18 files / 2846 lines
+### `capi` (L6) — 17 files / 2002 lines; tests 19 files / 2891 lines
 
-- `src/api.rs` 272 ▲ — The C entry points.
-- `src/api/work.rs` 191 — What an entry point asks [`deliver`](super::deliver) to run.
+- `src/api.rs` 274 ▲ — The C entry points.
+- `src/api/work.rs` 249 — What an entry point asks [`deliver`](super::deliver) to run.
 - `src/input.rs` 95 — Turning the caller's raw pointers into Rust slices.
 - `src/lib.rs` 58 — Shojiku C ABI: the shared library the FFI SDKs (python, ruby, c#, java) load.
 - `src/ops.rs` 88 — The operations, and the layout pipeline three of them share.
