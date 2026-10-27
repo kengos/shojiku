@@ -57,11 +57,21 @@ pub fn run(template_yaml: &str, params: Value) -> (LayoutDocument, Diagnostics) 
 /// nesting bound — the only way one nested past `MAX_CONTAINER_DEPTH` still
 /// reaches layout, whose own, independent cap is what the callers pin. It
 /// still goes through the YAML door, so the document has to stay inside the
-/// door's `MAX_DEPTH`.
+/// door's `MAX_DEPTH`, and is read on a thread with the stack a document
+/// that deep needs.
 pub fn run_unguarded(template_yaml: &str, params: Value) -> (LayoutDocument, Diagnostics) {
-    let template: Template = shojiku_core::yaml::from_str(template_yaml).expect("template");
-    let out = layout_template(&template, params, None);
-    (out.document, out.diagnostics)
+    let template_yaml = template_yaml.to_owned();
+    std::thread::Builder::new()
+        .stack_size(shojiku_core::yaml::DEEP_DOCUMENT_STACK)
+        .spawn(move || {
+            let template: Template =
+                shojiku_core::yaml::from_str(&template_yaml).expect("template");
+            let out = layout_template(&template, params, None);
+            (out.document, out.diagnostics)
+        })
+        .expect("spawn")
+        .join()
+        .expect("no panic")
 }
 
 /// Like [`run`] but keeps the full output (the path-addressed `BoxIndex`).

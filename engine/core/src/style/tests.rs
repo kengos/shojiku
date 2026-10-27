@@ -31,7 +31,7 @@ fn border_properties_round_trip_as_camel_case() {
     };
     let yaml = crate::yaml::to_string(&s).expect("yaml");
     assert!(yaml.contains("borderWidth: 0.8"), "got: {yaml}");
-    assert!(yaml.contains("borderColor: '#333333'"), "got: {yaml}");
+    assert!(yaml.contains("borderColor: \"#333333\""), "got: {yaml}");
     let back: Style = crate::yaml::from_str(&yaml).expect("parse");
     assert_eq!(back.border_width, Some(BorderWidth::All(0.8)));
     assert_eq!(back.border_color, Some(BorderColor::All("#333333".into())));
@@ -133,7 +133,7 @@ fn background_color_round_trips_as_camel_case() {
         ..Style::default()
     };
     let yaml = crate::yaml::to_string(&s).expect("yaml");
-    assert!(yaml.contains("backgroundColor: '#eef'"), "got: {yaml}");
+    assert!(yaml.contains("backgroundColor: \"#eef\""), "got: {yaml}");
     let back: Style = crate::yaml::from_str(&yaml).expect("parse");
     assert_eq!(back.background_color.as_deref(), Some("#eef"));
 }

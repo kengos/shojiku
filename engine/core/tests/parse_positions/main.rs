@@ -100,11 +100,19 @@ fn every_case_reports_the_recorded_position() {
     // An empty directory would compare an empty record against an empty
     // file and pass; the committed set is larger than this.
     assert!(cases.len() >= 20, "the committed cases are missing");
-    let actual: String = cases
-        .iter()
-        .map(|(name, text)| record(name, &parse(name, text)))
-        .collect::<Vec<_>>()
-        .join("\n");
+    // Some cases nest as deep as the YAML door allows.
+    let actual: String = std::thread::Builder::new()
+        .stack_size(shojiku_core::yaml::DEEP_DOCUMENT_STACK)
+        .spawn(move || {
+            cases
+                .iter()
+                .map(|(name, text)| record(name, &parse(name, text)))
+                .collect::<Vec<_>>()
+                .join("\n")
+        })
+        .expect("spawn")
+        .join()
+        .expect("no panic");
     let expected =
         std::fs::read_to_string(suite_dir().join("expected.txt")).expect("the expected record");
     assert!(

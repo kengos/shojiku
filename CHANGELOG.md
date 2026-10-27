@@ -17,8 +17,8 @@ platform binaries.
 - **`shojiku_core::yaml`, one door for reading YAML in the Rust crate.**
   While it reads a document it refuses an oversize input, nesting past 120
   levels, a mapping key that is not a string or appears twice, a NaN or
-  infinite number, an integer from 65 to 128 bits wide and a local YAML
-  tag (`!name`), and it hands back the engine's own `Value` tree. Its
+  infinite number, a local YAML tag (`!name`) and aliases that replay more
+  than 100,000 events, and it hands back the engine's own `Value` tree. Its
   `to_string` writes a value out as YAML.
 
 - **The key catalog now says what each style key does, not only what it
@@ -70,8 +70,7 @@ platform binaries.
   - a NaN or infinite number anywhere in a pack, including under a key the
     pack does not read.
   - in a locale pack, a duplicate key inside a table such as `dateFormats`
-    (the last one used to win) and an integer past 64 bits under a key the
-    pack does not read.
+    (the last one used to win).
   - nesting deeper than 120 levels, where the limit used to be 128. A
     template chain of 58 to 61 containers, which reached the container
     limit and reported `container_depth_exceeded`, now reaches this one
@@ -80,9 +79,9 @@ platform binaries.
     above, or a NaN, reports that refusal rather than the v1 migration
     hint.
 - **Where a refused document is reported.** A non-string key, a duplicate
-  key, an integer past 64 bits, a local tag and nesting too deep are each a
+  key, a local tag and nesting too deep are each a
   `parse_error` with the path and the line/column of the node (a NaN keeps
-  its own `non_finite_number`). A duplicate key, an integer past 64 bits and
+  its own `non_finite_number`). A duplicate key and
   nesting too deep used to be a `parse_error` whose position, if any, was
   only inside the message text, and a template's non-string key had no
   line/column. The path of a refusal at the document
@@ -97,11 +96,53 @@ platform binaries.
   `shojiku_authoring::reference::tables::parse`. Its `located_message()`
   is the one-string rendering they used to carry, with where the refusal
   happened; its `to_string()` is the message alone. `CoreError` and `LangPackError` no longer convert from a
-  `serde_yaml::Error`, and no crate but `shojiku-core` depends on
-  serde_yaml any more. An oversize font-pack manifest handed over as text
+  `serde_yaml::Error`, and no crate but `shojiku-core` depends on the
+  YAML parser. An oversize font-pack manifest handed over as text
   (an injected pack, or one added to the WASM session) is now refused with
   "the input is N bytes, over the 16777216-byte input cap" rather than
   "pack is N bytes, …"; one read from disk is still refused at the read.
+- **The engine reads and writes YAML with serde-saphyr instead of
+  serde_yaml**, whose parser is no longer maintained; `cargo deny` now
+  ignores no advisory at all. What changes for a document:
+  - An unquoted number is a number however it is written: `zip: 0600001`
+    reads as the number 600001 (a float, which an integer field refuses)
+    rather than the string `"0600001"`,
+    `1_000` as 1000, and an integer past 64 bits as a float. Quote the
+    value to keep it text. A params document
+    written as JSON is unaffected.
+  - A number too large for a float (`1e309`, a 400-digit integer) reads as
+    infinite and is refused like `.inf`, where it used to be read as text.
+  - A quoted string that runs over several lines must indent the
+    following lines past its key.
+  - A `null` (`~`, `null`, or no value) where a list or a mapping is
+    wanted reads as an empty one, as it already did in a locale overlay:
+    `properties: ~` in definitions, `faces: ~` in a font-pack manifest and
+    `dateFormats: ~` in a locale pack used to fail, and so did a template
+    header's or footer's `items: ~`. Inside the template body or an item it
+    still fails, since those are read through serde's buffering.
+  - Parse errors are worded by the new parser. An unclosed `[` or `{` is
+    reported at the bracket that was opened rather than where the document
+    ended, the expected values are listed without backticks, and the
+    location reads `line L, column C`. A typed error's message leads with
+    its whole path, the unknown key included; a section of the wrong shape
+    reads "expected mapping start", and an empty font-pack manifest
+    "unexpected end of input". A local tag is located at the node it tags
+    (for a mapping, its first key) rather than at the tag, an unknown
+    `type:` of a template section at the key rather than at its value, and
+    a duplicate key at its second spelling rather than at the mapping that
+    holds it. The `key` the Designer's "remove this key" quick-fix reads is
+    unchanged.
+  - Written YAML puts double quotes around a string another reader could
+    take for something else (`"#ff0000"`, `"2.0"`, `"1989-01-08"`, the key
+    `"y"`), where it used single quotes or none.
+- **Reading a document nested as deep as the reader allows takes more
+  stack.** At 120 levels it needs about 3 MiB in a debug build; the
+  Designer's WASM build reads 119 levels on its 1 MiB stack, and a release
+  build of the native library is not measured. An application calling the
+  engine library from a thread with a small stack and handing it hostile
+  input should give that thread more. The Rust crate gains
+  `shojiku_core::yaml::MAX_ALIAS_EVENTS` and `DEEP_DOCUMENT_STACK` (the
+  4 MiB the tests use), and `YamlErrorKind::OutOfRange` is gone.
 
 ### Changed
 
@@ -160,6 +201,13 @@ platform binaries.
 
 ### Security
 
+- **YAML aliases are bounded: the aliases of one document replay at most
+  100,000 events, at every YAML door.** The old limit grew with the
+  document, so a document inside the 16 MiB input cap could expand to some
+  10^8 nodes (the "billion laughs"). Sharing a style through an anchor
+  still works: 500 references to a style of a few keys read well inside
+  the bound. A document
+  past the bound is a `parse_error`.
 - **A mapping key that is not a string is refused in params, definitions
   and locale packs too**, with no deprecation release.
   Templates have refused one since 0.3, because the typed read buffers some

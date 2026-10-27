@@ -10,24 +10,36 @@
 //! failed on as a [`Fault`](super::fault::Fault), beside the message.
 
 use super::error::{YamlError, YamlErrorKind};
-use super::fault::TreeError;
+use super::fault::{self, TreeError};
+use super::parser;
 use super::value::Value;
 use serde::de::value::{MapAccessDeserializer, MapDeserializer, SeqDeserializer};
 use serde::de::{DeserializeOwned, Deserializer, Error as _, IntoDeserializer, Visitor};
+use std::cell::Cell;
 
-#[expect(
-    clippy::disallowed_methods,
-    clippy::disallowed_types,
-    reason = "the door itself: the one place a typed read meets the parser"
-)]
 pub(super) fn typed<T: DeserializeOwned>(source: &str) -> Result<T, YamlError> {
-    let de = serde_yaml::Deserializer::from_str(source);
-    serde_path_to_error::deserialize(de).map_err(|err| {
-        let path = err.path().to_string();
-        let inner = err.into_inner();
-        YamlError::new(YamlErrorKind::Shape, inner.to_string())
-            .at_path(path)
-            .located(&inner)
+    // The path of a structural failure, kept aside: the parser's error
+    // type is what the read hands back.
+    let path = Cell::new(None);
+    parser::read(source, |de| {
+        serde_path_to_error::deserialize(de).map_err(|err| {
+            path.set(Some(err.path().to_string()));
+            err.into_inner()
+        })
+    })
+    .map_err(|err| {
+        // Every structural failure has a path; one past the read has none.
+        // The message leads with it below the root, as a one-string error
+        // shows it.
+        let path = path.take();
+        let message = match path.as_deref() {
+            Some(at) if at != "." => format!("{at}: {err}"),
+            _ => err.to_string(),
+        };
+        YamlError::new(YamlErrorKind::Shape, message)
+            .with_fault(fault::of_parser(&err))
+            .located(&err)
+            .at_path_if(path)
     })
 }
 
@@ -37,7 +49,7 @@ pub(super) fn from_value<T: DeserializeOwned>(value: &Value) -> Result<T, YamlEr
         let inner = err.into_inner();
         YamlError::new(YamlErrorKind::Shape, inner.message)
             .at_path(path)
-            .with_fault(inner.fault)
+            .with_fault(Some(inner.fault))
     })
 }
 

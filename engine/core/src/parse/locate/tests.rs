@@ -248,3 +248,26 @@ fn a_key_whose_removal_leaves_a_different_failure_is_still_named() {
     assert_eq!(path, "sections.body.items[0]");
     assert_eq!(key, None);
 }
+
+#[test]
+fn the_same_unknown_key_at_the_root_is_not_blamed_on_an_item() {
+    // The root rejects `bogus` first; an item rejecting a key of the same
+    // name is a different failure (another struct, another key list), so
+    // the error stays where serde put it and no key is offered.
+    let yaml = format!("bogus: 1\n{}", flow("{ type: text, text: a, bogus: 1 }"));
+    let (path, key, line, _) = fault(&yaml);
+    assert_eq!(path, "bogus");
+    assert_eq!(key, None);
+    assert_eq!(line, 1);
+}
+
+#[test]
+fn the_same_failure_in_another_section_is_not_blamed_on_its_item() {
+    // The body fails first, on its missing `type`; a footer item missing
+    // its own `type` fails the same way, but it is not under the body, so
+    // the error stays at the body.
+    let yaml = "sections:\n  body:\n    items: []\n  footer:\n    items:\n      - { text: a }\n";
+    let (path, key, ..) = fault(yaml);
+    assert_eq!(path, "sections.body");
+    assert_eq!(key, None);
+}

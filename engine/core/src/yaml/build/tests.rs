@@ -17,8 +17,12 @@ fn a_node_or_key_of_an_unread_type_is_refused_naming_what_was_expected() {
         .deserialize(BytesDeserializer::<DeError>::new(b"x"))
         .expect_err("bytes are not a YAML value");
     assert!(err.to_string().contains("expected a YAML value"), "{err}");
-    let err = Key { state: &state }
-        .deserialize(BytesDeserializer::<DeError>::new(b"x"))
-        .expect_err("bytes are not a key");
+    let seen = std::collections::HashSet::new();
+    let err = Key {
+        state: &state,
+        seen: &seen,
+    }
+    .deserialize(BytesDeserializer::<DeError>::new(b"x"))
+    .expect_err("bytes are not a key");
     assert!(err.to_string().contains("expected a string key"), "{err}");
 }

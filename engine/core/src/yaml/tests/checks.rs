@@ -2,7 +2,7 @@
 //! to the node that broke the rule, and the parser's location.
 
 use super::refused;
-use crate::yaml::{MAX_DEPTH, MAX_INPUT_BYTES, Value, YamlErrorKind, parse};
+use crate::yaml::{MAX_ALIAS_EVENTS, MAX_DEPTH, MAX_INPUT_BYTES, Value, YamlErrorKind, parse};
 use shojiku_diagnostics::Echo;
 
 #[test]
@@ -44,8 +44,9 @@ fn an_oversize_input_is_refused_unread() {
 fn a_syntax_error_carries_the_parser_location_and_no_path() {
     let err = refused("a: [1\n", YamlErrorKind::Syntax);
     assert_eq!(err.path, None);
-    assert_eq!((err.line, err.column), (2, 1), "{err:?}");
-    assert!(err.message.contains("did not find expected"), "{err:?}");
+    // The bracket that is never closed.
+    assert_eq!((err.line, err.column), (1, 4), "{err:?}");
+    assert!(err.message.contains("unclosed bracket"), "{err:?}");
 }
 
 /// `n` sequences, each holding the next.
@@ -60,16 +61,18 @@ fn nested_mappings(n: usize) -> String {
 
 #[test]
 fn nesting_is_read_to_the_bound_and_refused_one_past_it() {
-    assert!(parse(&nested_sequences(MAX_DEPTH)).is_ok());
-    assert!(parse(&nested_mappings(MAX_DEPTH)).is_ok());
-    // One past the bound is still inside the parser's own limit of 128, so
-    // the refusal is this door's and names the collection that is too deep.
-    // The path is the document's, so it is clipped like any echo of it.
-    let err = refused(&nested_sequences(MAX_DEPTH + 1), YamlErrorKind::TooDeep);
-    assert_eq!(err.path, Some(Echo::from("[0]".repeat(MAX_DEPTH))));
-    assert!(err.message.contains("deeper than 120 levels"), "{err:?}");
-    let err = refused(&nested_mappings(MAX_DEPTH + 1), YamlErrorKind::TooDeep);
-    assert_eq!(err.path, Some(Echo::from(vec!["a"; MAX_DEPTH].join("."))));
+    crate::yaml::on_a_deep_document_stack(|| {
+        assert!(parse(&nested_sequences(MAX_DEPTH)).is_ok());
+        assert!(parse(&nested_mappings(MAX_DEPTH)).is_ok());
+        // One past the bound is still inside the parser's own limit, so the
+        // refusal is this door's and names the collection that is too deep.
+        // The path is the document's, so it is clipped like any echo of it.
+        let err = refused(&nested_sequences(MAX_DEPTH + 1), YamlErrorKind::TooDeep);
+        assert_eq!(err.path, Some(Echo::from("[0]".repeat(MAX_DEPTH))));
+        assert!(err.message.contains("deeper than 120 levels"), "{err:?}");
+        let err = refused(&nested_mappings(MAX_DEPTH + 1), YamlErrorKind::TooDeep);
+        assert_eq!(err.path, Some(Echo::from(vec!["a"; MAX_DEPTH].join("."))));
+    });
 }
 
 #[test]
@@ -142,40 +145,59 @@ fn a_non_finite_number_is_refused_where_it_sits() {
 }
 
 #[test]
-fn an_integer_past_64_bits_is_refused_where_it_sits() {
-    for literal in ["18446744073709551616", "-9223372036854775809"] {
-        let err = refused(&format!("a:\n  b: {literal}\n"), YamlErrorKind::OutOfRange);
-        assert_eq!(err.path.as_deref(), Some("a.b"), "{literal}");
-        assert!(
-            err.message
-                .contains(&format!("`{literal}` is outside the 64-bit range"))
-        );
-        let err = refused(&format!("{literal}: x\n"), YamlErrorKind::NonStringKey);
-        assert!(
-            err.message.contains(&format!("mapping key `{literal}`")),
-            "{err:?}"
-        );
-    }
-    // Past 128 bits today's parser reads an integer as a float, which passes.
-    let wide = format!("a: 1{}\n", "0".repeat(40));
-    let tree = parse(&wide).expect("parses").into_tree();
-    assert_eq!(tree.get("a"), Some(&Value::Float(1e40)));
-    // Past what an `f64` holds, it reads the digits as a string.
-    let digits = format!("1{}", "0".repeat(400));
-    let tree = parse(&format!("a: {digits}\n"))
+fn an_integer_past_64_bits_is_read_as_a_float_and_past_f64_is_refused() {
+    for (literal, float) in [
+        ("18446744073709551616", 18_446_744_073_709_551_616.0),
+        ("-9223372036854775809", -9_223_372_036_854_775_809.0),
+        ("1e40", 1e40),
+    ] {
+        let tree = parse(&format!(
+            "a:
+  b: {literal}
+"
+        ))
         .expect("parses")
         .into_tree();
-    assert_eq!(tree.get("a"), Some(&Value::String(digits)));
+        let inner = tree.get("a").and_then(|a| a.get("b"));
+        assert_eq!(inner, Some(&Value::Float(float)), "{literal}");
+        // As a key it is a number all the same.
+        refused(&format!("{literal}: x\n"), YamlErrorKind::NonStringKey);
+    }
+    // Past what an `f64` holds, the number is infinite, which is refused.
+    let digits = format!("1{}", "0".repeat(400));
+    let err = refused(&format!("a: {digits}\n"), YamlErrorKind::NonFinite);
+    assert_eq!(err.path.as_deref(), Some("a"));
+}
+
+#[test]
+fn a_plain_number_is_a_number_however_it_is_written() {
+    // Only `true` and `false` are booleans, and `<<` is an ordinary key.
+    let doc = "a: 0123\nb: 1_000\nc: yes\nd: on\n<<: x\n";
+    let tree = parse(doc).expect("parses").into_tree();
+    assert_eq!(tree.get("a"), Some(&Value::Float(123.0)));
+    assert_eq!(tree.get("b"), Some(&Value::Int(1000)));
+    assert_eq!(tree.get("c"), Some(&Value::String("yes".to_owned())));
+    assert_eq!(tree.get("d"), Some(&Value::String("on".to_owned())));
+    assert_eq!(tree.get("<<"), Some(&Value::String("x".to_owned())));
+    // Quoted, each is the string it spells.
+    let tree = parse("a: '0123'\nb: '1_000'\n")
+        .expect("parses")
+        .into_tree();
+    assert_eq!(tree.get("a"), Some(&Value::String("0123".to_owned())));
+    assert_eq!(tree.get("b"), Some(&Value::String("1_000".to_owned())));
 }
 
 #[test]
 fn a_local_tag_is_refused_on_a_value_and_on_a_key() {
-    let err = refused("a: !money 5\n", YamlErrorKind::Tag);
-    assert_eq!(err.path.as_deref(), Some("a"));
-    assert!(err.message.contains("local YAML tags"), "{err:?}");
-    let err = refused("!name a: 5\n", YamlErrorKind::Tag);
-    assert_eq!(err.path.as_deref(), Some("."));
-    // A standard tag is the parser's to resolve, and today's reads it as the
+    // The parser refuses it; the path is where the door's read stopped, the
+    // node on a value and the mapping holding it on a key.
+    for (doc, path) in [("a:\n  b: !money 5\n", "a.b"), ("!name a: 5\n", ".")] {
+        let err = refused(doc, YamlErrorKind::Tag);
+        assert!(err.message.contains("local YAML tags"), "{err:?}");
+        assert_eq!(err.path.as_deref(), Some(path), "{doc}");
+        assert!(err.line > 0, "{doc}: {err:?}");
+    }
+    // A standard tag is the parser's to resolve, and it reads it as the
     // scalar it names.
     let tree = parse("a: !!str 5\n").expect("parses").into_tree();
     assert_eq!(tree.get("a"), Some(&Value::String("5".to_owned())));
@@ -194,39 +216,70 @@ fn the_cap_is_sixteen_mebibytes() {
     assert_eq!(MAX_INPUT_BYTES, 16 * 1024 * 1024);
 }
 
-/// The parser's OWN alias limit, pinned. The door does not bound alias
-/// expansion itself, which is exactly why it is worth a test: swap the
-/// parser and this is the hole that reopens with no other gate noticing.
+/// The billion-laughs shape: `levels` anchors, each a list of ten aliases to
+/// the one before, then a key holding the last. Each level replays ten times
+/// the events of the one before.
+fn laughs(levels: usize) -> String {
+    let mut src = String::from("a0: &a0 \"x\"\n");
+    for i in 1..=levels {
+        let refs = vec![format!("*a{}", i - 1); 10].join(", ");
+        src.push_str(&format!("a{i}: &a{i} [{refs}]\n"));
+    }
+    src.push_str(&format!("root: *a{levels}\n"));
+    src
+}
+
 #[test]
-fn the_parser_refuses_runaway_alias_expansion_at_this_input_size() {
-    // The billion-laughs shape at ~200 source bytes. The limit this pins is
-    // REAL but it is not a constant: serde_yaml's repetition budget is
-    // `events.len() * 100`, so it scales with the input and a padded
-    // document buys a proportionally bigger bomb — measured at roughly 6
-    // nodes per source byte, so a document inside the input cap can still
-    // expand to order 10^8 nodes. What this pins is that the budget exists
-    // at all and that a small bomb cannot walk past it.
-    let laughs = |levels: usize| {
-        let mut src = String::from("a0: &a0 \"x\"\n");
-        for i in 1..=levels {
-            let prev = format!("*a{}", i - 1);
-            let refs = vec![prev; 10].join(", ");
-            src.push_str(&format!("a{i}: &a{i} [{refs}]\n"));
-        }
-        src.push_str(&format!("root: *a{levels}\n"));
-        src
-    };
+fn alias_expansion_is_bounded_by_one_total_whatever_the_input_size() {
     // Positive control: the shape itself parses, so the refusal below is the
-    // LIMIT talking and not a syntax error in the fixture.
+    // bound talking and not a syntax error in the fixture.
     parse(&laughs(3)).expect("parses");
-    let err = refused(&laughs(4), YamlErrorKind::Syntax);
-    assert!(err.message.contains("repetition"), "{err:?}");
+    let err = refused(&laughs(5), YamlErrorKind::Syntax);
+    assert!(err.message.contains("total_replayed_events"), "{err:?}");
+    assert!(
+        err.message.contains(&format!("> {MAX_ALIAS_EVENTS}")),
+        "{err:?}"
+    );
+    assert!(err.line > 0, "{err:?}");
+    // Padding the document does not buy a bigger bomb: the bound is a
+    // number, not a multiple of the input.
+    let padding = format!("pad: \"{}\"\n", "p".repeat(4 * 1024 * 1024));
+    parse(&format!("{padding}{}", laughs(3))).expect("parses");
+    let err = refused(&format!("{padding}{}", laughs(5)), YamlErrorKind::Syntax);
+    assert!(
+        err.message.contains(&format!("> {MAX_ALIAS_EVENTS}")),
+        "{err:?}"
+    );
+}
+
+#[test]
+fn every_alias_counts_toward_the_total() {
+    // Each alias of a scalar replays at least one event: half the bound is
+    // read, one past it is not.
+    let refs = |n: usize| format!("x: &x 1\nall: [{}]\n", vec!["*x"; n].join(", "));
+    parse(&refs(MAX_ALIAS_EVENTS / 2)).expect("half the bound parses");
+    refused(&refs(MAX_ALIAS_EVENTS + 1), YamlErrorKind::Syntax);
+}
+
+#[test]
+fn one_style_shared_five_hundred_times_is_read() {
+    // How a document shares a style: one anchor, referenced from every row.
+    let mut src = String::from(
+        "base: &s { fontSize: 9, fontWeight: bold, color: \"#000000\", textAlign: left }\nrows:\n",
+    );
+    for _ in 0..500 {
+        src.push_str("  - *s\n");
+    }
+    let tree = parse(&src).expect("parses").into_tree();
+    let Some(Value::Sequence(rows)) = tree.get("rows") else { panic!("{tree:?}") };
+    assert_eq!(rows.len(), 500);
+    assert!(rows.iter().all(|row| Some(row) == tree.get("base")));
 }
 
 #[test]
 fn an_empty_document_is_null() {
-    // The parser reports an empty document as no value at all; it reads as
-    // `null`, the way a document of just `~` does.
+    // An empty document reads as `null`, the way a document of just `~`
+    // does.
     assert_eq!(parse("").expect("parses").into_tree(), Value::Null);
     assert_eq!(
         parse("# only a comment\n").expect("parses").into_tree(),

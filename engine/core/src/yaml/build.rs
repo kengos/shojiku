@@ -10,19 +10,21 @@
 //! costs nothing unless something is refused.
 
 use super::error::{YamlError, YamlErrorKind};
+use super::parser;
 use super::value::Value;
 use super::{MAX_DEPTH, MAX_INPUT_BYTES};
 use crate::parse::trail::Trail;
 use key::Key;
-use serde::de::{self, DeserializeSeed, Deserializer, EnumAccess, MapAccess, SeqAccess, Visitor};
+use serde::de::{self, DeserializeSeed, Deserializer, MapAccess, SeqAccess, Visitor};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::fmt;
 
-/// A refusal raised during the read, with the path to it innermost first.
-struct Refusal {
-    kind: YamlErrorKind,
-    message: String,
+/// What stopped the read: the door's own refusal, if it was one, and the
+/// path to where the read stopped, innermost first, whoever stopped it.
+#[derive(Default)]
+struct Stop {
+    refusal: Option<(YamlErrorKind, String)>,
     segments: Vec<Segment>,
 }
 
@@ -31,14 +33,9 @@ enum Segment {
     Index(usize),
 }
 
-type State = RefCell<Option<Refusal>>;
+type State = RefCell<Stop>;
 
 /// Reads `input` into a checked tree.
-#[expect(
-    clippy::disallowed_methods,
-    clippy::disallowed_types,
-    reason = "the door itself: the one place a document is read into a tree"
-)]
 pub(super) fn tree(input: &str) -> Result<Value, YamlError> {
     if input.len() > MAX_INPUT_BYTES {
         let message = format!(
@@ -52,13 +49,16 @@ pub(super) fn tree(input: &str) -> Result<Value, YamlError> {
         state: &state,
         depth: 0,
     };
-    node.deserialize(serde_yaml::Deserializer::from_str(input))
-        .map_err(|err| match state.into_inner() {
-            Some(refusal) => YamlError::new(refusal.kind, refusal.message)
-                .at_path(spell(&refusal.segments))
+    parser::read(input, |de| node.deserialize(de)).map_err(|err| {
+        let stop = state.into_inner();
+        match stop.refusal {
+            Some((kind, message)) => YamlError::new(kind, message)
+                .at_path(spell(&stop.segments))
                 .located(&err),
-            None => YamlError::new(YamlErrorKind::Syntax, err.to_string()).located(&err),
-        })
+            // The parser's own refusal of a local tag sits at a node too.
+            None => YamlError::from_parser(&err, || spell(&stop.segments)),
+        }
+    })
 }
 
 /// The path, root first, in the spelling the typed read uses (`a.b[3].c`,
@@ -82,20 +82,13 @@ fn spell(innermost_first: &[Segment]) -> String {
 /// Records a refusal and returns the error that stops the read.
 fn refuse<E: de::Error>(state: &State, kind: YamlErrorKind, message: String) -> E {
     let error = E::custom(&message);
-    *state.borrow_mut() = Some(Refusal {
-        kind,
-        message,
-        segments: Vec::new(),
-    });
+    state.borrow_mut().refusal = Some((kind, message));
     error
 }
 
-/// Adds the step an unwinding refusal passed through. A syntax error has no
-/// refusal recorded and passes through untouched.
+/// Adds the step an unwinding error passed through.
 fn blame<E>(state: &State, segment: Segment, error: E) -> E {
-    if let Some(refusal) = state.borrow_mut().as_mut() {
-        refusal.segments.push(segment);
-    }
+    state.borrow_mut().segments.push(segment);
     error
 }
 
@@ -135,12 +128,8 @@ impl<'de> Visitor<'de> for Node<'_> {
         f.write_str("a YAML value")
     }
 
+    /// `null`, `~`, an empty value, and an empty document.
     fn visit_unit<E: de::Error>(self) -> Result<Value, E> {
-        Ok(Value::Null)
-    }
-
-    /// An empty document: the parser reports it as no value at all.
-    fn visit_none<E: de::Error>(self) -> Result<Value, E> {
         Ok(Value::Null)
     }
 
@@ -154,14 +143,6 @@ impl<'de> Visitor<'de> for Node<'_> {
 
     fn visit_u64<E: de::Error>(self, n: u64) -> Result<Value, E> {
         Ok(i64::try_from(n).map_or(Value::UInt(n), Value::Int))
-    }
-
-    fn visit_i128<E: de::Error>(self, n: i128) -> Result<Value, E> {
-        Err(refuse_range(self.state, n))
-    }
-
-    fn visit_u128<E: de::Error>(self, n: u128) -> Result<Value, E> {
-        Err(refuse_range(self.state, n))
     }
 
     fn visit_f64<E: de::Error>(self, f: f64) -> Result<Value, E> {
@@ -192,11 +173,9 @@ impl<'de> Visitor<'de> for Node<'_> {
         let child = self.enter()?;
         let mut seen = HashSet::new();
         let mut entries = Vec::new();
-        while let Some(key) = map.next_key_seed(Key { state: self.state })? {
-            if !seen.insert(key.clone()) {
-                let message = format!("the key `{key}` appears twice in one mapping");
-                return Err(refuse(self.state, YamlErrorKind::DuplicateKey, message));
-            }
+        let state = self.state;
+        while let Some(key) = map.next_key_seed(Key { state, seen: &seen })? {
+            seen.insert(key.clone());
             match map.next_value_seed(child) {
                 Ok(value) => entries.push((key, value)),
                 Err(e) => return Err(blame(self.state, Segment::Key(key), e)),
@@ -204,22 +183,6 @@ impl<'de> Visitor<'de> for Node<'_> {
         }
         Ok(Value::Mapping(entries))
     }
-
-    fn visit_enum<A: EnumAccess<'de>>(self, _: A) -> Result<Value, A::Error> {
-        Err(refuse_tag(self.state))
-    }
-}
-
-/// An integer the parser read wider than 64 bits, which no number of the
-/// engine holds.
-fn refuse_range<E: de::Error>(state: &State, n: impl fmt::Display) -> E {
-    let message = format!("the integer `{n}` is outside the 64-bit range");
-    refuse(state, YamlErrorKind::OutOfRange, message)
-}
-
-fn refuse_tag<E: de::Error>(state: &State) -> E {
-    let message = "local YAML tags (`!name`) are not supported".to_owned();
-    refuse(state, YamlErrorKind::Tag, message)
 }
 
 mod key;

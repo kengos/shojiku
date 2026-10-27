@@ -6,21 +6,10 @@ version = 2
 yanked = "deny"
 # The krilla/fontations migration (2026-07) removed both former exceptions
 # (lopdf RUSTSEC-2026-0187, ttf-parser RUSTSEC-2026-0192) from the dependency
-# tree entirely. Keep the list that short — a new ignore needs a written
-# argument recorded beside the entry rather than carried as a bare exception.
-ignore = [
-    # unsafe-libyaml is UNMAINTAINED (its repository was archived), which is a
-    # notice, not a vulnerability: the advisory names no flaw. It is the parser
-    # under serde_yaml, which every authored-YAML door goes through, so it is
-    # not removable without replacing serde_yaml itself. What the workspace
-    # relies on from it is pinned by tests in engine/core/src/yaml/tests/
-    # (the alias-expansion refusal at the tested input size; nesting is the
-    # door's own bound), every host-reachable YAML door is capped at
-    # MAX_INPUT_BYTES, and the one known exposure — alias amplification that
-    # scales with input size — is documented in engine/core/src/yaml.rs. Drop this entry
-    # with the move off serde_yaml.
-    { id = "RUSTSEC-2024-0449", reason = "unmaintained notice for unsafe-libyaml (serde_yaml's parser), not a vulnerability; see the comment above" },
-]
+# tree entirely, and the move off serde_yaml removed the unsafe-libyaml one.
+# Keep the list empty — a new ignore needs a written argument recorded beside
+# the entry rather than carried as a bare exception.
+ignore = []
 
 [licenses]
 version = 2
@@ -46,7 +35,7 @@ multiple-versions = "warn"
 # writes YAML, so no crate but shojiku-core may depend on the parser crate.
 # engine/clippy.toml holds the same line at the call site.
 deny = [
-    { crate = "serde_yaml", wrappers = ["shojiku-core"] },
+    { crate = "serde-saphyr", wrappers = ["shojiku-core"] },
 ]
 
 [sources]

@@ -1,14 +1,18 @@
-//! The visitor for a mapping key: a string is the key, anything else is
-//! refused as the key of the mapping that holds it.
+//! The visitor for a mapping key: a string is the key, unless the mapping
+//! already holds it; anything else is refused as the key of the mapping
+//! that holds it. Refused while the key is read, so the parser locates the
+//! refusal at the key.
 
-use super::{State, refuse, refuse_tag};
+use super::{State, refuse};
 use crate::yaml::error::YamlErrorKind;
-use serde::de::{self, DeserializeSeed, Deserializer, EnumAccess, MapAccess, SeqAccess, Visitor};
+use serde::de::{self, DeserializeSeed, Deserializer, MapAccess, SeqAccess, Visitor};
+use std::collections::HashSet;
 use std::fmt;
 
-/// The key visitor of one mapping.
+/// The key visitor of one mapping, which has read the keys in `seen`.
 pub(super) struct Key<'s> {
     pub(super) state: &'s State,
+    pub(super) seen: &'s HashSet<String>,
 }
 
 impl Key<'_> {
@@ -38,6 +42,10 @@ impl<'de> Visitor<'de> for Key<'_> {
     }
 
     fn visit_str<E: de::Error>(self, s: &str) -> Result<String, E> {
+        if self.seen.contains(s) {
+            let message = format!("the key `{s}` appears twice in one mapping");
+            return Err(refuse(self.state, YamlErrorKind::DuplicateKey, message));
+        }
         Ok(s.to_owned())
     }
 
@@ -57,14 +65,6 @@ impl<'de> Visitor<'de> for Key<'_> {
         Err(self.refuse(format!("`{n}`")))
     }
 
-    fn visit_i128<E: de::Error>(self, n: i128) -> Result<String, E> {
-        Err(self.refuse(format!("`{n}`")))
-    }
-
-    fn visit_u128<E: de::Error>(self, n: u128) -> Result<String, E> {
-        Err(self.refuse(format!("`{n}`")))
-    }
-
     fn visit_f64<E: de::Error>(self, f: f64) -> Result<String, E> {
         Err(self.refuse(format!("`{f}`")))
     }
@@ -75,9 +75,5 @@ impl<'de> Visitor<'de> for Key<'_> {
 
     fn visit_map<A: MapAccess<'de>>(self, _: A) -> Result<String, A::Error> {
         Err(self.refuse("a mapping".to_owned()))
-    }
-
-    fn visit_enum<A: EnumAccess<'de>>(self, _: A) -> Result<String, A::Error> {
-        Err(refuse_tag(self.state))
     }
 }

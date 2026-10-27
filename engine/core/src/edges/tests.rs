@@ -58,9 +58,9 @@ fn garbage_and_nonfinite_sides_are_rejected() {
     );
     assert!(parse_err("{ top: bogus }").contains("invalid length"));
     assert!(parse_err("{ top: \"1e309pt\" }").contains("not finite"));
-    // serde_yaml never yields a non-finite f64 — an overflowing bare
-    // number falls back to the string path and its rejection.
-    assert!(parse_err("1e309").contains("got string"));
+    // An overflowing bare number reads as infinity, which the YAML door
+    // refuses before the type sees it.
+    assert!(parse_err("1e309").contains("not finite"));
 }
 
 #[test]
@@ -87,8 +87,9 @@ fn bare_auto_string_is_rejected_with_a_pointer_to_the_map_form() {
 
 #[test]
 fn all_sides_guards_nonfinite_numbers() {
-    // Unreachable through serde_yaml (see above) but `all_sides` is the
-    // finite gate for any deserializer that does hand it an f64.
+    // Unreachable through the YAML door, which refuses a non-finite number
+    // first (see above), but `all_sides` is the finite gate for any
+    // deserializer that does hand it an f64.
     let err = all_sides(f64::INFINITY).expect_err("inf rejected");
     assert!(err.contains("not finite"));
 }

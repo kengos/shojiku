@@ -72,15 +72,11 @@ fn a_chain_spelled_through_a_field_number_is_refused_not_read() {
     // 61 deep, it overflowed a test-sized stack and aborted the process
     // before the key check existed. It is past the door's depth bound now,
     // but the door meets the outermost `5:` first, in document order, so the
-    // refusal is still the key's. An abort takes the whole test binary
-    // down, so a regression here is loud rather than a failed assertion.
+    // refusal is the key's, not the depth's.
     let deepest = body(&chain_via_5(61));
-    let result = std::thread::Builder::new()
-        .stack_size(2 << 20)
-        .spawn(move || parse_template(&deepest).map(|_: Template| ()))
-        .expect("spawn")
-        .join()
-        .expect("no panic");
+    let result = crate::yaml::on_a_deep_document_stack(move || {
+        parse_template(&deepest).map(|_: Template| ())
+    });
     assert!(
         matches!(&result, Err(CoreError::Located { message, .. }) if message.as_str().contains("is not a string")),
         "{result:?}"

@@ -62,7 +62,8 @@ fn era_date_round_trips_zero_padded() {
     assert_eq!(d, day(1989, 1, 8));
     assert_eq!(
         shojiku_core::yaml::to_string(&d).expect("yaml").trim(),
-        "1989-01-08"
+        // Quoted: unquoted, a YAML 1.1 reader takes it for a timestamp.
+        "\"1989-01-08\""
     );
 }
 

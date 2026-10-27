@@ -201,17 +201,11 @@ fn a_non_string_key_is_refused_before_this_walk_runs() {
     );
 }
 
-/// Parses `yaml` on a thread the size of a test thread: enough for the
-/// pass-1 parse of the deepest chain, not for the typed parse of it. An
-/// overflow aborts the whole test binary, so a regression here is loud
-/// rather than a failed assertion.
-fn on_a_test_sized_stack(yaml: String) -> Result<Template, CoreError> {
-    std::thread::Builder::new()
-        .stack_size(2 << 20)
-        .spawn(move || parse_template(&yaml))
-        .expect("spawn")
-        .join()
-        .expect("no panic")
+/// Parses `yaml` on the stack a document at the YAML door's depth bound
+/// needs. That the typed parse never ran is read off the error: a chain
+/// carrying an unknown key would otherwise fail on that key.
+fn on_a_deep_stack(yaml: String) -> Result<Template, CoreError> {
+    crate::yaml::on_a_deep_document_stack(move || parse_template(&yaml))
 }
 
 #[test]
@@ -229,11 +223,10 @@ fn the_deepest_chain_the_door_reads_is_refused_not_read() {
             chain(deepest - 1, TEXT)
         )),
     ] {
-        let err = on_a_test_sized_stack(yaml).expect_err("refused");
+        let err = on_a_deep_stack(yaml).expect_err("refused");
         assert!(matches!(err, CoreError::ContainerDepth { .. }), "{err:?}");
     }
-    let past_the_door =
-        on_a_test_sized_stack(body(&chain(deepest + 1, TEXT))).expect_err("refused");
+    let past_the_door = on_a_deep_stack(body(&chain(deepest + 1, TEXT))).expect_err("refused");
     assert!(
         matches!(&past_the_door, CoreError::Located { message, .. } if message.as_str().contains("nests deeper than")),
         "{past_the_door:?}"

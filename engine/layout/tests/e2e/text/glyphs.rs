@@ -7,7 +7,9 @@ use crate::common::*;
 fn missing_glyph_warns_once_per_distinct_char() {
     // U+10FFFF has no glyph in any bundled face; a newline (control char)
     // must be ignored, and the repeated unmapped char must warn only once.
-    let text = "\u{10FFFF}\n\u{10FFFF}A";
+    // Written as YAML's `\n` escape: a raw line break inside a quoted
+    // scalar has to be indented past its key.
+    let text = "\u{10FFFF}\\n\u{10FFFF}A";
     let yaml = format!(
         r#"
 page: {{ margin: 0 }}

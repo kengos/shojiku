@@ -66,7 +66,7 @@ fn every_equals_scalar_form_round_trips_in_its_authored_shape() {
     // The string "2" and the number 2 stay distinguishable after a
     // serialize round-trip (the predicate is type-strict).
     let yaml = crate::yaml::to_string(&t.row.conditional_styles).expect("yaml");
-    assert!(yaml.contains("equals: '2'"), "yaml: {yaml}");
+    assert!(yaml.contains("equals: \"2\""), "yaml: {yaml}");
     assert!(yaml.contains("equals: 2\n"), "yaml: {yaml}");
 }
 

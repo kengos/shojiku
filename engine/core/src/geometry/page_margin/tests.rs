@@ -131,10 +131,10 @@ fn the_array_refusal_is_located_at_the_margin_inside_a_template() {
 
 #[test]
 fn overflowing_numbers_are_rejected() {
-    // serde_yaml hands an overflowing bare number over as a *string*
-    // (see the edges tests), so the string rejection catches it.
+    // An overflowing bare number reads as infinity, which the YAML door
+    // refuses before the type sees it (see the edges tests).
     let err = parse_err("1e309");
-    assert!(err.contains("mapping"), "{err}");
+    assert!(err.contains("not finite"), "{err}");
 }
 
 #[test]

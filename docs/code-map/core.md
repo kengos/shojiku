@@ -209,8 +209,11 @@ injected at parse). The template model splits along CSS lines.
   pass-1 tree: it walks every `items:` sequence (the one spelling all four
   item holders share), follows the first element that fails
   `yaml::from_value::<Item>` down to the deepest failing item, and — only
-  when that item's own error is part of serde's UNCLIPPED message
-  (`YamlError.full`; the `message` Echo is clipped at 200) — reports the item's path, `key` (the item's own
+  when that item fails on the same `Fault` the typed parse reported
+  (`YamlError.fault`, what serde failed on, compared without its wording; an
+  unknown key or variant carries its struct's key list) AND lies under the
+  reported path (the buffering cuts that path short, never off course) —
+  reports the item's path, `key` (the item's own
   top-level key named by the item's `Fault::UnknownField`, CONFIRMED by the item
   without it no longer failing with that fault — the fault alone cannot tell an
   inner struct's `box.style` from the item's own `style`) and no line/column
@@ -371,25 +374,37 @@ injected at parse). The template model splits along CSS lines.
   authoring reference readers and the mcp gallery/front-matter readers all
   read through it, and every YAML the engine writes (`PackManifest::to_yaml`,
   the round-trip tests) goes out through its `to_string` (`yaml/write.rs`;
-  a `Serialize` failure is kind `Write`). serde_yaml appears nowhere else:
-  `engine/clippy.toml` refuses its functions and types outside
-  `yaml/{build,read,write,error}.rs` (each use there under an
-  `#[expect(…, reason)]`), and `engine/deny.toml` bans it for any crate but
-  `shojiku-core`. `MAX_INPUT_BYTES` (16 MiB, twice the Designer's
+  a `Serialize` failure is kind `Write`). The parser is serde-saphyr, and
+  `yaml/parser.rs` holds its one configuration (strict booleans, `<<` an
+  ordinary key, unknown tags refused, NaN and duplicate keys passed to the
+  visitor, `MAX_ALIAS_EVENTS` = 100,000 replayed events per document, budgets
+  at or above what 16 MiB holds) and the one `read` every read goes
+  through. serde-saphyr appears nowhere else: `engine/clippy.toml` refuses
+  its functions and types outside `yaml/{parser,write,error,fault}.rs` (each
+  use there under an `#[expect(…, reason)]`), and `engine/deny.toml` bans it
+  for any crate but `shojiku-core`. `MAX_INPUT_BYTES` (16 MiB, twice the Designer's
   8 MiB template ceiling) lives here. `parse(input) -> Document` reads into the engine's own `Value`
   (`yaml/value.rs`: Null/Bool/Int/UInt/Float/String/Sequence/Mapping as
   `Vec<(String, Value)>` in document order, `get`, `Serialize`) and makes
   every refusal DURING that one read, in `yaml/build.rs` (the `serde`
   visitor; `build/key.rs` the key visitor): size (`MAX_INPUT_BYTES`), depth
-  (`MAX_DEPTH` = 120, counted here and set below serde_yaml's 128 so this
-  bound is the one that fires), non-string key, duplicate key, non-finite
-  number, integer of 65–128 bits (serde_yaml reads a wider one as a float,
-  and past `f64` as a string; both pass), local tag (`!name`; standard `!!str` tags are serde_yaml's
-  to resolve and pass, and `!!int abc` is serde_yaml's own refusal, kind
-  `Syntax`). A refusal's path is gathered as the error unwinds and
-  spelled through `parse/trail.rs` (root = `.`). An empty document reads as
+  (`MAX_DEPTH` = 120, counted here; the parser is set a few levels deeper
+  so this bound is the one that fires), non-string key, duplicate key,
+  non-finite number (`.nan`, and a number past `f64`, which reads as
+  infinite; an integer past 64 bits reads as a float), local tag (`!name`,
+  refused by the parser and reported as kind `Tag` with the path where the
+  read stopped; standard `!!str` tags are the parser's to resolve, and
+  `!!int abc` is its own refusal, kind `Syntax`), and aliases past
+  `MAX_ALIAS_EVENTS` (the parser's refusal, kind `Syntax`). A path is
+  gathered as the error unwinds and spelled through `parse/trail.rs`
+  (root = `.`). The read recurses once per level: a document at
+  `MAX_DEPTH` needs about 3 MiB of stack in a debug build, and
+  `DEEP_DOCUMENT_STACK` (4 MiB) is the thread size tests read one on
+  (`on_a_deep_document_stack` in-crate). An empty document reads as
   `Null`. `Document::typed` / `from_str` re-read the SOURCE
-  with `serde_path_to_error` (parser scalar rules, line/column);
+  with `serde_path_to_error` (parser scalar rules, line/column; the
+  message leads with the path below the root, and `fault` keeps what serde
+  failed on, read off the parser's error by `fault::of_parser`);
   `from_value` reads a subtree through `yaml/read.rs`'s `Deserializer` for
   `&Value` (strict: a scalar is the type it was read as, except that a
   `null` where a list or mapping is wanted reads as an empty one, as
@@ -398,15 +413,11 @@ injected at parse). The template model splits along CSS lines.
   serde failed on as a `Fault` — unknown field, wrong type, … with the names
   serde gave — beside serde's own wording). `YamlError { kind: YamlErrorKind, path, line, column, message }`
   (`yaml/error.rs`, `#[non_exhaustive]`, Echo fields, plus the crate-private
-  unclipped `full` and `fault`, set only by `from_value`); `located_message()` renders a refusal as one string
+  `fault`, set by both typed reads; the template parse compares the
+  culprit item's with the typed parse's); `located_message()` renders a refusal as one string
   with its path and line/column after the message (a typed read's and a
   syntax error's message already carry theirs) — what every door with a
-  one-string error uses. **Alias resolutions are NOT bounded by it**: the
-  parser's repetition budget is `events.len() * 100`, so it SCALES with the
-  input — measured, a 197-byte bomb tops out at 2,351 nodes while the same
-  document padded to 400 KB reaches 2,545,689 (~6 nodes per source byte),
-  so a document inside the 16 MiB cap can still expand to order 10^8. It is
-  a documented exposure, not a closed one — do not re-file it as done.
+  one-string error uses.
   `tests/parse_positions/` (near-e2e) is the golden
   record of what the template/definitions/params doors report on
   broken documents — variant, path, key, line, column, message, or `ok`
