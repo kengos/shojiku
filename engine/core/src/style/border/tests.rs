@@ -54,7 +54,7 @@ fn color_scalar_and_map_round_trip() {
     assert_eq!(c.sides()[3].as_deref(), Some("#ff0000"));
     assert_eq!(
         crate::yaml::to_string(&c).expect("yaml").trim(),
-        "'#ff0000'"
+        "\"#ff0000\""
     );
     let c: BorderColor = crate::yaml::from_str("{ left: \"#00ff00\" }").expect("map");
     let sides = c.sides();

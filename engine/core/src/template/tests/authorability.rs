@@ -20,9 +20,9 @@ fn version_accepts_number_and_string_and_round_trips_as_authored() {
     // strings stay strings.
     let out = crate::yaml::to_string(&n).expect("yaml");
     assert!(out.contains("version: 1"), "got: {out}");
-    assert!(!out.contains("version: '1'"), "got: {out}");
+    assert!(!out.contains("version: \"1\""), "got: {out}");
     let out = crate::yaml::to_string(&s).expect("yaml");
-    assert!(out.contains("version: '2.0'"), "got: {out}");
+    assert!(out.contains("version: \"2.0\""), "got: {out}");
 }
 
 #[test]

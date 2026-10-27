@@ -160,7 +160,8 @@ fn deeply_nested_containers_fail_parsing_not_the_stack() {
         yaml.push_str(&format!("{indent}- type: container\n{indent}  items:\n"));
         indent.push_str("    ");
     }
-    assert!(parse_template(&yaml).is_err());
+    let read = crate::yaml::on_a_deep_document_stack(move || parse_template(&yaml).map(|_| ()));
+    assert!(read.is_err());
 }
 
 #[test]

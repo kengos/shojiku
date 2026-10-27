@@ -71,11 +71,14 @@ codegen-units = 1
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde_yaml = "0.9"
+# The YAML parser behind shojiku_core::yaml (the only crate allowed to use
+# it, see deny.toml). Without the default `comments` feature: the door reads
+# no comment text.
+serde-saphyr = { version = "2.0", default-features = false, features = ["deserialize", "serialize"] }
 # Wraps a Deserializer so a structural parse error carries the field PATH
-# (`sections.body.items[3].columns[0]`) alongside serde_yaml's line/column —
-# `serde_yaml::from_value` drops both. dtolnay, MIT/Apache-2.0, serde-only
-# dependency: deny.toml stays clean, no new transitives.
+# (`sections.body.items[3].columns[0]`) alongside the parser's line/column.
+# dtolnay, MIT/Apache-2.0, serde-only dependency: deny.toml stays clean, no
+# new transitives.
 serde_path_to_error = "0.1"
 thiserror = "2"
 time = { version = "0.3", features = ["parsing", "formatting", "macros"] }

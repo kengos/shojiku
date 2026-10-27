@@ -132,23 +132,26 @@ fn a_scalar_where_a_schema_belongs_nests_nothing() {
 fn the_deepest_schema_the_door_reads_is_refused_before_the_typed_parse() {
     // 59 levels is as deep as the YAML door's bound lets this shape go (two
     // collections a level, plus the root's and the innermost's: 2 × 59 + 1 =
-    // 119); the refusal comes before the typed parse would recurse through
-    // all of them.
-    let on_a_small_stack = |depth: usize| {
-        let yaml = chained(depth, "properties");
-        std::thread::Builder::new()
-            .stack_size(1 << 20)
-            .spawn(move || parse_definitions(&yaml).map(|_| ()))
-            .expect("spawn")
-            .join()
-            .expect("no panic")
+    // 119). The innermost schema names a type that does not exist, which the
+    // typed parse would refuse in its own words: the depth's refusal is what
+    // comes back, so the typed parse never ran.
+    let misspelt =
+        |depth: usize| chained(depth, "properties").replace("type: string", "type: strng");
+    let typed = parse_definitions(&misspelt(1)).expect_err("an unknown type");
+    assert!(
+        matches!(&typed, CoreError::Located { message, .. } if message.as_str().contains("strng")),
+        "{typed:?}"
+    );
+    let on_a_deep_stack = |depth: usize| {
+        let yaml = misspelt(depth);
+        crate::yaml::on_a_deep_document_stack(move || parse_definitions(&yaml).map(|_| ()))
     };
-    let deepest = on_a_small_stack(59);
+    let deepest = on_a_deep_stack(59);
     assert!(
         matches!(&deepest, Err(CoreError::Located { message, .. }) if message.as_str().starts_with("schema nests deeper")),
         "{deepest:?}"
     );
-    let past_the_door = on_a_small_stack(60);
+    let past_the_door = on_a_deep_stack(60);
     assert!(
         matches!(&past_the_door, Err(CoreError::Located { message, .. }) if message.as_str().contains("the document nests deeper")),
         "{past_the_door:?}"

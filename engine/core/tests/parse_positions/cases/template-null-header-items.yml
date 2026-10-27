@@ -1,0 +1,4 @@
+sections:
+  header:
+    items: ~
+  body: { type: flow, items: [] }

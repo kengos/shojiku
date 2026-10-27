@@ -45,7 +45,8 @@ fn a_bare_number_endpoint_stays_pt_and_round_trips_as_a_number() {
     assert_eq!(y, Length::Pt(28.5));
     let yaml = crate::yaml::to_string(&point("{ x: 0, y: 28.5 }")).expect("serialize");
     assert!(yaml.contains("x: 0"), "got: {yaml}");
-    assert!(yaml.contains("y: 28.5"), "got: {yaml}");
+    // `y` alone is a YAML 1.1 boolean, so the key is written quoted.
+    assert!(yaml.contains("\"y\": 28.5"), "got: {yaml}");
     assert!(!yaml.contains("pt"), "unit injected: {yaml}");
     // The authored `%` form round-trips as the string it was written as.
     let yaml = crate::yaml::to_string(&point("{ x: \"50%\", y: 0 }")).expect("serialize");
@@ -184,13 +185,13 @@ fn an_offset_serializes_only_the_axis_that_was_authored() {
     // A zero axis is skipped, so `offset: { y: -4 }` round-trips as written
     // rather than gaining an `x: 0` the author never typed.
     let yaml = crate::yaml::to_string(&point("{ item: a, offset: { y: -4 } }")).expect("serialize");
-    assert!(yaml.contains("y: -4"), "got: {yaml}");
+    assert!(yaml.contains("\"y\": -4"), "got: {yaml}");
     assert!(!yaml.contains("x:"), "injected a zero x: {yaml}");
     // Both axes authored come back as both.
     let yaml =
         crate::yaml::to_string(&point("{ item: a, offset: { x: 4, y: -2 } }")).expect("serialize");
     assert!(
-        yaml.contains("x: 4") && yaml.contains("y: -2"),
+        yaml.contains("x: 4") && yaml.contains("\"y\": -2"),
         "got: {yaml}"
     );
 }

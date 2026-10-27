@@ -27,7 +27,10 @@ enum Kind {
 /// The fault and the message `T` fails with on `tree`.
 fn failure<T: DeserializeOwned + std::fmt::Debug>(tree: &Value) -> (Fault, String) {
     let err = from_value::<T>(tree).expect_err("must fail");
-    (*err.fault.expect("a tree read keeps its fault"), err.full)
+    (
+        *err.fault.expect("a tree read keeps its fault"),
+        err.message.to_string(),
+    )
 }
 
 fn tree(yaml: &str) -> Value {
@@ -76,7 +79,10 @@ fn every_kind_serde_reports_keeps_its_fault_and_its_wording() {
     assert_eq!(
         faults,
         [
-            Fault::UnknownField("bogus".to_owned()),
+            Fault::UnknownField {
+                field: "bogus".to_owned(),
+                expected: vec!["name"],
+            },
             Fault::MissingField("name".to_owned()),
             Fault::InvalidType {
                 unexpected: "integer `1`".to_owned(),
@@ -90,7 +96,10 @@ fn every_kind_serde_reports_keeps_its_fault_and_its_wording() {
                 len: 1,
                 expected: "an array of length 2".to_owned(),
             },
-            Fault::UnknownVariant("Other".to_owned()),
+            Fault::UnknownVariant {
+                variant: "Other".to_owned(),
+                expected: vec!["Only"],
+            },
             Fault::DuplicateField("name".to_owned()),
         ]
     );
@@ -108,13 +117,89 @@ fn a_message_of_the_type_s_own_is_a_custom_fault() {
 fn an_unknown_field_is_named_as_the_document_spells_it() {
     // A key carrying serde's own quoting is one field, not a prefix of one.
     let (fault, _) = failure::<Entry>(&tree("{ name: a, \"name`, x\": 1 }"));
-    assert_eq!(fault, Fault::UnknownField("name`, x".to_owned()));
+    assert_eq!(
+        fault,
+        Fault::UnknownField {
+            field: "name`, x".to_owned(),
+            expected: vec!["name"],
+        }
+    );
+}
+
+/// A number whose own `Deserialize` refuses an odd one, by message.
+#[derive(Debug, Deserialize)]
+#[serde(try_from = "u8")]
+struct Even;
+
+impl TryFrom<u8> for Even {
+    type Error = String;
+
+    fn try_from(n: u8) -> Result<Self, String> {
+        if n.is_multiple_of(2) {
+            Ok(Even)
+        } else {
+            Err(format!("{n} is odd"))
+        }
+    }
+}
+
+/// The fault `T` fails with when read from the source `yaml`.
+fn from_source<T: DeserializeOwned + std::fmt::Debug>(yaml: &str) -> Option<Fault> {
+    from_str::<T>(yaml)
+        .expect_err("must fail")
+        .fault
+        .map(|f| *f)
+}
+
+/// The shapes above behind an internally tagged enum, which serde buffers
+/// and re-reads the way it does a template item — the read whose failures
+/// the template parse compares.
+#[derive(Debug, Deserialize)]
+#[serde(tag = "t")]
+enum Tagged {
+    Entry(#[expect(dead_code, reason = "read only to make serde check it")] Entry),
+    Small(#[expect(dead_code, reason = "read only to make serde check it")] Small),
+    Pair {
+        #[expect(dead_code, reason = "read only to make serde check it")]
+        p: [u8; 2],
+    },
+    Kind {
+        #[expect(dead_code, reason = "read only to make serde check it")]
+        k: Kind,
+    },
+    Even {
+        #[expect(dead_code, reason = "read only to make serde check it")]
+        e: Even,
+    },
 }
 
 #[test]
-fn a_read_from_the_source_carries_no_fault() {
-    let err = from_str::<Entry>("bogus: 1\n").expect_err("unknown field");
-    assert_eq!(err.fault, None);
+fn a_read_from_the_source_keeps_the_fault_a_read_from_the_tree_does() {
+    // The parser words these its own way; what serde failed on is kept as
+    // it is, so the two reads of one item compare equal.
+    for doc in [
+        "{ t: Entry, name: a, bogus: 1 }",
+        "{ t: Entry }",
+        "{ t: Entry, name: [ 1 ] }",
+        "{ t: Small, n: 300 }",
+        "{ t: Pair, p: [ 1 ] }",
+        "{ t: Kind, k: Other }",
+        "{ t: Even, e: 3 }",
+    ] {
+        let (tree, message) = failure::<Tagged>(&tree(doc));
+        assert_eq!(from_source::<Tagged>(doc), Some(tree), "{doc}: {message}");
+    }
+}
+
+#[test]
+fn a_failure_of_the_parser_s_own_carries_no_fault() {
+    #[derive(Debug, Deserialize)]
+    struct Letter {
+        #[expect(dead_code, reason = "read only to make serde check it")]
+        c: char,
+    }
+    // A `char` is one character; the parser refuses more, in its own words.
+    assert_eq!(from_source::<Letter>("c: ab\n"), None);
 }
 
 #[test]

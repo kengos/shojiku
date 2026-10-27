@@ -83,13 +83,11 @@ against:
   before a render starts, when a pack pins a face that is not on disk
   (`--offline` turns it off); the library hosts and the MCP server do
   not carry it.
-- **`engine/deny.toml` ignores no vulnerability advisory**, with `yanked =
-  "deny"`. It carries one ignore: RUSTSEC-2024-0449, the notice that
-  unsafe-libyaml (the YAML parser under serde_yaml) is unmaintained. The
-  notice names no flaw; the argument is written beside the entry, and the
-  entry is dropped with the move off serde_yaml. Adding an ignore requires
-  written justification, and the krilla/fontations migration removed the
-  two earlier exceptions by dropping those dependencies entirely.
+- **`engine/deny.toml` ignores no advisory**, with `yanked = "deny"`.
+  Adding an ignore requires written justification. The three earlier
+  exceptions all went by dropping the dependency behind them: two with the
+  krilla/fontations migration, and the unmaintained notice for
+  unsafe-libyaml with the move from serde_yaml to serde-saphyr.
 - **Every parser that reads unvetted input has a libFuzzer target**
   (`engine/fuzz/fuzz_targets/`), in two groups: the PDF reader and the
   signature-container decoders on the signing/verification side, and

@@ -42,12 +42,8 @@ never consulted.
 The supply chain is checked too.
 
 - [cargo-deny](https://github.com/kengos/shojiku/blob/main/engine/deny.toml)
-  checks advisories and licenses, and **ignores no vulnerability
-  advisory**. The one advisory it does ignore says that unsafe-libyaml,
-  the YAML parser serde_yaml uses internally, is no longer maintained,
-  which is not a vulnerability report. deny.toml records why, and the
-  ignore is removed when the engine stops using serde_yaml. A new
-  dependency that would need another ignore is not adopted
+  checks advisories and licenses, and **ignores no advisory**. A new
+  dependency that would need an ignore is not adopted
 <!-- sbom:generated:start (regenerate with `make site:data`) -->
 - **A CycloneDX SBOM is committed to the repository**
   ([sbom/](https://github.com/kengos/shojiku/tree/main/sbom)): 257 components for the engine, 236 for the gui, 127 for sdk-js. Each is generated from the lockfile

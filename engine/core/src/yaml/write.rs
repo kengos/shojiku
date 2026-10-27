@@ -8,6 +8,7 @@ use serde::Serialize;
     reason = "the door itself: the one place a value is written as YAML"
 )]
 pub(super) fn to_string<T: Serialize + ?Sized>(value: &T) -> Result<String, YamlError> {
-    serde_yaml::to_string(value)
+    // `&T` is sized where `T` may not be.
+    serde_saphyr::to_string(&value)
         .map_err(|err| YamlError::new(YamlErrorKind::Write, err.to_string()))
 }

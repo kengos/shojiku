@@ -1219,12 +1219,19 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   code rather than minting one, because a refused input never became a
   document. 16 MiB is twice the Designer's documented 8 MiB template ceiling,
   so no legal document approaches it; the MCP surface keeps its own tighter
-  512 KiB inline cap. **What this does NOT bound is YAML alias
-  amplification**: serde_yaml's repetition budget is `events.len() * 100`, so
-  it scales with the input — a document inside the cap can still expand to
-  order 10^8 nodes. Nesting depth IS bounded (the YAML door refuses past 120
-  levels, which is what keeps every walk over the read tree safe). The amplification
-  half is a known, written-down exposure rather than a closed one.
+  512 KiB inline cap. **YAML alias expansion is bounded by one fixed
+  total**: the aliases of one document replay at most 100,000 events in all
+  (`shojiku_core::yaml::MAX_ALIAS_EVENTS`, counted by the parser), at every
+  YAML door. It is a number, not a multiple of the input, so a small
+  document cannot expand into a tree far larger than itself, while one
+  style of a few keys shared 500 times reads well inside it. Nesting depth
+  is bounded too (the
+  YAML door refuses past 120 levels, which is what keeps every walk over the
+  read tree safe). A document at that depth needs about 3 MiB of stack in a
+  debug build (the tests read one on a 4 MiB thread,
+  `shojiku_core::yaml::DEEP_DOCUMENT_STACK`); the Designer's real-wasm suite
+  reads 119 levels on wasm's 1 MiB stack, and a release native host is not
+  measured.
 - **`shojiku capabilities`**: `{ version, capabilities }` JSON with no
   inputs; the key list is the GUI's feature gate. **Every
   wire-format/output-surface widening appends a key in the same PR.**
@@ -1732,9 +1739,8 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   length via `clippy::too_many_lines` (150). Test files are outside the
   length half — the reasons for a cap are in `docs/guidelines.md`, and
   none of them reaches a list of independent cases.
-- `cargo deny` (advisories/licenses/bans/sources, **no vulnerability
-  advisory ignored** — the one ignore, an unmaintained notice for
-  unsafe-libyaml, is argued in deny.toml — run
+- `cargo deny` (advisories/licenses/bans/sources, **no advisory
+  ignored** — run
   with `--all-features` so a feature-gated optional dependency cannot
   ride in unchecked), trivy on the Docker job, Dependabot weekly,
   **coverage blocking at 100% lines**; doc-only changes skip CI.

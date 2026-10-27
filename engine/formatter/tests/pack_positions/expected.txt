@@ -1,14 +1,14 @@
 ## lang-duplicate-key-in-table.yml
 parse
-message: the key `compact` appears twice in one mapping at `dateFormats`, line 3 column 3
+message: the key `compact` appears twice in one mapping at `dateFormats`, line 4 column 3
 
 ## lang-duplicate-key.yml
 parse
-message: the key `id` appears twice in one mapping at `.`, line 1 column 1
+message: the key `id` appears twice in one mapping at `.`, line 2 column 1
 
 ## lang-integer-past-64-bits.yml
 parse
-message: the integer `18446744073709551616` is outside the 64-bit range at `number.groupSize`, line 5 column 14
+message: number.groupSize: invalid u32 at line 5, column 14
 
 ## lang-nesting-125-levels.yml
 parse
@@ -19,23 +19,21 @@ parse
 message: mapping key `1` is not a string; every key must be one (quote it if it is a name) at `dateFormats`, line 3 column 3
 
 ## lang-null-table.yml
-parse
-message: dateFormats: invalid type: unit value, expected a map at line 2 column 14
+ok id=xx dateFormats={}
 
 ## lang-ok-minimal.yml
 ok id=xx dateFormats={}
 
 ## lang-syntax-bad-indent.yml
 parse
-message: mapping values are not allowed in this context at line 4 column 8
+message: mapping values are not allowed in this context at line 4, column 8
 
 ## lang-tagged-value.yml
 parse
-message: local YAML tags (`!name`) are not supported at `id`, line 1 column 5
+message: local YAML tags (`!name`) are not supported at `id`, line 1 column 11
 
 ## lang-unknown-key-integer-past-64-bits.yml
-parse
-message: the integer `18446744073709551616` is outside the 64-bit range at `note`, line 2 column 7
+ok id=xx dateFormats={}
 
 ## lang-unknown-key-non-finite.yml
 parse
@@ -43,46 +41,49 @@ message: the number `NaN` is not finite; NaN and infinity are not allowed at `no
 
 ## lang-wrong-type.yml
 parse
-message: weekdaysShort: invalid type: integer `5`, expected a sequence at line 2 column 16
+message: weekdaysShort: expected sequence start at line 2, column 16
 
 ## manifest-duplicate-key.yml
 error
-message: the key `version` appears twice in one mapping at `.`, line 1 column 1
+message: the key `version` appears twice in one mapping at `.`, line 2 column 1
 
 ## manifest-empty.yml
 error
-message: missing field `version`
+message: unexpected end of input at line 1, column 1
 
 ## manifest-integer-past-64-bits.yml
 error
-message: the integer `18446744073709551616` is outside the 64-bit range at `version`, line 1 column 10
+message: version: invalid u32 at line 1, column 10
 
 ## manifest-non-string-key.yml
 error
 message: mapping key `1` is not a string; every key must be one (quote it if it is a name) at `.`, line 4 column 1
+
+## manifest-null-faces.yml
+ok version=1 license=OFL-1.1 faces=0
 
 ## manifest-ok.yml
 ok version=1 license=OFL-1.1 faces=1
 
 ## manifest-syntax-tab-indent.yml
 error
-message: found character that cannot start any token at line 3 column 1, while scanning for the next token
+message: tabs disallowed within this context (block indentation) at line 3, column 2
 
 ## manifest-tagged-value.yml
 error
-message: local YAML tags (`!name`) are not supported at `license`, line 2 column 10
+message: local YAML tags (`!name`) are not supported at `license`, line 2 column 16
 
 ## manifest-unknown-key.yml
 error
-message: unknown field `licence`, expected one of `version`, `license`, `redistributable`, `embeddingAttested`, `faces` at line 4 column 1
+message: licence: unknown field `licence`, expected one of version, license, redistributable, embeddingAttested, faces at line 4, column 1
 
 ## manifest-unknown-weight.yml
 error
-message: faces[0].weight: unknown variant `heavyish`, expected `normal` or `bold` at line 7 column 13
+message: faces[0].weight: unknown variant `heavyish`, expected one of normal, bold at line 7, column 13
 
 ## overlay-duplicate-key.yml
 parse
-message: the key `compact` appears twice in one mapping at `dateFormats`, line 2 column 3
+message: the key `compact` appears twice in one mapping at `dateFormats`, line 3 column 3
 
 ## overlay-empty.yml
 parse
@@ -107,11 +108,11 @@ ok id=ja-JP dateFormats={"compact":"yy/MM/dd","default":"yyyy/MM/dd(E)","long":"
 
 ## overlay-syntax-unclosed-brace.yml
 parse
-message: did not find expected ',' or '}' at line 2 column 1, while parsing a flow mapping at line 1 column 14
+message: unclosed bracket '{' at line 1, column 14
 
 ## overlay-tagged-value.yml
 parse
-message: local YAML tags (`!name`) are not supported at `dateFormats.compact`, line 2 column 12
+message: local YAML tags (`!name`) are not supported at `dateFormats.compact`, line 2 column 18
 
 ## overlay-unknown-key-non-finite.yml
 parse

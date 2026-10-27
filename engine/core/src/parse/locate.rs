@@ -12,9 +12,15 @@
 //! as an [`Item`] (read through [`crate::yaml::from_value`]), and follows
 //! that chain down to the deepest item that fails on its own.
 //!
-//! The refinement is applied only when that item's own error is part of the
-//! original message, so a document whose FIRST failure lies elsewhere keeps
-//! the error serde reported. The work is one deserialize per sibling along a
+//! The refinement is applied only when that item's own failure is the one
+//! the typed parse reported — the same [`Fault`], compared by what serde
+//! failed on rather than by its wording, at a path the item lies under (the
+//! buffering cut the reported path short, never off course) — so a
+//! document whose FIRST failure lies in another section, or outside any,
+//! keeps the error serde reported. A failure in a section's own fields that
+//! an item inside it repeats exactly (the same unknown key in a `box`, the
+//! same bad `gap`) is still blamed on the item: the fault cannot tell the
+//! two apart, and no key is offered for it. The work is one deserialize per sibling along a
 //! single failing chain, plus at most one to confirm the key — O(size ×
 //! depth), on the error path only. It is NOT bounded by how far the typed parse got: a
 //! document that fails at a top-level key is still walked to the items below
@@ -26,7 +32,7 @@
 use super::trail::Trail;
 use crate::template::Item;
 use crate::yaml::fault::Fault;
-use crate::yaml::{Value, from_value};
+use crate::yaml::{Value, YamlError, from_value};
 
 /// Where an in-item failure really is: the item's path, and the item's own
 /// top-level key the failure rejects as unknown, when it is one.
@@ -36,25 +42,32 @@ pub(crate) struct ItemFault {
     pub(crate) key: Option<String>,
 }
 
-/// The failing item: its path, the error it raises alone (as text, and as
-/// what serde failed on), and the mapping.
+/// The failing item: its path, what it fails on alone, and the mapping.
 struct Culprit<'a> {
     path: String,
-    message: String,
     fault: Option<Box<Fault>>,
     node: &'a Value,
 }
 
-/// Finds the item behind a template parse failure whose full serde message is
-/// `message`, in the pass-1 tree `raw`. `None` when no item fails
-/// on its own or when the one that does is not what `message` reports — the
-/// original error then stands as serde gave it.
-pub(crate) fn item_fault(raw: &Value, message: &str) -> Option<ItemFault> {
+/// Finds the item behind the template parse failure `err`, in the pass-1
+/// tree `raw`. `None` when no item fails on its own or when the one that
+/// does is not what `err` reports — the original error then stands as serde
+/// gave it.
+pub(crate) fn item_fault(raw: &Value, err: &YamlError) -> Option<ItemFault> {
     let found = walk(raw, &mut Trail::default())?;
-    message.contains(&found.message).then(|| ItemFault {
+    let at = err.path.as_ref().map_or(".", |path| path.as_str());
+    (found.fault == err.fault && lies_under(&found.path, at)).then(|| ItemFault {
         key: unknown_key(found.node, found.fault.as_deref()),
         path: found.path,
     })
+}
+
+/// Whether `path` is `at` or below it (`.` is the root, above everything).
+fn lies_under(path: &str, at: &str) -> bool {
+    at == "."
+        || path
+            .strip_prefix(at)
+            .is_some_and(|rest| rest.is_empty() || rest.starts_with(['.', '[']))
 }
 
 /// The first failing item under `node` in document order, deepest first.
@@ -87,7 +100,6 @@ fn failing_item<'a>(items: &'a [Value], trail: &mut Trail<'a>) -> Option<Culprit
         trail.push_index(i);
         let found = walk(node, trail).unwrap_or_else(|| Culprit {
             path: trail.spell(),
-            message: err.full,
             fault: err.fault,
             node,
         });
@@ -105,7 +117,7 @@ fn failing_item<'a>(items: &'a [Value], trail: &mut Trail<'a>) -> Option<Culprit
 /// that struct sits under the key of the same name, which goes with it, and
 /// then that key is named.
 fn unknown_key(node: &Value, fault: Option<&Fault>) -> Option<String> {
-    let (Value::Mapping(map), Some(Fault::UnknownField(field))) = (node, fault) else {
+    let (Value::Mapping(map), Some(Fault::UnknownField { field, .. })) = (node, fault) else {
         return None;
     };
     map.iter().find(|(key, _)| key == field)?;

@@ -24,7 +24,7 @@
 //! (definitions, top-level template keys) keep full path + accurate location.
 
 use crate::error::CoreError;
-use crate::yaml::{self, Document, Value};
+use crate::yaml::{self, Document, Value, YamlError};
 use serde::de::DeserializeOwned;
 
 /// A check over the pass-1 tree, run before the typed parse reads it.
@@ -60,15 +60,14 @@ fn typed_with<T: DeserializeOwned>(
     doc: &Document<'_>,
     what: &'static str,
     bound: Bound,
-    fault: fn(&Value, &str) -> Option<locate::ItemFault>,
+    fault: fn(&Value, &YamlError) -> Option<locate::ItemFault>,
 ) -> Result<T, CoreError> {
     bound(doc.tree())?;
-    doc.typed()
-        .map_err(|err| match fault(doc.tree(), &err.full) {
-            Some(found) => CoreError::in_item(what, err, found),
-            // A typed read is never refused for size, so no byte count is read.
-            None => CoreError::from_yaml(what, 0, err),
-        })
+    doc.typed().map_err(|err| match fault(doc.tree(), &err) {
+        Some(found) => CoreError::in_item(what, err, found),
+        // A typed read is never refused for size, so no byte count is read.
+        None => CoreError::from_yaml(what, 0, err),
+    })
 }
 
 pub(crate) mod locate;

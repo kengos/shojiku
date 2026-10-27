@@ -4,13 +4,13 @@ path: properties.name.type
 key: -
 line: 4
 column: 11
-message: properties.name.type: unknown variant `strin`, expected one of `string`, `number`, `integer`, `boolean`, `object`, `array` at line 4 column 11
+message: properties.name.type: unknown variant `strin`, expected one of string, number, integer, boolean, object, array at line 4, column 11
 
 ## definitions-duplicate-key.yml
 located definitions
 path: properties.name
 key: -
-line: 4
+line: 5
 column: 5
 message: the key `type` appears twice in one mapping
 
@@ -18,8 +18,8 @@ message: the key `type` appears twice in one mapping
 located definitions
 path: properties.name
 key: -
-line: 3
-column: 9
+line: 4
+column: 5
 message: local YAML tags (`!name`) are not supported
 
 ## definitions-non-string-property-key.yml
@@ -29,6 +29,9 @@ key: -
 line: 3
 column: 3
 message: mapping key `1` is not a string; every key must be one (quote it if it is a name)
+
+## definitions-null-properties.yml
+ok
 
 ## definitions-root-not-object.yml
 located definitions
@@ -40,7 +43,7 @@ message: the definitions root must be `type: object` with `properties`
 
 ## definitions-syntax-bad-indent.yml
 parse
-message: did not find expected key at line 5 column 4, while parsing a block mapping at line 3 column 3
+message: while parsing a block mapping, did not find expected key at line 5, column 4
 
 ## definitions-unknown-property-key.yml
 located definitions
@@ -48,7 +51,7 @@ path: properties.name.lable
 key: -
 line: 5
 column: 5
-message: properties.name: unknown field `lable`, expected one of `type`, `format`, `title`, `description`, `example`, `enum`, `minLength`, `maxLength`, `minimum`, `maximum`, `minItems`, `maxItems`, `required`,…
+message: properties.name.lable: unknown field `lable`, expected one of type, format, title, description, example, enum, minLength, maxLength, minimum, maximum, minItems, maxItems, required, properties, items, …
 
 ## definitions-v1-groups-with-non-string-key.yml
 located definitions
@@ -70,7 +73,7 @@ message: the `groups` list is the retired v1 form; definitions now use the OpenA
 located params
 path: order
 key: -
-line: 2
+line: 3
 column: 3
 message: the key `code` appears twice in one mapping
 
@@ -78,12 +81,7 @@ message: the key `code` appears twice in one mapping
 ok null
 
 ## params-integer-past-64-bits.yml
-located params
-path: order.total
-key: -
-line: 2
-column: 10
-message: the integer `18446744073709551616` is outside the 64-bit range
+ok {"order":{"total":1.8446744073709552e+19}}
 
 ## params-nesting-125-levels.yml
 located params
@@ -104,12 +102,15 @@ line: 2
 column: 3
 message: mapping key `2024` is not a string; every key must be one (quote it if it is a name)
 
+## params-number-past-f64.yml
+non-finite params
+
 ## params-scalar-edges.yml
-ok {"base":{"x":1},"merged":{"<<":{"x":1},"y":2},"octal":"017","octal_prefixed":15,"past_128_bits":1e+40,"past_f64":"10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","standard_tag":"5","underscored":"1_000","yes":"yes"}
+ok {"base":{"x":1},"merged":{"<<":{"x":1},"y":2},"octal":17.0,"octal_prefixed":15,"past_128_bits":1e+40,"standard_tag":"5","underscored":1000,"yes":"yes"}
 
 ## params-syntax-unclosed-brace.yml
 parse
-message: did not find expected ',' or '}' at line 2 column 1, while parsing a flow mapping at line 1 column 11
+message: unclosed bracket '{' at line 1, column 11
 
 ## template-bad-enum-variant.yml
 located template
@@ -117,7 +118,7 @@ path: sections.body.items[0]
 key: -
 line: 0
 column: 0
-message: sections: unknown variant `show_empty`, expected `collapse` or `reserve` at line 2 column 3
+message: sections.body: unknown variant `show_empty`, expected one of collapse, reserve at line 2, column 3
 
 ## template-non-finite.yml
 non-finite template
@@ -144,27 +145,38 @@ path: .
 key: -
 line: 1
 column: 1
-message: invalid type: sequence, expected struct Template
+message: expected mapping start at line 1, column 1
+
+## template-null-header-items.yml
+ok
+
+## template-null-items.yml
+located template
+path: sections.body
+key: -
+line: 2
+column: 3
+message: sections.body: invalid type: unit value, expected a sequence at line 2, column 3
 
 ## template-syntax-duplicate-key.yml
 located template
 path: sections.body
 key: -
-line: 3
+line: 4
 column: 5
 message: the key `type` appears twice in one mapping
 
 ## template-syntax-tab-indent.yml
 parse
-message: found character that cannot start any token at line 3 column 1, while scanning for the next token
+message: tabs disallowed within this context (block indentation) at line 3, column 2
 
 ## template-syntax-undefined-alias.yml
 parse
-message: unknown anchor at line 4 column 12
+message: alias references unknown anchor at line 4, column 12
 
 ## template-syntax-unterminated-flow.yml
 parse
-message: did not find expected ',' or ']' at line 5 column 1, while parsing a flow sequence at line 4 column 12
+message: unclosed bracket '[' at line 4, column 12
 
 ## template-table-column-wrong-key.yml
 located template
@@ -172,14 +184,14 @@ path: sections.body.items[0]
 key: -
 line: 0
 column: 0
-message: sections: unknown field `key`, expected one of `id`, `label`, `type`, `fit`, `data`, `cell`, `width`, `styleNames`, `style` at line 2 column 3
+message: sections.body: unknown field `key`, expected one of id, label, type, fit, data, cell, width, styleNames, style at line 2, column 3
 
 ## template-tagged-value.yml
 located template
 path: sections.body.items[0].text
 key: -
 line: 6
-column: 15
+column: 21
 message: local YAML tags (`!name`) are not supported
 
 ## template-unknown-body-type.yml
@@ -187,8 +199,8 @@ located template
 path: sections.body.type
 key: -
 line: 3
-column: 11
-message: sections.body.type: unknown variant `sideways`, expected `flow` or `absolute` at line 3 column 11
+column: 5
+message: sections.body.type: unknown variant `sideways`, expected one of flow, absolute at line 3, column 5
 
 ## template-unknown-item-key.yml
 located template
@@ -196,7 +208,7 @@ path: sections.body.items[0]
 key: colour
 line: 0
 column: 0
-message: sections: unknown field `colour`, expected one of `id`, `visible`, `box`, `text`, `data`, `bindings`, `spans`, `styleNames`, `style`, `link`, `mark`, `ruby`, `rubySize` at line 2 column 3
+message: sections.body: unknown field `colour`, expected one of id, visible, box, text, data, bindings, spans, styleNames, style, link, mark, ruby, rubySize at line 2, column 3
 
 ## template-unknown-item-type.yml
 located template
@@ -204,7 +216,7 @@ path: sections.body.items[0]
 key: -
 line: 0
 column: 0
-message: sections: unknown variant `txt`, expected one of `text`, `rect`, `line`, `table`, `page_number`, `image`, `container`, `repeat`, `repeat_flow`, `qr_code`, `list`, `page_break`, `char_grid`, `ellipse`,…
+message: sections.body: unknown variant `txt`, expected one of text, rect, line, table, page_number, image, container, repeat, repeat_flow, qr_code, list, page_break, char_grid, ellipse, checkbox at line 2, co…
 
 ## template-unknown-key-nested-item.yml
 located template
@@ -212,7 +224,7 @@ path: sections.body.items[1].items[0]
 key: bogus
 line: 0
 column: 0
-message: sections: unknown field `bogus`, expected one of `id`, `visible`, `box`, `text`, `data`, `bindings`, `spans`, `styleNames`, `style`, `link`, `mark`, `ruby`, `rubySize` at line 2 column 3
+message: sections.body: unknown field `bogus`, expected one of id, visible, box, text, data, bindings, spans, styleNames, style, link, mark, ruby, rubySize at line 2, column 3
 
 ## template-unknown-top-level-key.yml
 located template
@@ -220,7 +232,7 @@ path: bogusTop
 key: -
 line: 1
 column: 1
-message: unknown field `bogusTop`, expected one of `version`, `name`, `document`, `page`, `styles`, `defaults`, `formats`, `sections`
+message: bogusTop: unknown field `bogusTop`, expected one of version, name, document, page, styles, defaults, formats, sections at line 1, column 1
 
 ## template-wrong-type-top-level.yml
 located template
@@ -228,4 +240,4 @@ path: styles
 key: -
 line: 1
 column: 9
-message: styles: invalid type: sequence, expected a map at line 1 column 9
+message: styles: expected mapping start at line 1, column 9
