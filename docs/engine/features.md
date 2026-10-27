@@ -1230,8 +1230,9 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   read tree safe). A document at that depth needs about 3 MiB of stack in a
   debug build (the tests read one on a 4 MiB thread,
   `shojiku_core::yaml::DEEP_DOCUMENT_STACK`); the Designer's real-wasm suite
-  reads 119 levels on wasm's 1 MiB stack, and a release native host is not
-  measured.
+  reads 119 levels on wasm's 1 MiB stack, and a release native build needs
+  about 450 KiB. The C ABI runs each call on a thread of its own with an
+  8 MiB stack, so an FFI host's thread size does not limit the depth.
 - **`shojiku capabilities`**: `{ version, capabilities }` JSON with no
   inputs; the key list is the GUI's feature gate. **Every
   wire-format/output-surface widening appends a key in the same PR.**

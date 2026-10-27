@@ -113,8 +113,9 @@ pub fn parse(input: &str) -> Result<Document<'_>, YamlError> {
 /// Measured: the tree read alone needs between 2.5 and 2.75 MiB at 121
 /// levels, a template's typed read with 115 levels inside one item between
 /// 2.5 and 3 MiB, and `parse_params` at 120 levels between 2 and 3 MiB. A
-/// release build needs less (the Designer's real-wasm suite reads 119
-/// levels on wasm's 1 MiB stack); a release native host is not measured.
+/// release build needs less: the Designer's real-wasm suite reads 119
+/// levels on wasm's 1 MiB stack, and the release C library about 450 KiB
+/// (it runs each call on an 8 MiB thread of its own).
 pub const DEEP_DOCUMENT_STACK: usize = 4 << 20;
 
 /// Runs `read` on a thread of [`DEEP_DOCUMENT_STACK`]. An overflow aborts

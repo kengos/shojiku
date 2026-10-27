@@ -10,6 +10,7 @@ mod external_signing;
 mod header;
 mod refusals;
 mod signing;
+mod stack;
 mod threading;
 mod verifying;
 

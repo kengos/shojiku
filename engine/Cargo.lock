@@ -1629,6 +1629,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shojiku-authoring",
+ "shojiku-core",
  "shojiku-diagnostics",
  "shojiku-formatter",
  "shojiku-image",

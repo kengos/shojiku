@@ -20,6 +20,15 @@ use crate::request::Request;
 use crate::result::ShojikuResult;
 use crate::status::Failure;
 
+/// The stack every operation runs on, whatever the calling thread has.
+///
+/// The host decides its threads' stacks — 1 MiB for a JVM or Ruby thread,
+/// 512 KiB for a plain macOS pthread — and a document at the YAML door's
+/// depth bound needs about 450 KiB in a release build and about 3 MiB in a
+/// debug one. 8 MiB, the usual Linux main-thread stack, covers both with room;
+/// it is address space, and only the pages a call touches are committed.
+const ENGINE_STACK: usize = 8 << 20;
+
 /// A `(pointer, length)` argument as it arrives from C.
 pub(super) type Arg = (*const u8, usize);
 
@@ -53,7 +62,56 @@ pub(super) enum Work {
     Verify { pdf: Arg, anchors: Arg },
 }
 
+/// A [`Work`] lent to the one thread [`Work::on_engine_stack`] starts.
+///
+/// The raw pointers keep `Work` itself from crossing threads, and they
+/// should: only this wrapper, made and consumed inside that function, may.
+struct Lent<'a>(&'a Work);
+
+// SAFETY: a `Lent` exists only inside `Work::on_engine_stack`, which hands it
+// to a scoped thread and waits for that thread before returning, so every
+// pointer is read inside the call it was lent for — the header's contract.
+// The bytes behind them are read, never written.
+unsafe impl Send for Lent<'_> {}
+
+impl Lent<'_> {
+    /// Runs the lent work. A method rather than a field access, so a closure
+    /// captures the whole wrapper and not the `&Work` inside it.
+    ///
+    /// # Safety
+    ///
+    /// As [`Work::run`].
+    unsafe fn run(self) -> Result<ShojikuResult, Failure> {
+        // SAFETY: the caller's contract, as `Work::run` states it.
+        unsafe { self.0.run() }
+    }
+}
+
 impl Work {
+    /// Runs [`Work::run`] on a thread of [`ENGINE_STACK`], waiting for it.
+    ///
+    /// A panic on that thread is raised again on the caller's, with its own
+    /// payload, so the shield around this call reports it as before. A thread
+    /// that cannot be started panics here, which the shield reports the same
+    /// way.
+    ///
+    /// # Safety
+    ///
+    /// As [`Work::run`].
+    pub(super) unsafe fn on_engine_stack(&self) -> Result<ShojikuResult, Failure> {
+        let lent = Lent(self);
+        std::thread::scope(|scope| {
+            let engine = std::thread::Builder::new().name("shojiku".into());
+            // SAFETY: the caller's contract, carried to a thread this scope joins.
+            let run = move || unsafe { lent.run() };
+            let thread = engine.stack_size(ENGINE_STACK).spawn_scoped(scope, run);
+            let thread = thread.expect("the engine thread could not be started");
+            thread
+                .join()
+                .unwrap_or_else(|panic| std::panic::resume_unwind(panic))
+        })
+    }
+
     /// The envelope-taking shape, named so the three entry points that use it
     /// read as one line each.
     pub(super) fn document(

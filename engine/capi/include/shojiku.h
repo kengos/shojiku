@@ -69,6 +69,12 @@
  *    binding whose runtime cares (a GIL, a GVL, an event loop) can and should
  *    release it around a call.
  *
+ *    Each operation runs on a thread of its own with an 8 MiB stack, and the
+ *    calling thread waits for it. The size of YOUR thread's stack therefore
+ *    does not limit how deeply a document may nest; the library's own bound
+ *    does. Your pointers are read only while you wait, inside the call they
+ *    were lent for.
+ *
  * STABILITY
  *
  *    shojiku_abi_version() returns the revision of this file. It goes up only

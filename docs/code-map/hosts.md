@@ -698,7 +698,14 @@ per SDK covers both.
   write the result or the failure-as-result. `deliver` is function-pointer
   taking, not generic, so one copy exists in the binary.
 - `src/api/work.rs` — the `Work` enum (one variant per entry point) and the
-  pointer borrowing. A VALUE, not a closure per entry point: a closure is a
+  pointer borrowing. `on_engine_stack` runs every operation on a scoped
+  thread of `ENGINE_STACK` (8 MiB) that the caller's thread joins: the host
+  picks its threads' stacks (1 MiB on a JVM or Ruby thread), and a document
+  at the YAML depth bound needs ~450 KiB in release, ~3 MiB in debug. A panic
+  there is re-raised on the caller's thread into the same shield. Only the
+  private `Lent` wrapper is `Send` — `Work` itself stays thread-bound by its
+  raw pointers — and it lives inside `on_engine_stack`, whose caller waits.
+  The `Work` enum is a VALUE, not a closure per entry point: a closure is a
   separate function in every copy of this crate, and each copy the caller
   does not reach reads to the coverage gate as dead code. Split from
   `api.rs` when the verify arm pushed that file at the 300-line budget.
@@ -771,6 +778,9 @@ per SDK covers both.
   byte-identity claim against the one-shot path, prepare idempotence, and the
   two outcomes the header says are NOT caught at the boundary (a signature
   over another document; a tampered file) proven to fail verification.
+  `stack.rs` reads params at the YAML depth bound from a 256 KiB caller
+  thread — the header's stack paragraph. The debug test build needs ~3 MiB
+  there, and the object-nested case overflowed 384 KiB in release too.
   `threading.rs` pins the header's THREADING paragraph — four threads render
   one document and must produce the SAME BYTES as a single-threaded call, so
   both halves of the claim (no shared mutable state; determinism is not a
