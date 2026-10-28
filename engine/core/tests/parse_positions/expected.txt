@@ -120,6 +120,22 @@ line: 0
 column: 0
 message: sections.body: unknown variant `show_empty`, expected one of collapse, reserve at line 2, column 3
 
+## template-body-field-repeated-in-item.yml
+located template
+path: sections.body
+key: -
+line: 3
+column: 5
+message: sections.body: data did not match any variant of untagged enum LengthRepr at line 3, column 5
+
+## template-container-field-repeated-in-child.yml
+located template
+path: sections.body.items[0]
+key: -
+line: 0
+column: 0
+message: sections.body: unknown field `bogus`, expected one of x, y, w, h, minWidth, maxWidth, minHeight, maxHeight, margin, padding, type, direction, gap, alignItems, justifyContent, columns, rows, columnGap,…
+
 ## template-non-finite.yml
 non-finite template
 

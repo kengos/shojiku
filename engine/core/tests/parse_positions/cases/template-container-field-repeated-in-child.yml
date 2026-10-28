@@ -1,0 +1,10 @@
+sections:
+  body:
+    type: flow
+    items:
+      - type: container
+        box: { bogus: 1 }
+        items:
+          - type: text
+            text: a
+            box: { bogus: 1 }

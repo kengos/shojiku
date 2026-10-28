@@ -190,14 +190,14 @@ injected at parse). The template model splits along CSS lines.
   `items:`, slipping past nesting's `items:` count) — is the door's refusal,
   pinned in `template/tests/non_string_keys.rs` by a 61-deep `5:` chain on a
   2 MiB thread.
-  `parse/trail.rs` — `Trail`: the path the template walks (nesting,
-  locate) carry as BORROWED segments, spelled only when one reports (the
+  `parse/trail.rs` — `Trail`: the path the template walks (nesting)
+  carry as BORROWED segments, spelled only when one reports (the
   `yaml` door spells its refusal paths through it too). Formatting the path at every node copied the whole prefix per
   child — a long explicit key over a long sequence was quadratic inside
   the input cap; pinned by a 1 MiB key × 200k elements under a deadline.
   `parse/nesting.rs` — the template bound: counts nesting of `items:`
   SEQUENCES whatever the `type` beside them (every Item-in-Item passes through
-  one, and `locate` re-reads every one), refusing past `MAX_CONTAINER_DEPTH`
+  one; a superset of what the typed parse and `locate` descend), refusing past `MAX_CONTAINER_DEPTH`
   as `CoreError::ContainerDepth` → `container_depth_exceeded` with validation's
   own path (the nearest sequence element: the item, or the table column) —
   pinned against validate by a parity test over both bands, both body kinds,
@@ -205,19 +205,26 @@ injected at parse). The template model splits along CSS lines.
   path of structural keys (each bare or with one numeric index) is kept whole
   (validation's is not clipped); any other path is echoed.
   Internally-tagged enums truncate the error path to the enum boundary;
-  for a TEMPLATE, `parse/locate.rs` then re-locates the failure off the
-  pass-1 tree: it walks every `items:` sequence (the one spelling all four
-  item holders share), follows the first element that fails
-  `yaml::from_value::<Item>` down to the deepest failing item, and — only
-  when that item fails on the same `Fault` the typed parse reported
-  (`YamlError.fault`, what serde failed on, compared without its wording; an
-  unknown key or variant carries its struct's key list) AND lies under the
-  reported path (the buffering cuts that path short, never off course) —
-  reports the item's path, `key` (the item's own
-  top-level key named by the item's `Fault::UnknownField`, CONFIRMED by the item
-  without it no longer failing with that fault — the fault alone cannot tell an
-  inner struct's `box.style` from the item's own `style`) and no line/column
-  (`CoreError::Located.key`).
+  for a TEMPLATE, `parse/locate.rs` then follows serde's OWN first failure
+  down the pass-1 tree, one buffered node at a time: the node at the
+  reported path (`sections.body`, or a band's `items[i]`) is read as the
+  variant struct its tag names (`parse/locate/variant.rs`: `FlowBody` /
+  `AbsoluteBody`, one arm per `ItemKind`, from the node without `type:`,
+  through `yaml::trace` — `yaml/strict.rs`, the tree read as serde's
+  buffered re-read (`ContentDeserializer`) reads it where the door's read
+  differs: `null` a unit value, `{}` a unit, `{}`/`[]` a unit struct, a
+  non-negative integer unsigned — keeping the path as `serde_path_to_error`
+  segments); when that read fails with the reported `Fault` at a path
+  entering an `items:` element, the failure is inside that item and the
+  same read is made on it. No candidate is compared, so a failure in a
+  section's or container's own fields that an item repeats exactly stays
+  theirs. It reports the deepest item reached, `key` (the item's own
+  top-level key: the failure one map segment below the item and a
+  `Fault::UnknownField` naming it; deeper keys such as `box.style` are not
+  named) and no line/column (`CoreError::Located.key`); a failure in the
+  body's own fields, or any disagreement between the strict read and
+  serde's (an enum's wrong shape is worded differently), keeps serde's
+  error or stops at the item last confirmed.
 - `params.rs` — params parse (the door's tree → `serde_json`) +
   `resolve_path` dotted lookup + `is_blank`
   (the shared absent/null/`""` predicate placeholders key off).
@@ -411,10 +418,15 @@ injected at parse). The template model splits along CSS lines.
   serde_yaml's `from_value` did — an overlay clears a table that way; path,
   no location; its error is `yaml/fault.rs`'s `TreeError`, which keeps what
   serde failed on as a `Fault` — unknown field, wrong type, … with the names
-  serde gave — beside serde's own wording). `YamlError { kind: YamlErrorKind, path, line, column, message }`
+  serde gave — beside serde's own wording); the crate-private `trace`
+  (`yaml/strict.rs`) is the same read the way serde re-reads a buffered
+  enum (`null` a unit value, `{}` a unit, a non-negative integer unsigned),
+  returning the failure's `Fault` and
+  its path as segments (`Traced`), for the template parse's locate.
+  `YamlError { kind: YamlErrorKind, path, line, column, message }`
   (`yaml/error.rs`, `#[non_exhaustive]`, Echo fields, plus the crate-private
   `fault`, set by both typed reads; the template parse compares the
-  culprit item's with the typed parse's); `located_message()` renders a refusal as one string
+  each buffered node's re-read from the tree with the typed parse's); `located_message()` renders a refusal as one string
   with its path and line/column after the message (a typed read's and a
   syntax error's message already carry theirs) — what every door with a
   one-string error uses.

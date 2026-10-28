@@ -16,9 +16,10 @@
 //! `repeat` cell, a `repeat_flow` item and a table column `cell` — so on a valid
 //! document the count is exactly validation's container depth, and the path is
 //! the one validation reports: the nearest sequence element holding the
-//! too-deep list (the item, or the table column). Counting by `type` instead
-//! would leave `locate` unbounded, since it re-reads every `items:` sequence it
-//! finds, including one under an item whose type takes none.
+//! too-deep list (the item, or the table column). It counts more than the
+//! typed parse can reach — an `items:` under a type that takes none is refused
+//! as an unknown key before it is read — and `locate` descends only where the
+//! typed read did, so the count errs on the bounded side.
 //!
 //! Every key is a string: the door refuses any other, which the buffered
 //! struct could read as `items` (it takes a plain integer as a field NUMBER).

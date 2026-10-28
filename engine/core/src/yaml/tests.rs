@@ -3,6 +3,7 @@
 mod checks;
 mod faults;
 mod reads;
+mod strict;
 mod writes;
 
 use super::{YamlError, YamlErrorKind, parse};
