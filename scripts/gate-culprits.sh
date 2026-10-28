@@ -59,7 +59,7 @@ emit "rustfmt:" "$(pick '^Diff in /')"
 # --fail-under-lines threshold — it just exits non-zero — so there is nothing to
 # match on. The `engine:coverage` target appends scripts/coverage-why.sh output to
 # log for exactly this reason; lift that block out.
-emit "coverage:" "$(pick '^(UNCOVERED|COVERED IN ONE COPY ONLY) |^  [a-z].*\.rs:[0-9]' 30)"
+emit "coverage:" "$(pick '^(UNCOVERED|COVERED IN ONE COPY ONLY|NEVER CALLED|LINE TOTAL SHORT) |^  [a-z].*\.rs(:[0-9]| \()' 30)"
 
 # examples:check: render-examples.sh prints one MISMATCH line per drifted file.
 # Without this the failure falls back to the tail, which shows the comparison's

@@ -13,8 +13,7 @@
 # being mistaken for them.
 
 .PHONY: investigate\:tree investigate\:last-error investigate\:docker \
-        investigate\:coverage investigate\:render investigate\:gates \
-        investigate\:pins
+        investigate\:gates investigate\:pins
 
 investigate\:tree: ## Which tree do gates run over from HERE? (the drift that goes green)
 	@printf 'a gate started from this directory runs over:\n'

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The make surface's own invariant. Four rules, one detector, self-tested
+# The make surface's own invariant. Five rules, one detector, self-tested
 # against a known-bad fixture BEFORE it reads the real tree.
 #
 #   1. every target defined in mk/<x>.mk is named <x>:<job> or _<x>-<job>
@@ -11,6 +11,14 @@
 #      backtick span, a shell fence, a yaml run:/target: — is a target that
 #      exists, including a name a CI matrix builds by interpolation, which
 #      is checked as a pattern
+#   5. every name a .PHONY list declares has a rule of its own
+#
+# Rule 5 does not depend on how a doc spells the name. A recipe renamed away
+# while its .PHONY entry stayed answers "Nothing to be done" rather than "No
+# rule", so it passes for a target to whoever runs it — and a doc that names it
+# in a shape rule 4 does not read (the `/ :coverage` shorthand after a full
+# `make investigate:tree`) keeps teaching it. Two names lived that way through
+# a whole rename.
 #
 # Rule 4 is the reason this gate exists. Nothing else in the repo can see a doc
 # teaching a command that was renamed away, and an agent reading such a doc
@@ -110,6 +118,34 @@ rule_gate_wiring() {
 				printf "%s: gate call names an undefined target: %s\n", file, a[1]
 			if (a[2] != t)
 				printf "%s: gate on %s labels itself %s\n", file, t, a[2]
+		}' "$dir"/Makefile "$dir"/mk/*.mk
+}
+
+# Rule 5. A .PHONY list continues across backslash-newlines; an escaped colon
+# inside a name (engine\:lint) is part of the name, not a continuation.
+rule_phony_orphans() {
+	local dir=$1 all
+	all=" $(targets_in "$dir"/Makefile "$dir"/mk/*.mk | tr '\n' ' ') "
+	awk -v all="$all" -v dir="$dir/" '
+		FNR == 1 {
+			file = FILENAME
+			if (index(file, dir) == 1) file = substr(file, length(dir) + 1)
+			cont = 0
+		}
+		cont || /^\.PHONY:/ {
+			line = $0
+			cont = (line ~ /\\$/)
+			sub(/\\$/, "", line)
+			sub(/[ \t]*#.*/, "", line)
+			sub(/^\.PHONY:/, "", line)
+			n = split(line, w, /[ \t]+/)
+			for (i = 1; i <= n; i++) {
+				# A name built by a variable is expanded by make, not read here.
+				if (w[i] == "" || w[i] ~ /\$/) continue
+				name = w[i]; gsub(/\\/, "", name)
+				if (index(all, " " name " ") == 0)
+					printf "%s: .PHONY declares %s but no rule defines it\n", file, name
+			}
 		}' "$dir"/Makefile "$dir"/mk/*.mk
 }
 
@@ -223,6 +259,7 @@ run_all() {                         # $1 dir, $2 listing file
 	rule_misfiled "$1"
 	rule_unscoped "$1"
 	rule_gate_wiring "$1"
+	rule_phony_orphans "$1"
 	rule_dangling_refs "$1" "$2"
 }
 
@@ -239,6 +276,8 @@ cat > "$WORK/fixture.want" <<'WANT'
 Makefile: gate call names an undefined target: _engine-missing
 Makefile: gate on engine:mislabel labels itself engine:WRONGLABEL
 mk/engine.mk: target gui:strayfile does not belong to scope engine
+Makefile: .PHONY declares engine:declaredonly but no rule defines it
+mk/engine.mk: .PHONY declares engine:alsodeclaredonly but no rule defines it
 public target strayname has no scope and is not one of: help verify quiet clean proof
 WANT
 sort "$WORK/fixture.out" > "$WORK/fixture.got"

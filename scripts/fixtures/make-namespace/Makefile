@@ -21,3 +21,9 @@ engine\:good: ## a correctly wired public target
 # and the self-test stays green.
 engine\:mislabel: ## a public target whose gate calls itself by the wrong name
 	@$(call gate,_engine-ok,engine:WRONGLABEL)
+
+# Rule 5 case: declared phony, defined nowhere. engine:good on the same list is
+# defined above and must NOT be reported, and neither line of the continued
+# list may be dropped.
+.PHONY: engine\:good \
+        engine\:declaredonly
