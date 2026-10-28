@@ -36,17 +36,6 @@ file is only for output that could not answer **which file / which line
 
 ## Open
 
-- [ ] `make_issue_coverage_why_misses_an_unrun_closure` — **When**: `make
-      engine:coverage` failed with every test green; the uncovered line was
-      a closure that never ran (`unwrap_or_else(|| …)` on a line whose outer
-      expression did run), so `cargo llvm-cov`'s own line total was one
-      short. **Not detected by**: the FAIL block's `--- which lines? ---`
-      (`scripts/coverage-why.sh`), which printed "every line is covered in
-      every instantiation" — it reads `DA:` records, where that line shows
-      the outer expression's hits. **Recovered by**: comparing each `SF`
-      block's `LF:` with its `LH:` in `engine/lcov.info`, then the block's
-      `FNDA:0` entry for the closure.
-
 - [ ] `make_issue_quiet_last_step_lags_the_failure` — **When**: `make
       quiet T=gui:test` (also `gui:test`) fails on the vitest COVERAGE
       thresholds. **Not detected by**: the wrapper's own summary, which
@@ -103,6 +92,31 @@ file is only for output that could not answer **which file / which line
       Left out of the cycle that found it — an unrelated file.)*
 
 ## Shipped
+
+- [x] `make_issue_coverage_why_misses_an_unrun_closure` — **When**: `make
+      engine:coverage` failed with every test green; the uncovered line was
+      a closure that never ran (`unwrap_or_else(|| …)` on a line whose outer
+      expression did run), so `cargo llvm-cov`'s own line total was one
+      short. **Not detected by**: the FAIL block's `--- which lines? ---`
+      (`scripts/coverage-why.sh`), which printed "every line is covered in
+      every instantiation" — it reads `DA:` records, where that line shows
+      the outer expression's hits. **Recovered by**: comparing each `SF`
+      block's `LF:` with its `LH:` in `engine/lcov.info`, then the block's
+      `FNDA:0` entry for the closure.
+      **Fixed by**: `scripts/coverage-why.sh` also reads `FN:`/`FNDA:`
+      and lists, under NEVER CALLED, every function start line whose call
+      count is zero in every copy — keyed by file and line, because the
+      same function's mangled name differs between the test binaries it is
+      linked into (keyed by symbol, a fully green report shows hundreds of
+      false zeros; keyed by line, none). Functions starting on one line
+      therefore count together, so each `SF` block's `LF:`/`LH:` is
+      checked against its `DA:` too, and a file whose total comes up short
+      with nothing else naming it is listed under LINE TOTAL SHORT. Induced for real: a multi-line
+      `unwrap_or_else(|| { … })` that never runs reds the gate with
+      `LF:90`/`LH:86` against three `DA:0` lines; the closure's own line
+      has DA hits and now appears as NEVER CALLED, heading included in the
+      FAIL block's excerpt (LINE TOTAL SHORT is lifted the same way). A closure written on ONE line leaves no `FN:`
+      record and costs no line, so it neither reds the gate nor shows here.
 
 - [x] `make_issue_lock_remedy_matches_the_recipe_echo` — **When**: `make
       engine:lint` failed at `== fmt ==` on a plain rustfmt diff, with no

@@ -18,8 +18,12 @@ clean:
 
     `make gui-${{ matrix.lang }}`
 
+Rule 5 cases (a `.PHONY` entry no rule defines, which make would otherwise
+answer with "Nothing to be done") live in this fixture's `Makefile` and
+`mk/engine.mk`.
+
 Waived case — the same shape, exempted on this line, and the reason the
-expected count is 5 rather than 6:
+expected count is 8 rather than 9:
 
     `make engine:alsomissing`  make-namespace-exempt: proves the hatch is wired
 

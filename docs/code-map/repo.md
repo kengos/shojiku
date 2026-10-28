@@ -598,8 +598,10 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   target surface itself (CI job `versions`, no Docker): a target defined in
   `mk/<x>.mk` belongs to scope `<x>`, a public target is colon-named or
   one of five allowlisted bare names, every `$(call gate,…)` names a
-  defined internal and labels itself correctly, and every `make <target>`
-  named in code ANYWHERE in the tracked tree — a backtick span, a shell
+  defined internal and labels itself correctly, every `.PHONY` entry has a
+  rule of its own (make answers a declared-only name with "Nothing to be
+  done", so it passes for a target however a doc spells it), and every
+  `make <target>` named in code ANYWHERE in the tracked tree — a backtick span, a shell
   fence, a yaml `run:`/`target:`, including a name a CI matrix builds by
   interpolation — is a target that EXISTS. That last rule is the only
   thing in the repo that can catch a doc teaching a command that was

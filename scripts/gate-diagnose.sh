@@ -150,11 +150,12 @@ fi
 
 # cargo-llvm-cov prints NOTHING when it trips --fail-under-lines; it just exits
 # non-zero. Without this the reader sees a bare failure and no line to act on.
-if has 'error: .*fail-under|--fail-under-lines|^UNCOVERED '; then
+if has 'error: .*fail-under|--fail-under-lines|^UNCOVERED |^NEVER CALLED |^LINE TOTAL SHORT '; then
 	say "REMEDY — the 100% line-coverage gate tripped." \
-		"make engine:coverage-why   lists the uncovered lines AND the ones covered" \
+		"make engine:coverage-why   lists the uncovered lines, the ones covered" \
 		"in only ONE of a crate's two copies (its own test binary vs the copy linked" \
-		"into dependents) — the second kind is invisible in a per-crate run."
+		"into dependents) — invisible in a per-crate run — and the closures no test" \
+		"calls, whose line can read as covered."
 fi
 
 if has 'Cannot connect to the Docker daemon|Is the docker daemon running'; then

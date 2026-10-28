@@ -80,9 +80,11 @@ slices.
 
 - **`make make:check`** is the gate over this surface itself: it refuses
   a target filed under the wrong `mk/<scope>.mk`, a public target with no
-  scope, and — the reason it exists — any tracked file naming a `make`
-  target that does not exist. It reads every tracked file, so a command
-  spelled in a Dockerfile or a doc comment counts too.
+  scope, a `.PHONY` entry no rule defines (make answers "Nothing to be
+  done" for it, so it passes for a target), and — the reason it exists —
+  any tracked file naming a `make` target that does not exist. It reads
+  every tracked file, so a command spelled in a Dockerfile or a doc
+  comment counts too.
 
 A few targets are deliberately **on-demand** rather than part of
 `verify`, because they cost minutes and answer a question most changes
