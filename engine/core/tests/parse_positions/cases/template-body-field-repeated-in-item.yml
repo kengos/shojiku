@@ -1,0 +1,9 @@
+sections:
+  body:
+    type: flow
+    gap: [ 1 ]
+    items:
+      - type: repeat_flow
+        data: { key: rows }
+        item: { items: [] }
+        gap: [ 1 ]

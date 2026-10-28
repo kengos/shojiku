@@ -53,8 +53,8 @@ pub struct YamlError {
     pub column: usize,
     pub message: Echo,
     /// What a typed read failed on, for comparing two failures without
-    /// matching their text (the template parse compares it with an item's
-    /// own failure). `None` for every other error, so two errors alike in
+    /// matching their text (the template parse compares it with the same
+    /// node read again from the tree). `None` for every other error, so two errors alike in
     /// every shown field still differ when only one came from a typed read.
     /// Boxed: it is rare, and the error is returned by value everywhere.
     pub(crate) fault: Option<Box<Fault>>,

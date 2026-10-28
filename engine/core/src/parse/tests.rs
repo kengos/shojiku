@@ -80,8 +80,8 @@ fn a_long_key_over_a_long_sequence_costs_the_walks_their_sum_not_product() {
     let err = template_within_deadline(refused).expect_err("refused");
     let CoreError::Located { path, .. } = &err else { panic!("{err:?}") };
     assert_eq!(path, "styles");
-    // String keys only: the nesting walk and, once the typed parse rejects
-    // the unknown key, the re-locating walk both cross the sequence too.
+    // String keys only: the nesting walk crosses the sequence; the
+    // re-locating pass does not, the unknown root key being no buffered node.
     let unknown = format!("{body}? {key}\n: [{zeros}]\n");
     let err = template_within_deadline(unknown).expect_err("unknown key");
     assert!(matches!(err, CoreError::Located { .. }), "{err:?}");

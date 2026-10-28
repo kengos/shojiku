@@ -153,11 +153,23 @@ pub fn from_value<T: DeserializeOwned>(value: &Value) -> Result<T, YamlError> {
     read::from_value(value)
 }
 
+/// Reads a tree into `T` the way `serde` re-reads a buffered enum — a `null`
+/// list or mapping is refused, not read as empty, among the differences
+/// `strict.rs` lists — keeping the failure's
+/// path as segments, for a caller that follows it back down the tree (the
+/// template parse, to the failing item).
+pub(crate) fn trace<T: DeserializeOwned>(value: &Value) -> Result<T, Traced> {
+    strict::trace(value)
+}
+
+pub(crate) use strict::Traced;
+
 mod build;
 mod error;
 pub(crate) mod fault;
 mod parser;
 mod read;
+mod strict;
 #[cfg(test)]
 mod tests;
 mod value;

@@ -15,10 +15,11 @@
 //! intermediate value and re-deserializes it, so an error INSIDE a body item
 //! truncates the path to the enum boundary (`sections.body`) and its
 //! line/column point at the buffered container's start, not the offending
-//! key. For a TEMPLATE, [`locate`] then walks the tree to the item that
-//! fails on its own and reports ITS path — with the rejected top-level key
-//! as a typed field when the failure is that key being unknown — and drops
-//! the misleading line/column. The serde MESSAGE still names the bad key and
+//! key. For a TEMPLATE, [`locate`] then follows serde's own first failure
+//! down the tree to the item it is inside and reports ITS path — with the
+//! rejected top-level key as a typed field when the failure is that key
+//! being unknown — and drops the misleading line/column; a failure in the
+//! body's own fields keeps serde's error. The serde MESSAGE still names the bad key and
 //! lists the expected fields (so `key:` on a table column reports
 //! `unknown field \`key\`, expected … \`data\``), and plain-struct inputs
 //! (definitions, top-level template keys) keep full path + accurate location.

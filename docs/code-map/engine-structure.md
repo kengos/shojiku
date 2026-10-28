@@ -178,7 +178,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 96 files / 12087 lines; tests 110 files / 15833 lines
+### `core` (L1) — 98 files / 12356 lines; tests 111 files / 16126 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -203,9 +203,10 @@ first sentence of its `//!` header.
 - `src/length.rs` 229 — Template length values: absolute points/physical units, a percentage of the parent, or a font-relative `em`/`rem`.
 - `src/lib.rs` 68 — Shojiku data model.
 - `src/params.rs` 48 — `params` — runtime data supplied by the calling application.
-- `src/parse.rs` 77 — Two-pass typed parse shared by the template and definitions entry points.
-- `src/parse/locate.rs` 132 — Re-locates a template parse failure that the tagged-enum buffering cut short.
-- `src/parse/nesting.rs` 116 — The template nesting bound, checked on the pass-1 tree before the typed parse reads the document.
+- `src/parse.rs` 78 — Two-pass typed parse shared by the template and definitions entry points.
+- `src/parse/locate.rs` 138 — Re-locates a template parse failure that the tagged-enum buffering cut short.
+- `src/parse/locate/variant.rs` 94 — The typed read of a buffered node's VARIANT struct: the one read that says where inside a `Body` or an `Item` serde failed.
+- `src/parse/nesting.rs` 117 — The template nesting bound, checked on the pass-1 tree before the typed parse reads the document.
 - `src/parse/trail.rs` 68 — The path a walk over the pass-1 tree is at, kept as segments borrowed from the tree and spelled out only when a walk reports it.
 - `src/ruby.rs` 284 ▲ — Aozora-bunko markup (`|base《reading》` ruby + `［＃…］` notes) — the `markup: aozora` grammar for `char_grid` content.
 - `src/ruby/grammar.rs` 121 — `［＃…］` note-body grammars beyond the sheet break: the large-writing span notes and the per-line placement notes.
@@ -267,13 +268,14 @@ first sentence of its `//!` header.
 - `src/validate/spans.rs` 65 — Structural checks for rich-text `spans`: content exclusivity, the MAX_SPANS cap, and span-inapplicable style keys.
 - `src/validate/styles.rs` 156 — `styleNames` cross-checks against the named-style registry, with the MAX_STYLES / MAX_STYLE_NAMES sanity caps.
 - `src/validate/tables.rs` 232 — Table checks: the bound array group, per-column content shape (`data` vs `cell` exclusivity), row-relative column keys, the row `conditionalStyles` predicates (and the `scope` they ignore), and the array-scoped bindings inside a `cell:` column's sub-template.
-- `src/yaml.rs` 164 — The one door YAML (and JSON, a subset of it) enters the engine through, and the one it is written out through ([`to_string`]).
+- `src/yaml.rs` 176 — The one door YAML (and JSON, a subset of it) enters the engine through, and the one it is written out through ([`to_string`]).
 - `src/yaml/build.rs` 190 — Reads a document into a [`Value`], refusing what the door refuses at the node that breaks the rule rather than in a walk afterwards.
 - `src/yaml/build/key.rs` 79 — The visitor for a mapping key: a string is the key, unless the mapping already holds it; anything else is refused as the key of the mapping that holds it.
 - `src/yaml/error.rs` 144 — What the YAML door reports when it refuses a document, or cannot write a value out.
 - `src/yaml/fault.rs` 181 — What a typed read of a [`super::Value`] failed on, kept as `serde` reported it rather than only as prose.
 - `src/yaml/parser.rs` 62 — The parser crate, configured once: every read of the door (the tree and the typed read) goes through [`read`], so both see the same YAML.
 - `src/yaml/read.rs` 174 — Typed reads: from a document's source, and from a [`Value`] subtree.
+- `src/yaml/strict.rs` 155 — The tree read the way `serde` re-reads a buffered enum (its private `ContentDeserializer`), where that differs from the door's own tree read: a `null` is a unit value wherever it lands, so a list, a mapping or a struct refuses it and only an `Option` takes it (as `None`); a unit, or a unit variant's payload, takes an empty mapping, and a unit struct an empty mapping or list; a non-negative integer is read as unsigned, so a variant named by its index reads.
 - `src/yaml/value.rs` 68 — The tree a YAML document is read into, owned by the engine rather than by the parser.
 - `src/yaml/write.rs` 14 — Writes a value as YAML, through the same parser crate the door reads with.
 

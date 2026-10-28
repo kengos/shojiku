@@ -194,6 +194,15 @@ platform binaries.
 
 ### Fixed
 
+- **A template parse error in a section's or a container's own fields is no
+  longer reported at an item inside it that repeats the same mistake.** When
+  a flow body's `gap` or `box` held a bad value and an item in it held the
+  very same one, or a container's `box` held an unknown key that a child's
+  `box` repeated, the error was reported at the item, with its line and
+  column dropped. It now stays where the parse failed: the body, with its
+  line and column, or the container. An unknown key on an item itself is
+  still named, so the Designer's "remove this key" fix is still offered.
+
 - **The key catalog's length pattern admitted strings the engine refuses.**
   The `pattern` on a length string (`"10mm"`, `"5%"`) and on a grid track's
   `fr` weight checked only the END of the string, so `"abc10mm"` passed it.
