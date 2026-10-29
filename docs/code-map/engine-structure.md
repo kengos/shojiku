@@ -178,7 +178,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 98 files / 12356 lines; tests 111 files / 16126 lines
+### `core` (L1) — 98 files / 12361 lines; tests 111 files / 16126 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -187,9 +187,9 @@ first sentence of its `//!` header.
 - `src/definitions/shape.rs` 165 — Structural checks over a definitions schema: the root must be an object, nesting/node/enum caps hold, and structural keys sit on the right base types (serde can't express those conditionals).
 - `src/edges.rs` 262 — Box-edge insets: per-side `margin` / `padding` values on item boxes.
 - `src/error.rs` 184 — The crate error type for parsing untrusted input artifacts.
-- `src/facts.rs` 54 — The engine's per-key facts about the style wire, as data.
+- `src/facts.rs` 55 — The engine's per-key facts about the style wire, as data.
 - `src/facts/inherit.rs` 34 — Which style keys inherit: the CSS split, as the layout cascade applies it.
-- `src/facts/initial.rs` 103 — The value each style key takes when nothing authors it — the CSS "initial" value every cascade starts from at the document root.
+- `src/facts/initial.rs` 107 — The value each style key takes when nothing authors it — the CSS "initial" value every cascade starts from at the document root.
 - `src/facts/paint.rs` 138 — Which surfaces paint with which style keys.
 - `src/facts/ranges.rs` 135 — The bounds a numeric style key is held to where it is used, and what an out-of-range value falls back to.
 - `src/geometry.rs` 225 — Positioning core — page geometry and box model.
@@ -375,7 +375,7 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
-### `layout` (L3) — 133 files / 19470 lines; tests 271 files / 38283 lines
+### `layout` (L3) — 133 files / 19476 lines; tests 271 files / 38283 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -425,8 +425,8 @@ first sentence of its `//!` header.
 - `src/engine/intrinsic.rs` 109 — Max-content (intrinsic) width measurement — the ONE machine two consumers read: the flex row planner's `flexBasis: content` sizing and the grid's `auto` COLUMN tracks.
 - `src/engine/intrinsic/leaf.rs` 127 — Per-kind max-content width: the text leaf and the container recursion.
 - `src/engine/link.rs` 155 — Hyperlink resolution: interpolates `link.url` against the current data scope, then gates the resolved value before it enters the tree — layout is the trust boundary; renderers emit whatever the tree carries without judgment.
-- `src/engine/list.rs` 249 — List items: a bounded per-element list — one line per array entry, clamped at the last fitting entry with a count-aware overflow line (`他{count}件`).
-- `src/engine/list/vertical.rs` 163 — Vertical list building: each array entry is one COLUMN, laid right-to-left (the first entry rightmost).
+- `src/engine/list.rs` 252 — List items: a bounded per-element list — one line per array entry, clamped at the last fitting entry with a count-aware overflow line (`他{count}件`).
+- `src/engine/list/vertical.rs` 166 — Vertical list building: each array entry is one COLUMN, laid right-to-left (the first entry rightmost).
 - `src/engine/marks.rs` 272 ▲ — Form marks (`ellipse`, `checkbox`): box-inscribed vector shapes whose *presence* is params-driven but whose *geometry* is template-fixed — an unmatched mark still reserves its box, so the blank↔filled one-template workflow never shifts layout between params sets.
 - `src/engine/marks/presence.rs` 59 — Form-mark presence: turns a `MarkBinding` into "draw / don't draw" against the current data scope, warning on the two params shapes the predicate cannot use.
 - `src/engine/meta.rs` 197 — Document-metadata resolution: interpolates the `document:` block against params, then gates every resolved value before it enters the tree — layout is the trust boundary here exactly as it is for `link.url` (see `engine/link.rs`); renderers write what the tree carries without judgment.
@@ -529,7 +529,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 42 files / 5161 lines; tests 44 files / 6056 lines
+### `authoring` (L5) — 43 files / 5225 lines; tests 44 files / 6183 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -551,12 +551,13 @@ first sentence of its `//!` header.
 - `src/prepare.rs` 114 — The layout pipeline shared by `inspect` / `preview` / `render`: gate validation errors, load (or accept injected) assets, lay out, dedupe diagnostics.
 - `src/preview.rs` 81 — Preview rasterization: every page to PNG bytes (the export/download form) or raw RGBA pixels (the canvas form, skipping the PNG encode).
 - `src/reference.rs` 87 — `reference` — the key catalog: the machine-readable facts of the authorable wire, held ONCE so every surface that describes a key renders the same source.
-- `src/reference/address.rs` 77 — Node addresses: the dotted names (`Style.fontSize`, `Item.text.data`, `PointSpec.item`) the annotation layer and the engine's fact tables use to name a node of the catalog, resolved onto the subschema they name.
+- `src/reference/address.rs` 92 — Node addresses: the dotted names (`Style.fontSize`, `Item.text.data`, `PointSpec.item`) the annotation layer and the engine's fact tables use to name a node of the catalog, resolved onto the subschema they name.
 - `src/reference/annotate.rs` 45 — Merging the annotation layer into the derived catalog.
 - `src/reference/annotations.rs` 295 ▲ — The annotation layer's RULE: every catalog node carries prose, and every annotation names a real node.
 - `src/reference/annotations/closed.rs` 90 — Which shapes have a CLOSED value set, and what those values are.
-- `src/reference/facts.rs` 165 — The engine's fact tables, written into the catalog as JSON Schema keywords so a reader of the artifact — the Designer's generic property panel, an agent — learns them from the same document as the shapes.
+- `src/reference/facts.rs` 177 — The engine's fact tables, written into the catalog as JSON Schema keywords so a reader of the artifact — the Designer's generic property panel, an agent — learns them from the same document as the shapes.
 - `src/reference/facts/capabilities.rs` 230 — Which catalog nodes an older engine may not carry, and the capability key that says this one does — so a panel built from the catalog can leave out a field the engine it talks to would refuse.
+- `src/reference/facts/kinds.rs` 37 — Which catalog values carry a meaning their JSON type does not say: a string that is a colour, a number that is a fraction of one.
 - `src/reference/facts/refs.rs` 91 — Which catalog values name something defined elsewhere: another item's `id`, a named style, a named format, or a key of the params data.
 - `src/reference/generate.rs` 122 — Catalog generation — the half that needs the schema derive.
 - `src/reference/pages.rs` 240 — The rule that keeps a page's HAND-WRITTEN diagnostics section honest against the engine's own registries.

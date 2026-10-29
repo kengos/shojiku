@@ -3,10 +3,11 @@
 //! name a node of the catalog, resolved onto the subschema they name.
 //!
 //! An address is `$defs/<Shape>`, one of its properties, a discriminated
-//! `oneOf` branch, one of THAT branch's properties, or a key of a branch with
-//! no discriminator. Resolution is a lookup driven by the name, never a walk
-//! of the document, so a mistyped address can only fail to resolve — it
-//! cannot decorate an arbitrary subschema.
+//! `oneOf` branch, one of THAT branch's properties, a key of a branch with
+//! no discriminator, or (spelled `@<key>`, or `@<type>` for a bare scalar
+//! form) such a branch itself. Resolution is a lookup driven by the name,
+//! never a walk of the document, so a mistyped address can only fail to
+//! resolve — it cannot decorate an arbitrary subschema.
 
 use serde_json::{Map, Value};
 
@@ -34,7 +35,11 @@ fn resolve<'a>(schema: &'a mut Value, tail: std::str::Split<'_, char>) -> Option
 /// One segment: a property first, then a branch discriminator, then a key of
 /// a branch with no discriminator. A segment spelled `@<key>` names the
 /// branch with no discriminator that carries `<key>` — the alternative FORM
-/// itself rather than one of its keys (`PointSpec.@item`).
+/// itself rather than one of its keys (`PointSpec.@item`). A bare scalar
+/// form carries no key, so `@<type>` names it by its JSON type instead
+/// (`BorderColor.@string`, the one-colour-for-all-sides form). Either
+/// spelling resolves only when exactly one branch answers it, so an
+/// ambiguous one fails rather than picking the first.
 ///
 /// Property before branch is not a preference — no shape in the catalog
 /// carries both `oneOf` and `properties`, which the gate pins, so at most one
@@ -43,12 +48,10 @@ fn resolve<'a>(schema: &'a mut Value, tail: std::str::Split<'_, char>) -> Option
 /// branch, and the audit refuses a spelling that would match both.
 fn step<'a>(node: &'a mut Value, segment: &str) -> Option<&'a mut Value> {
     if let Some(key) = segment.strip_prefix('@') {
-        return node
-            .get_mut("oneOf")
-            .and_then(Value::as_array_mut)?
-            .iter_mut()
-            .filter(|branch| branch.pointer("/properties/type/const").is_none())
-            .find(|branch| branch.pointer(&format!("/properties/{key}")).is_some());
+        let branches = node.get_mut("oneOf").and_then(Value::as_array_mut)?;
+        let mut forms = branches.iter_mut().filter(|branch| is_form(branch, key));
+        let form = forms.next()?;
+        return forms.next().is_none().then_some(form);
     }
     if node.get("properties").is_some() {
         return node
@@ -64,6 +67,18 @@ fn step<'a>(node: &'a mut Value, segment: &str) -> Option<&'a mut Value> {
         .iter_mut()
         .filter(|branch| branch.pointer("/properties/type/const").is_none())
         .find_map(|branch| branch.get_mut("properties")?.get_mut(segment))
+}
+
+/// Whether an undiscriminated branch is the form `@<key>` names: an object
+/// form carrying `<key>`, or a bare scalar form whose JSON type is `<key>`.
+fn is_form(branch: &Value, key: &str) -> bool {
+    if branch.pointer("/properties/type/const").is_some() {
+        return false;
+    }
+    match branch.get("properties") {
+        Some(props) => props.get(key).is_some(),
+        None => branch.get("type").and_then(Value::as_str) == Some(key),
+    }
 }
 
 /// Whether a branch's discriminator is pinned to `name`.

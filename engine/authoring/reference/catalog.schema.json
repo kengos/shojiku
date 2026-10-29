@@ -213,26 +213,31 @@
       "description": "A border colour: one `#rrggbb` string for all four sides, or a map naming `top`, `right`, `bottom` and `left` individually. An unset side in the map inherits nothing — it simply has no colour of its own.",
       "oneOf": [
         {
-          "type": "string"
+          "type": "string",
+          "x-shojiku-value-kind": "color"
         },
         {
           "additionalProperties": false,
           "properties": {
             "bottom": {
               "description": "The bottom side's border colour, as an `#rrggbb` string. Unset, that side has no colour of its own.",
-              "type": "string"
+              "type": "string",
+              "x-shojiku-value-kind": "color"
             },
             "left": {
               "description": "The left side's border colour, as an `#rrggbb` string. Unset, that side has no colour of its own.",
-              "type": "string"
+              "type": "string",
+              "x-shojiku-value-kind": "color"
             },
             "right": {
               "description": "The right side's border colour, as an `#rrggbb` string. Unset, that side has no colour of its own.",
-              "type": "string"
+              "type": "string",
+              "x-shojiku-value-kind": "color"
             },
             "top": {
               "description": "The top side's border colour, as an `#rrggbb` string. Unset, that side has no colour of its own.",
-              "type": "string"
+              "type": "string",
+              "x-shojiku-value-kind": "color"
             }
           },
           "type": "object"
@@ -2162,7 +2167,8 @@
               "type": [
                 "string",
                 "null"
-              ]
+              ],
+              "x-shojiku-initial": "+{count}"
             },
             "style": {
               "$ref": "#/$defs/Style",
@@ -2694,7 +2700,8 @@
             "string",
             "null"
           ],
-          "x-shojiku-initial": "#000000"
+          "x-shojiku-initial": "#000000",
+          "x-shojiku-value-kind": "color"
         },
         "opacity": {
           "description": "Paint alpha for the stroke, from 0 to 1; defaults to 1. Out of range warns `invalid_opacity` and draws opaque.",
@@ -2706,7 +2713,8 @@
             "null"
           ],
           "x-shojiku-capability": "style.opacity",
-          "x-shojiku-initial": 1.0
+          "x-shojiku-initial": 1.0,
+          "x-shojiku-value-kind": "fraction"
         },
         "style": {
           "anyOf": [
@@ -3641,7 +3649,8 @@
             "null"
           ],
           "x-shojiku-capability": "style.backgroundColor",
-          "x-shojiku-inherited": false
+          "x-shojiku-inherited": false,
+          "x-shojiku-value-kind": "color"
         },
         "borderColor": {
           "anyOf": [
@@ -3707,7 +3716,8 @@
             "null"
           ],
           "x-shojiku-inherited": true,
-          "x-shojiku-initial": "#000000"
+          "x-shojiku-initial": "#000000",
+          "x-shojiku-value-kind": "color"
         },
         "fontFamily": {
           "description": "The face id to draw with, resolved against the loaded font packs. Inherited; defaults to the pack's own default face. An id no pack ships warns `unknown_font_family`.",
@@ -3827,7 +3837,8 @@
           ],
           "x-shojiku-capability": "style.opacity",
           "x-shojiku-inherited": false,
-          "x-shojiku-initial": 1.0
+          "x-shojiku-initial": 1.0,
+          "x-shojiku-value-kind": "fraction"
         },
         "overflow": {
           "anyOf": [

@@ -68,7 +68,10 @@ impl Ctx<'_, '_> {
             texts.push(self.entry_text(list, entry, keys, index));
         }
         if cut > 0 {
-            let template = list.overflow_text.as_deref().unwrap_or("+{count}");
+            let template = list
+                .overflow_text
+                .as_deref()
+                .unwrap_or(shojiku_core::facts::LIST_OVERFLOW_TEXT);
             texts.push(template.replace("{count}", &cut.to_string()));
         }
 

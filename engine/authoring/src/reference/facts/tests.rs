@@ -1,6 +1,7 @@
 //! The fact keywords against the committed catalog: every address names a
 //! real node, every capability is declared, every reference-shaped node is
-//! classified, and a sample of the written values is what the tables say.
+//! classified, every value kind sits on a value of its type, and a sample
+//! of the written values is what the tables say.
 
 use super::*;
 use crate::CAPABILITIES;
@@ -350,4 +351,130 @@ fn the_committed_catalog_carries_every_fact_keyword() {
             .unwrap_or_else(|| panic!("no node `{}`", e.node));
         assert_eq!(node[e.keyword], e.value, "`{}` {}", e.node, e.keyword);
     }
+}
+
+/// Every value-kind node is a real node: a plain address is a catalog
+/// node, a form address lands, and a marked node holds the JSON type its
+/// kind is spelled in — a colour on a string, a fraction on a number held
+/// to 0..1.
+#[test]
+fn every_value_kind_node_is_a_catalog_value_of_its_type() {
+    let catalog = catalog();
+    let all: BTreeSet<String> = nodes(&catalog).into_iter().collect();
+    let mut defs = catalog["$defs"].as_object().expect("$defs").clone();
+    for (node, kind) in kinds::NAMED {
+        assert!(
+            node.contains('@') || all.contains(node),
+            "`{node}` is not a catalog node"
+        );
+        let schema = crate::reference::address::locate(&mut defs, node)
+            .unwrap_or_else(|| panic!("no node `{node}`"));
+        assert_eq!(schema["x-shojiku-value-kind"], json!(kind.as_str()));
+        let types = match &schema["type"] {
+            Value::Array(types) => types.clone(),
+            one => vec![one.clone()],
+        };
+        match kind {
+            kinds::ValueKind::Color => assert!(types.contains(&json!("string")), "{node}"),
+            kinds::ValueKind::Fraction => {
+                assert!(types.contains(&json!("number")), "{node}");
+                assert_eq!(schema["minimum"], json!(0.0), "{node}");
+                assert_eq!(schema["maximum"], json!(1.0), "{node}");
+            }
+        }
+    }
+    let distinct: BTreeSet<&str> = kinds::NAMED.iter().map(|(n, _)| *n).collect();
+    assert_eq!(distinct.len(), kinds::NAMED.len(), "a node is named twice");
+}
+
+/// The scalar form of a border colour is the `string` branch, found by its
+/// type; the per-side form is not touched, and the union itself carries no
+/// kind (a map is not one colour).
+#[test]
+fn a_border_colour_is_marked_on_each_form_not_on_the_union() {
+    let (catalog, _) = merged();
+    let border = def(&catalog, "BorderColor");
+    assert!(border.get("x-shojiku-value-kind").is_none());
+    let forms = border["oneOf"].as_array().expect("a oneOf");
+    assert_eq!(forms[0]["type"], json!("string"));
+    assert_eq!(forms[0]["x-shojiku-value-kind"], json!("color"));
+    assert!(forms[1].get("x-shojiku-value-kind").is_none());
+    assert_eq!(
+        forms[1]["properties"]["left"]["x-shojiku-value-kind"],
+        json!("color")
+    );
+    // A string with no colour meaning stays unmarked.
+    assert!(
+        def(&catalog, "Style")["properties"]["fontFamily"]
+            .get("x-shojiku-value-kind")
+            .is_none()
+    );
+    let mut defs = catalog["$defs"].as_object().expect("$defs").clone();
+    assert!(crate::reference::address::locate(&mut defs, "BorderColor.@number").is_none());
+}
+
+/// The committed catalog states the list's overflow line as the constant
+/// layout draws with when `overflowText` is unset (layout's e2e list suite
+/// holds what that draws).
+#[test]
+fn the_overflow_text_initial_is_the_constant_layout_reads() {
+    let catalog = catalog();
+    let overflow = &branch(&catalog, "list")["properties"]["overflowText"];
+    assert_eq!(overflow["x-shojiku-initial"], json!("+{count}"));
+    assert_eq!(
+        overflow["x-shojiku-initial"],
+        json!(facts::LIST_OVERFLOW_TEXT)
+    );
+    assert!(
+        overflow.get("default").is_none(),
+        "a default would be written"
+    );
+}
+
+/// Every colour string and every 0..1 number in the catalog carries its
+/// kind, so a new `#rrggbb` key or a new alpha is classified rather than
+/// missed. A colour is found by its prose (`#rrggbb`) on a string node; a
+/// fraction by its bounds.
+#[test]
+fn every_colour_string_and_fraction_is_marked() {
+    let catalog = catalog();
+    let mut defs = catalog["$defs"].as_object().expect("$defs").clone();
+    let mut colours = 0;
+    for node in nodes(&catalog) {
+        let schema = crate::reference::address::locate(&mut defs, &node).expect("a node");
+        let is_string = schema["type"] == json!("string")
+            || schema["type"]
+                .as_array()
+                .is_some_and(|types| types.contains(&json!("string")));
+        let prose = schema["description"].as_str().unwrap_or_default();
+        if is_string && prose.contains("`#rrggbb`") {
+            colours += 1;
+            assert_eq!(schema["x-shojiku-value-kind"], json!("color"), "{node}");
+        }
+        if schema["maximum"] == json!(1.0) {
+            assert_eq!(schema["x-shojiku-value-kind"], json!("fraction"), "{node}");
+        }
+    }
+    // The scalar `BorderColor.@string` has no prose of its own; the seven
+    // described ones are found here. A bare string form inside a `oneOf`,
+    // and a colour nested in an object property, are not reached by this
+    // walk: one added there goes into `kinds::NAMED` by hand.
+    assert_eq!(colours, 7);
+}
+
+/// A form address that more than one branch answers resolves to nothing,
+/// never to the first match; a discriminated branch is never a form.
+#[test]
+fn an_ambiguous_form_address_does_not_resolve() {
+    let mut defs = json!({
+        "Twice": { "oneOf": [{ "type": "string" }, { "type": "string" }] },
+        "Once": { "oneOf": [{ "type": "string" }, { "type": "number" }] },
+        "Tagged": { "oneOf": [{ "properties": { "type": { "const": "a" }, "x": {} } }] },
+    })
+    .as_object()
+    .expect("an object")
+    .clone();
+    assert!(crate::reference::address::locate(&mut defs, "Twice.@string").is_none());
+    assert!(crate::reference::address::locate(&mut defs, "Once.@string").is_some());
+    assert!(crate::reference::address::locate(&mut defs, "Tagged.@x").is_none());
 }

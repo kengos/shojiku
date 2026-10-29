@@ -95,8 +95,8 @@ pub struct ListItem {
     pub bindings: Bindings,
     /// Template for the trailing overflow line; `{count}` is replaced
     /// with the number of entries that did NOT fit (e.g. `他{count}件`).
-    /// Default `+{count}`. Same token convention as `page_number`'s
-    /// `format`.
+    /// Default [`crate::facts::LIST_OVERFLOW_TEXT`] (`+{count}`). Same
+    /// token convention as `page_number`'s `format`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub overflow_text: Option<String>,
     #[serde(rename = "styleNames", default, skip_serializing_if = "Vec::is_empty")]
