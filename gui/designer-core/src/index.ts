@@ -1,5 +1,7 @@
 // Public surface of designer-core.
 
+export type { CatalogField, FieldBounds, FieldSpec } from './catalog/fieldKinds';
+export type { CompositeNames } from './catalog/fieldSpec';
 export {
   itemInitialOverrides,
   itemStyleKeys,
@@ -7,7 +9,8 @@ export {
   spanStyleKeys,
   styleKeyFacts,
   styleKeys,
-} from './catalog';
+} from './catalog/style';
+export { type CatalogSurface, surfaceFields, surfaceKeys } from './catalog/surface';
 export {
   clampTemplateMaxBytes,
   MAX_ALIAS_COUNT,
