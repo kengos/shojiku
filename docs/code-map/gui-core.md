@@ -195,16 +195,50 @@ files and `e2e/` excluded, with NO waiver list.
   mirroring `engine/core` serde names (`data` is a `DataBinding
   {key?,format?}` map, never a bare string; enum unions copied from the
   engine); no runtime code.
-- `catalog.ts` — the engine's key catalog
-  (`engine/authoring/reference/catalog.schema.json`) as a build-time JSON
-  import (`resolveJsonModule` in `tsconfig.base.json`; the gui container
-  mounts the whole repo, and `gui/designer-app/Dockerfile` COPYs the one
-  file into its app stage), read lazily inside each function so a bundle
-  calling none of them drops the JSON — and the reads a panel needs from its fact keywords:
-  `styleKeys`, `styleKeyFacts` (initial value, inheritance, bounds),
-  `itemStyleKeys` / `spanStyleKeys` (the style keys a surface takes),
-  `itemInitialOverrides`. The JSON is typed to the three shapes the reads use,
-  so an unknown type or key falls to an empty answer, never a throw.
+- `catalog/` — the engine's key catalog
+  (`engine/authoring/reference/catalog.schema.json`) and the reads a panel
+  needs from it. No layer barrel: `src/index.ts` re-exports each file.
+  - `defs.ts` — the build-time JSON import (`resolveJsonModule` in
+    `tsconfig.base.json`; the gui container mounts the whole repo, and
+    `gui/designer-app/Dockerfile` COPYs the one file into its app stage),
+    read lazily inside each function so a bundle calling none of them drops
+    the JSON; the typed `$defs` view (`defs`, `CatalogNode` = the JSON
+    Schema + `x-shojiku-*` keywords the reads look at, `ObjectNode`) and its
+    lookups: `itemBranch`, `refName`, `defNode` (a `$ref` → its `$defs`
+    node, `undefined` for an unknown or prototype-only name).
+  - `style.ts` — the style fact reads: `styleKeys`, `styleKeyFacts`
+    (initial value, inheritance, bounds), `itemStyleKeys` / `spanStyleKeys`
+    (the style keys a surface takes), `itemInitialOverrides`. An unknown
+    type or key falls to an empty answer, never a throw.
+  - `fieldKinds.ts` + `fieldSpec.ts` — **`fieldSpec(node, composites)`**:
+    a node's SHAPE → the one `FieldSpec` kind a generic renderer draws
+    (`enum` / `length` / `number` / `percent` / `boolean` / `color` / `ref`
+    / `text` / `sides` / `composite` / `map` / `opaque`). Only shape and
+    markers decide, never a key name: `color` / `percent` from
+    `x-shojiku-value-kind` (`color` / `fraction`; BorderColor carries it on
+    its scalar arm and each side, not the union), `ref` from
+    `x-shojiku-ref`, `length` from a `$ref` to `Length`, `sides` from a
+    `oneOf [scalar, top/right/bottom/left object]` (its `scalar` = the
+    scalar arm's kind, the union's bounds laid over it), `composite` from a
+    `$ref` whose `$defs` name the CALLER passes in `composites`
+    (`CompositeNames` = anything with `has`, so the renderer's editor
+    registry `Map` is the one table), `map` from an object whose
+    `additionalProperties` entry is an object with listed keys (its `entry`
+    = those keys' `CatalogField`s). `anyOf [X, null]` / `type [T, null]`
+    read as X / T; a `$ref`'s own keywords (bounds, markers) lay over its
+    target. `MAX_SPEC_DEPTH` ends the catalog's
+    recursive shapes (a data definition's `properties` map) as `opaque`; an
+    empty enum is `opaque` too, and an `integer` reads as `number`.
+    `CatalogField` = `{key, spec, capability, required, initial}`.
+    `fieldSpec` itself is internal to `catalog/` — callers get each spec
+    from `surfaceFields`.
+  - `surface.ts` — **`surfaceKeys(surface)` / `surfaceFields(surface,
+    composites)`**: the catalog half of a "more settings" section's list
+    (`CatalogSurface` = `style` — every `Style` key / `defaultsStyle` — the
+    `defaults.style` `x-shojiku-style-keys` / `item` of a `type` — its own
+    keys less the structural set `type`/`id`/`box`/`style`/`styleNames`/
+    `visible`/`data`). The keys a hand-made control already owns are the
+    caller's to take away; no capability filtering here.
 - `scripts/normalize-examples.ts` — the `normalize:examples` one-shot:
   rewrites every `examples/*/*/templates.yml` to the
   `serializeTemplate` fixed point.

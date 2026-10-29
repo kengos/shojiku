@@ -5,7 +5,7 @@ import {
   spanStyleKeys,
   styleKeyFacts,
   styleKeys,
-} from './catalog';
+} from './style';
 
 // Over the REAL committed catalog: these are the engine's facts, so each
 // expectation below is one the engine's own tables state.

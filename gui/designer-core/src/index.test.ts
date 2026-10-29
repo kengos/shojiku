@@ -12,6 +12,8 @@ describe('public surface', () => {
     expect(typeof core.parsePath).toBe('function');
     expect(typeof core.formatPath).toBe('function');
     expect(typeof core.toYamlPath).toBe('function');
+    expect(typeof core.surfaceKeys).toBe('function');
+    expect(typeof core.surfaceFields).toBe('function');
     expect(core.MAX_HISTORY).toBeGreaterThan(0);
     expect(core.MAX_BATCH_OPS).toBeGreaterThan(0);
     expect(core.MAX_KEY_DEPTH).toBeGreaterThan(0);
