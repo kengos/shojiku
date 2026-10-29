@@ -32,6 +32,15 @@ platform binaries.
   a validator ignores, plus `minimum`/`maximum` on the numeric keys; no
   `default` is written, since a form generator would copy it into the
   template and stop the key inheriting.
+- **The key catalog marks colours and fractions, and a list's overflow
+  line.** A value whose JSON type does not say what it means now carries
+  `x-shojiku-value-kind`: `color` on the `#rrggbb` strings (`color`,
+  `backgroundColor`, each form of `borderColor`, a line's `color`) and
+  `fraction` on the two 0–1 opacities.
+  A property panel can offer a colour picker or show a percentage without
+  keeping its own table of key names. A list's `overflowText` now states
+  its initial value, `+{count}`, the same text the engine draws when it is
+  unset.
 - **The Designer sets a character grid's alignment and tate-chu-yoko.** A
   `char_grid` now offers Text alignment (`textAlign`), which moves a partly
   filled line toward its end — named top, middle and bottom when the grid is

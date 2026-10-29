@@ -1769,15 +1769,18 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   (`x-shojiku-style-keys`) and where it starts one elsewhere
   (`x-shojiku-initial-overrides`); a value naming an item id, a named
   style, a format or a data key says so (`x-shojiku-ref`); a node an older
-  engine lacks names its capability key (`x-shojiku-capability`); and the
-  two forms of a line endpoint are tagged (`x-shojiku-form`). No `default`
-  is written: a form generator copies a `default` into the document, which
-  would stop a key inheriting. The style facts are `shojiku_core::facts`,
-  the same tables the layout guards and validation's inert-key lists read,
-  so a fact is written once; the reference and capability facts are tables
-  beside the catalog, checked against every node and every declared
-  capability. A table's own style layers (column, row, header)
-  carry no `x-shojiku-style-keys` yet.
+  engine lacks names its capability key (`x-shojiku-capability`); a
+  colour string or a 0–1 fraction says so (`x-shojiku-value-kind`:
+  `color`, `fraction`); a list's `overflowText` states its `+{count}`
+  initial; and the two forms of a line endpoint are tagged
+  (`x-shojiku-form`). No `default` is written: a form generator copies a
+  `default` into the document, which would stop a key inheriting. The
+  style facts are `shojiku_core::facts`, the same tables the layout guards
+  and validation's inert-key lists read, so a fact is written once; the
+  reference, capability and value-kind facts are tables beside the
+  catalog, checked against every node and every declared capability. A
+  table's own style layers (column, row, header) carry no
+  `x-shojiku-style-keys` yet.
 - **The reference's tables are assembled from a spec and audited against
   it.** 35 tables across 24 pages of `docs/engine/` — the 28 key tables and
   `diagnostics.md`'s 7 — are written between markers by

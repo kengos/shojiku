@@ -6,7 +6,8 @@
 //! (`minimum`, `exclusiveMinimum`, `maximum`); `x-shojiku-*` extensions for
 //! the rest, which a validator ignores:
 //!
-//! - `x-shojiku-initial` on each `Style.<key>` and `LineStyle.<key>`. NOT
+//! - `x-shojiku-initial` on each `Style.<key>` and `LineStyle.<key>`, and on
+//!   a list's `overflowText`. NOT
 //!   `default`: a form generator writes a `default` into the document, and a
 //!   written `fontSize: 10` would stop the key inheriting — or, on a key an
 //!   older engine lacks, be refused at parse;
@@ -24,6 +25,8 @@
 //!   (`FormatRef`) it is the string form that is the reference;
 //! - `x-shojiku-capability` on a node an older engine may not carry
 //!   ([`capabilities`]);
+//! - `x-shojiku-value-kind` on a value whose meaning its JSON type does not
+//!   carry — a colour string, a 0–1 fraction ([`kinds`]);
 //! - `x-shojiku-form` on the two forms of a line endpoint, so a panel can
 //!   offer the choice between them.
 //!
@@ -36,6 +39,7 @@ use shojiku_core::facts::{self, ScalarRange, Surface};
 use shojiku_core::{ItemKind, StyleKey};
 
 pub mod capabilities;
+pub mod kinds;
 pub mod refs;
 #[cfg(test)]
 mod tests;
@@ -83,6 +87,11 @@ pub fn extensions(catalog: &Value) -> Vec<Extension> {
     }
     bounds(&mut out, "LineStyle.width", facts::LINE_WIDTH);
     bounds(&mut out, "LineStyle.opacity", facts::OPACITY);
+    out.push(ext(
+        "Item.list.overflowText",
+        "x-shojiku-initial",
+        json!(facts::LIST_OVERFLOW_TEXT),
+    ));
     for (node, surface) in styled_nodes() {
         let keys: Vec<&str> = facts::keys()
             .filter(|key| facts::takes(surface, *key))
@@ -108,6 +117,9 @@ pub fn extensions(catalog: &Value) -> Vec<Extension> {
     }
     for (node, kind) in refs::references(catalog) {
         out.push(ext(node, "x-shojiku-ref", json!(kind.as_str())));
+    }
+    for (node, kind) in kinds::NAMED {
+        out.push(ext(node, "x-shojiku-value-kind", json!(kind.as_str())));
     }
     for (node, key) in capabilities::gated(catalog) {
         out.push(ext(node, "x-shojiku-capability", Value::String(key)));

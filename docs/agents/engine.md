@@ -172,20 +172,26 @@ which surfaces paint with it, what a value refers to, which capability
 gates it — is not in the parser's types, so the derive cannot produce it.
 The style facts are tables in `shojiku_core::facts`, each an exhaustive
 `match` over `StyleKey`, and those tables are what the layout guards
-(`sane.rs`) and validation's inert-key lists read. The two facts about
+(`sane.rs`) and validation's inert-key lists read. The three facts about
 catalog NODES rather than style keys — which values are references, which
-capability gates which node — are tables beside the catalog
+capability gates which node, which values mean more than their JSON type
+(a colour string, a 0–1 fraction) — are tables beside the catalog
 (`engine/authoring` `reference/facts/`), checked against every node and
 every declared capability. The catalog generator writes all of them onto
 the nodes as keywords (`reference/facts.rs`), so the catalog and the guard
 cannot disagree; the Designer still carries hand copies until it reads the
-catalog. Two choices in that mapping are deliberate:
+catalog. Three choices in that mapping are deliberate:
 
 - **No `default`.** JSON Schema's `default` is what a form generator writes
   into the document, and a written `fontSize: 10` stops the key inheriting
   from its container (and a key an older engine lacks is then refused at
   parse). The initial value is `x-shojiku-initial`, with
   `x-shojiku-initial-overrides` on the surfaces that start a key elsewhere.
+- **A value's meaning is `x-shojiku-value-kind`, not `format`.** The
+  standard `format` keyword already carries the derive's `double` on the
+  numbers, and a validator running format as an assertion may refuse a
+  name it does not know. The kind says what the value IS (`color`,
+  `fraction`), never which control draws it; a reader picks the control.
 - **The bounds use the standard `minimum`/`maximum`, though the engine
   does not refuse past them.** A guard warns and falls back rather than
   failing the document, so here the catalog is NARROWER than the parser —

@@ -136,7 +136,9 @@ injected at parse). The template model splits along CSS lines.
   `line_initial` for the `line` item's `LineStyle`; `surface_initial` for
   the surfaces that start a key elsewhere — a form mark's 1pt outline, a
   table's and a char_grid's 0.5pt ruling, a table's middle-aligned cells,
-  and `Initial::FromSurface` for a char_grid's cell-relative glyph size),
+  and `Initial::FromSurface` for a char_grid's cell-relative glyph size;
+  `LIST_OVERFLOW_TEXT`, a list's `+{count}` overflow line, read by layout's
+  horizontal and vertical list and by the catalog),
   `range` → `ScalarRange` (the guard bounds and fallbacks, on the RESOLVED
   pt for the two lengths; `LINE_WIDTH`, and `OPACITY` shared with the line
   stroke), and `facts/paint.rs` — `painted_by` → the `Surface`s

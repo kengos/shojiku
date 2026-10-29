@@ -101,3 +101,7 @@ pub const TABLE_CELL_VERTICAL_ALIGN: crate::VerticalAlign = crate::VerticalAlign
 /// A table's and a character grid's ruling width when the style authors
 /// none.
 pub const GRID_STROKE_PT: f64 = 0.5;
+
+/// A list's trailing overflow line when it authors no `overflowText`;
+/// `{count}` becomes the number of entries that did not fit.
+pub const LIST_OVERFLOW_TEXT: &str = "+{count}";

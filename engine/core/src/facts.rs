@@ -16,7 +16,8 @@
 //! The key catalog renders them, and tests in `shojiku-layout` hold the
 //! cascade to the inheritance and initial-value rows. The `line` item's
 //! stroke style is not a [`crate::Style`]; its two bounded keys are
-//! [`LINE_WIDTH`] and [`OPACITY`].
+//! [`LINE_WIDTH`] and [`OPACITY`]. A list's overflow line, not a style key
+//! either, starts as [`LIST_OVERFLOW_TEXT`].
 
 use crate::style::StyleKey;
 
@@ -29,8 +30,8 @@ mod tests;
 
 pub use inherit::inherits;
 pub use initial::{
-    GRID_STROKE_PT, Initial, MARK_STROKE_PT, TABLE_CELL_VERTICAL_ALIGN, initial, line_initial,
-    surface_initial,
+    GRID_STROKE_PT, Initial, LIST_OVERFLOW_TEXT, MARK_STROKE_PT, TABLE_CELL_VERTICAL_ALIGN,
+    initial, line_initial, surface_initial,
 };
 pub use paint::{Surface, holds_content, painted_by, takes};
 pub use ranges::{

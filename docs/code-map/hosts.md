@@ -111,26 +111,35 @@ false`), no clap.
   authored per-key prose; English only — the engine does not translate).
   `reference/address.rs` (DEFAULT, crate-private) — `locate`: a dotted node name
   (`Style.fontSize`, `Item.text.data`, `PointSpec.item`, and `@<key>` for an
-  undiscriminated branch itself, `PointSpec.@item`) onto its subschema, by
-  lookup; the annotation merge and the fact keywords both resolve through it.
+  undiscriminated branch itself, `PointSpec.@item` — or, for a bare scalar
+  form with no key, `@<type>`, `BorderColor.@string`; either resolves only
+  when exactly one branch answers it) onto its subschema, by lookup; the
+  annotation merge and the fact keywords both resolve through it.
   `reference/facts.rs` + `facts/` (DEFAULT) — `extensions(catalog)`: the
   `shojiku_core::facts` tables as catalog keywords — the standard
   `minimum` / `exclusiveMinimum` / `maximum`, NO `default` anywhere (a form
   generator writes a `default` into the document, which would stop a
   `Style` key inheriting or put a key an older engine lacks into the
   file), and `x-shojiku-initial`, `-inherited`, `-style-keys`, `-holds-content`,
-  `-initial-overrides`, `-ref`, `-capability`, `-form` — and `merge`, which
-  writes them and returns the addresses that named no node.
+  `-initial-overrides`, `-ref`, `-capability`, `-form`, `-value-kind` (plus
+  `x-shojiku-initial` on `Item.list.overflowText` from
+  `facts::LIST_OVERFLOW_TEXT`) — and `merge`, which writes them and returns
+  the addresses that named no node.
   `facts/refs.rs` — `RefKind` (item / style / format / dataKey), the named
   references, every `styleNames`/`alternateStyleNames` list by name, and
   `NOT_REFERENCES` for the reference-shaped names that are not one;
+  `facts/kinds.rs` — `ValueKind` (color / fraction), the `NAMED` nodes whose
+  meaning their JSON type does not carry (the colour strings, incl. each
+  `BorderColor` form's string but not the union; the two 0–1 opacities);
   `facts/capabilities.rs` — node → capability key, by naming rule plus the
   `NAMED`/`BOX`/template lists (a listed pair replaces the naming rule for
   its node), and `UNGATED`, the keys with no node of
   their own (a new value of an older key, a behaviour, a host feature). The
   tests require the committed `CATALOG` to carry every keyword with its
   value, merge into a copy and require every address to land,
-  every capability to be gated or `UNGATED` (exactly one), and the `Style`
+  every capability to be gated or `UNGATED` (exactly one), every value kind
+  to sit on a value of its JSON type (a fraction held to 0..1) and every
+  `#rrggbb` string and 0..1 number to carry one, and the `Style`
   properties and item types to equal `StyleKey::ALL` / `ItemKind::ALL`.
   `reference/generate.rs` (`schema` feature only) — two roots
   (`Template`, `Definitions`) into one `$defs`, `for_deserialize`, and the
