@@ -460,8 +460,10 @@ hostile geometry degrades to null before it can reach an op.
 - `canvas/lengths.ts` — authored-length math: `readLength`/
   `formatLength` (commits in the AUTHORED form at per-unit precision;
   non-finite → null)/`snapLength`/`stepLength` (unit-preserving,
-  reversible); unit constants from `panel/pageSizes` — never a second
-  mapping.
+  reversible), `isRelativeLength` (`%` / `em` / `rem`) and
+  `isFontRelativeLength` (`em` / `rem` within the length cap — the relative
+  form every length key takes); unit constants from `panel/pageSizes` —
+  never a second mapping.
 - `canvas/guides.ts` — smart-guide math (`alignPositions`/`axisGuide`/
   `guideLineFor`).
 - `canvas/useDrag.ts` — the generic pointer drag state machine

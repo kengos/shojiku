@@ -219,10 +219,17 @@ export function typesettingOp(
   if (next === '') {
     return { op: 'removeKey', path, keys };
   }
-  const digits = /^digits([0-9])$/.exec(next);
-  const value =
-    key === 'textCombineUpright' && digits !== null ? { digits: Number(digits[1]) } : next;
+  const value = key === 'textCombineUpright' ? combineValue(next) : next;
   // `putValue` replaces whatever node is there, so switching between the map
   // and a keyword is one op on the one key.
   return { op: 'putValue', path, keys, value };
+}
+
+/** A non-empty `textCombineUpright` token as the wire value it stands for —
+ * the inverse of `combineToken` except for `UNREADABLE_COMBINE`, which is the
+ * shown row of an unparseable value and is never picked anew: `digitsN` is the
+ * `{ digits: N }` map, any other token the keyword verbatim. */
+export function combineValue(token: string): string | { readonly digits: number } {
+  const digits = /^digits([0-9])$/.exec(token);
+  return digits === null ? token : { digits: Number(digits[1]) };
 }

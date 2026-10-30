@@ -711,7 +711,9 @@ services/props; nothing in the component reads the singleton.
   that derive a panel's type set from the wire (`panel/noBoxWire`,
   `panel/styleNamesWire`, `ids/idWire`). `itemTypes.ts` is the 15 wire item
   types as a literal for jsdom suites, which cannot read the engine source;
-  `ids/idWire.test.ts` asserts it equals the `Item` enum. `contrast.ts` is the ONE WCAG ratio the suites measure
+  `ids/idWire.test.ts` asserts it equals the `Item` enum. `schemaHost.tsx` is
+  the catalog section's two hosts over a real editor (`LiveHost` — one op per
+  `FieldEdit`; `DraftHost` — local draft, one batch on save). `contrast.ts` is the ONE WCAG ratio the suites measure
   thresholds with — `theme/tokens` (AA on every rendered pairing),
   `ui/chipContrast` (the unset chip's ring on both surfaces) and
   `canvas/paperInkConvention` (which tokens may paint on the paper) had a copy

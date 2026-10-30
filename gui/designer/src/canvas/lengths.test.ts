@@ -1,5 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { formatLength, ptLength, readLength, snapLength, stepLength } from './lengths';
+import {
+  formatLength,
+  isFontRelativeLength,
+  isRelativeLength,
+  ptLength,
+  readLength,
+  snapLength,
+  stepLength,
+} from './lengths';
+
+describe('relative lengths', () => {
+  it('takes em / rem as font-relative and % only as relative, each within the cap', () => {
+    expect(isFontRelativeLength(' 2em ')).toBe(true);
+    expect(isFontRelativeLength('1.5rem')).toBe(true);
+    expect(isFontRelativeLength('50%')).toBe(false);
+    expect(isFontRelativeLength(`${'9'.repeat(40)}em`)).toBe(false);
+    expect(isRelativeLength('50%')).toBe(true);
+    expect(isRelativeLength('2em')).toBe(true);
+    expect(isRelativeLength('auto')).toBe(false);
+    expect(isRelativeLength(`${'9'.repeat(40)}%`)).toBe(false);
+  });
+});
 
 describe('readLength', () => {
   it('reads a finite number as pt', () => {

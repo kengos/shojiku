@@ -17,6 +17,7 @@ import { useI18n } from '../i18n/context';
 import { decorationOf, hasLineThrough, hasUnderline } from '../text/spanRuns';
 import type { CascadeContext } from '../toolbar/cascade';
 import { effectiveValueIn } from '../toolbar/effective';
+import { DecorationBoxes } from './DecorationBoxes';
 import { applyPanelOp } from './model';
 import { type DefaultsSection, OriginBadge } from './OriginBadge';
 import { decorationToggleOp } from './textLookOps';
@@ -40,25 +41,14 @@ export function DecorationChecks({
   const { t } = useI18n();
   const effective = effectiveValueIn(ctx, 'textDecoration');
   const current = decorationOf(effective.value);
-  const box = (line: 'underline' | 'line_through', label: string, checked: boolean) => (
-    <label className="flex items-center gap-1.5 text-sm text-text">
-      <input
-        type="checkbox"
-        className="accent-accent"
-        checked={checked}
-        onChange={() =>
+  return (
+    <div className="mb-2">
+      <DecorationBoxes
+        current={current}
+        onToggle={(line) =>
           applyPanelOp(controller, decorationToggleOp(path, effective, line, combined))
         }
       />
-      {label}
-    </label>
-  );
-  return (
-    <div className="mb-2">
-      <div className="flex flex-wrap gap-x-4 gap-y-1">
-        {box('underline', t('flow.underline'), hasUnderline(current))}
-        {box('line_through', t('flow.lineThrough'), hasLineThrough(current))}
-      </div>
       <OriginBadge
         // The badge names the lines in words, not the wire's two-token value.
         effective={{

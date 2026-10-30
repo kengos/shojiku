@@ -35,19 +35,37 @@ const LENGTH_RE = /^(-?\d+(?:\.\d+)?)(mm|cm|in|pt)?$/;
 const UNIT_DECIMALS: Record<SizeUnit, number> = { mm: 1, cm: 2, in: 2, pt: 1 };
 const NUMBER_DECIMALS = 2;
 
-/** Read an authored `box` length value: a finite number is pt; a string must
- * be `<signed numeral><absolute unit?>` (a unitless numeral string commits
- * back as a canonical number). `null` for anything else — relative units,
- * garbage, non-finite, maps/arrays. */
+/** A relative length's unit (`%`, `em`, `rem`), or `null`. A numeral past the
+ * length cap is not one: it can overflow to infinity, which the engine refuses
+ * at parse, failing the whole template. */
+function relativeUnit(value: string): string | null {
+  const trimmed = value.trim();
+  const match =
+    trimmed.length <= MAX_LENGTH_CHARS ? /^-?\d+(?:\.\d+)?(%|r?em)$/.exec(trimmed) : null;
+  return match === null ? null : match[1];
+}
+
 /** Whether a value is a RELATIVE length (`100%`, `2em`, `1.5rem`) — legal wire
  * the engine resolves at layout, but not something the panel can step by
  * points. Distinct from "`readLength` refused it": that is also true of an
  * empty field and of garbage (`auto`, `12 mm`, a typo), and telling THOSE
  * authors their value is a percent or em is a lie about their own document. */
 export function isRelativeLength(value: string): boolean {
-  return /^-?\d+(?:\.\d+)?(?:%|r?em)$/.test(value.trim());
+  return relativeUnit(value) !== null;
 }
 
+/** Whether a value is a font-relative length (`2em`, `1.5rem`) — the relative
+ * form every length key takes, where `%` is not (`letterSpacing` refuses it at
+ * parse). */
+export function isFontRelativeLength(value: string): boolean {
+  const unit = relativeUnit(value);
+  return unit !== null && unit !== '%';
+}
+
+/** Read an authored `box` length value: a finite number is pt; a string must
+ * be `<signed numeral><absolute unit?>` (a unitless numeral string commits
+ * back as a canonical number). `null` for anything else — relative units,
+ * garbage, non-finite, maps/arrays. */
 export function readLength(value: unknown): AuthoredLength | null {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? { pt: value, unit: null } : null;
