@@ -13,7 +13,7 @@
 import { useId, useState } from 'react';
 import type { EditorController } from '../editor/useEditor';
 import { useI18n } from '../i18n/context';
-import { IconChevronDown } from '../ui/icons';
+import { DisclosureToggle } from './DisclosureToggle';
 import { StyleNamesPicker } from './StyleNamesPicker';
 
 /** One checklist inside the disclosure: the wire slot it writes and what it
@@ -60,26 +60,16 @@ export function AdvancedStyles({
   const count = lists.reduce((sum, list) => sum + list.names.length, 0);
   return (
     <div className="mt-2">
-      <button
-        type="button"
-        // No preflight is imported, so a bare button keeps the browser's grey
-        // face and outset border — which in dark chrome puts light text on a
-        // light box. The reset is part of the control.
-        className="flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-sm text-text"
-        aria-expanded={open}
-        aria-controls={bodyId}
-        onClick={() => setOpen(!open)}
-      >
-        {/* The section heading's chevron idiom: one glyph, a quarter turn when closed. */}
-        <IconChevronDown
-          size={12}
-          data-collapsed={open ? undefined : ''}
-          className="text-muted transition-transform data-collapsed:-rotate-90"
-        />
-        {open || count === 0
-          ? t('panel.styleNamesToggle.title')
-          : t('panel.styleNamesToggle.count', { n: count })}
-      </button>
+      <DisclosureToggle
+        open={open}
+        bodyId={bodyId}
+        title={
+          open || count === 0
+            ? t('panel.styleNamesToggle.title')
+            : t('panel.styleNamesToggle.count', { n: count })
+        }
+        onToggle={() => setOpen(!open)}
+      />
       {open ? (
         <div id={bodyId} className="mt-1">
           {lists.map((list) => (

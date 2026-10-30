@@ -6,7 +6,7 @@
 > Area index + neighbors: [gui-designer.md](gui-designer.md). Granularity:
 > file role + key exports + load-bearing contracts.
 
-Covers `panel/`, `diagnostics/`. Shell + tree: [gui-designer.md](gui-designer.md).
+Covers `panel/` (incl. `panel/schema/`), `diagnostics/`. Shell + tree: [gui-designer.md](gui-designer.md).
 
 Panel-wide postures: pure models never throw — hostile/unreadable nodes
 degrade to unset/empty (and hostile list entries still yield rows so
@@ -1144,7 +1144,9 @@ presence is not a text binding.
   lines between cells are the table's; `cellPadding` does not reach a
   container cell), then the ordinary path-generic fields pointed at the
   frame — `EdgeFields` (padding, `FRAME_PADDING_RULES`), the fill
-  `PanelColorField` (`style.backgroundColor`), `BorderEditor`
+  `PanelColorField` (`style.backgroundColor`; its label + swatch + words row
+  is `PanelColorRow.tsx`, value in / value out, shared with the catalog
+  section's colour widget), `BorderEditor`
   (`style.border`), `OverflowField` (`style.overflow`, which a repeat cell
   and a card honour) and `OpacityField` — and the jump back to the owner.
   Padding, overflow and opacity are each capability-gated; the frame's NAME
@@ -1209,7 +1211,9 @@ presence is not a text binding.
   `UNREADABLE_COMBINE`, so the row stays visible and its 「not set」 row can
   remove it) and `typesettingOp` (one
   `putValue` per pick, so the map ↔ keyword switch is one op; `''` removes;
-  unchanged is `null`).
+  unchanged is `null`). `combineValue` is the codec's other direction (a
+  non-empty token → the wire value), shared with the catalog section's
+  `TextCombineUpright` editor.
 - `panel/TypesettingSection.tsx` — `typesettingParts(props, i18n)` → the
   section's summary, `?` and body (or `null` when the type gets no key): one
   inherited-select per key (own value, `withAuthored`, `OriginBadge` with the
@@ -1228,7 +1232,9 @@ presence is not a text binding.
   Strikethrough checkbox over the one `textDecoration` key, read from the
   EFFECTIVE value; `decorationToggleOp` removes an own key the cascade makes
   redundant and writes `none` to switch off a named style's line; exclusive
-  without `style.textDecoration.combined`) and vertical alignment (select),
+  without `style.textDecoration.combined`; the two boxes themselves are
+  `DecorationBoxes.tsx`, value in / value out, shared with the catalog
+  section's `TextDecoration` composite) and vertical alignment (select),
   each gated by type AND
   capability; `withAuthored` keeps a legal out-of-set authored value visible as
   itself (the closed-control-over-open-vocabulary rule), shared by the overflow
@@ -1239,8 +1245,12 @@ presence is not a text binding.
   ±`MAX_LETTER_SPACING_PT` — the engine's `letterSpacing` range, 1000),
   `opacityPercent`/`opacityOp` (the field shows a
   percentage of the 0..1 alpha; a commit that would author the value already
-  carried is `null`, so a converted view is never written back untouched),
-  `steppedOpacity`, and the ▲▼ op builders.
+  carried is `null`, so a converted view is never written back untouched;
+  `fractionFromPercent` is the typed-percent → fraction rule both it and the
+  catalog section's `percent` control use),
+  `steppedOpacity`, `toggledDecoration` (one decoration checkbox's next value,
+  shared with the catalog section's `TextDecoration` editor), and the ▲▼ op
+  builders.
 - `panel/edgeModel.ts` (pure) + `panel/edgeOps.ts` (pure) — `box.padding` /
   `box.margin` as an all-sides number plus four verbatim sides (`readEdge` →
   none/uniform/perSide/other), and what a field authors: a leaf op on one side
@@ -1855,7 +1865,10 @@ conditional rules the next section owns).
   wire slot), closed by default; while closed it SAYS how many named styles it
   holds (`panel.styleNamesToggle.count`, all its lists together), because a style in effect behind a closed
   door is the question a non-engineer cannot answer. Open state is local UI
-  state. `namesAt(node, keys)` is the own-property, strings-only read.
+  state. `namesAt(node, keys)` is the own-property, strings-only read. Its
+  button is `panel/DisclosureToggle.tsx` (chevron + title, `aria-expanded` /
+  `aria-controls`, the open state the caller's), shared with the catalog
+  section's 「その他の設定」.
 - `panel/RowConditions.tsx` — the table's 「Conditional formatting」 section
   (`TableConditionsSection`, its own `PanelSection` + gate) in Google Sheets'
   conditional-format sidebar shape: `RowConditionsSection` shows either the rule
@@ -2233,7 +2246,10 @@ conditional rules the next section owns).
   "is the date format set here?" without opening the section.
 - `panel/styleLabels.ts` — pure: `styleOptionLabel` (wire spelling →
   localized wording; degrades to the spelling) + `unsetLabel`; pinned
-  against every `STYLE_FIELDS` enum option.
+  against every `STYLE_FIELDS` enum option, and (by
+  `schema/catalogLabels.test.ts`) against every enum spelling the catalog's
+  named-style surface offers — `borderStyle` reads the border editor's own
+  `border.style.*` words.
 - `panel/StylesManager.tsx` — the registry CRUD SECTION: the registry
   read, the one `run(plan)` gate every mutation passes through (a
   refusal surfaces a localized `<output>` and changes nothing, an
@@ -2268,6 +2284,106 @@ conditional rules the next section owns).
   `panel/StyleFormFields.tsx` (the `STYLE_FORM_ROWS` layout
   (drift-guarded) + per-key widget routing; colors via
   `ColorSwatchPicker`).
+
+## The catalog-driven section (`panel/schema/`)
+
+Controls drawn from the engine's key catalog instead of a hand table: the
+host hands `surfaceFields(surface, COMPOSITES)` (designer-core `catalog/`),
+less the keys it edits itself and the ones its capabilities lack, and gets
+one control per field. Nothing in the directory branches on a key name
+except the group table. Add-only so far: no surface mounts it yet.
+
+- `schema/fieldEdit.ts` — `FieldEdit` = `{ keys, value | undefined }`
+  relative to the edited object (`undefined` removes), the one thing the
+  section reports. Two host kinds consume it: a LIVE host makes one op of
+  each (`fieldEditOp`: removal / `setScalar` for a scalar, which keeps the
+  node's comments / `putValue` for a map), a DRAFT host keeps it until its
+  own save. Also the reads every field shares: `valueAt` (own keys only),
+  `isSet` (a `~` is unset), `setCount`, `scalarText`, and `sameValue` — the
+  changed-guard the section applies to every report.
+- `schema/entries.ts` — what a typed or stepped numeric entry authors under
+  the catalog's bounds (`inBounds` on the resolved pt): `lengthEntry` (a bare
+  numeral → number, an absolute length as typed, out of bounds → `null`, an
+  `em` / `rem` length within the length cap as typed (`isFontRelativeLength`,
+  `canvas/lengths.ts`), any other text `null` — `%` included: the
+  catalog cannot say which keys take it, and `letterSpacing` fails the
+  template at parse, so an authored `borderRadius: 50%` is read-only here),
+  `numberEntry` (both write `-0` as `0`), `steppedMeasure` (one pt / one, unit kept, not past a bound, `null` over empty text),
+  `textEntry` (empty removes). `null` = refused, write nothing.
+- `schema/widgetTypes.ts` — `SchemaContext` (the host's facts for the whole
+  section: `unset` `blank` | `initial` — a named style shows no initials, a
+  select's unset row is 「（既定）」; `initial` puts the catalog initial in
+  placeholders and 「未設定（…）」 — plus `capabilities` and the `refs`
+  picker options) and `Widget` (`short`, `decode`, `encode`, `Control`): a
+  widget is a CODEC between the wire value and what its control draws
+  (`Shown`, always a primitive). `decode` is the display a present value draws
+  as (`null` = none); `encode` the wire value a display authors (`undefined` =
+  the unset display, removes; `null` = refused). A control is handed a
+  display and reports one; it never sees the wire value.
+- `schema/widgets.ts` — the registry: each catalog kind (`FieldSpec`) → the panel's existing
+  widget. `sides` takes its one-value arm's control (`editedField`), a
+  `composite` the `COMPOSITES` editor for its `$defs` name; `map` /
+  `opaque` have none. `shows` is THE rule for whether a control can show a
+  present value, derived from the codec and never written per widget: it
+  decodes, its display is not the unset display (encode is neither
+  `undefined` nor `null`), and re-encoding lands on the same display. So
+  `''`, `textDecoration: none` / `overline`, a boolean equal to its initial,
+  an out-of-bounds measure, a `%` length, `opacity: 2` / `'40%'` / `1e-7` and `#ABC` all go
+  to the read-only row, while the reversed two-line decoration and
+  `opacity: 0.12345` (shown as 12.3) stay in their controls (display-stable,
+  not byte round-trip). `schema/scalarControls.tsx` holds the select
+  (`withAuthored`, `styleOptionLabel`; any string decodes), text and
+  reference (`scalarText` / `textEntry`; `FieldPicker` / `FormatPicker`
+  where `refs` carries that kind, else text), colour (`PanelColorRow`, shared
+  with the decoration tab's `PanelColorField`; decodes only what the chip's
+  `isHexColor` draws) and
+  checkbox (unset shows the initial's state, which is the unset display);
+  `schema/numericControls.tsx` the `StepperField` ones (length with the
+  `pt` badge + `stepper.unitHint` and number, both encoded under the
+  catalog's bounds, an unset one stepping from its initial placeholder; the fraction shown as % through `opacityPercent` /
+  `fractionFromPercent`).
+- `schema/composites.tsx` — `COMPOSITES`, keyed by `$defs` name, VALUE-IN /
+  VALUE-OUT (no controller: one section serves the named-style form's draft
+  and the live surfaces): `TextDecoration` (two checkboxes over the one
+  value, either two-line order reads as both; the next value is the
+  decoration tab's own `toggledDecoration`, so without
+  `style.textDecoration.combined` ticking one clears the other; with no
+  cascade to compare against, clearing both removes the key) and
+  `TextCombineUpright` (the `combineToken` / `combineValue` select; an
+  unparseable shape is its own removable `invalid` row). The same map is the
+  `composites` argument `surfaceFields` takes.
+- `schema/fieldGroups.ts` — `FIELD_GROUPS`, the section's ONE key-name
+  table (字間・下線 / 枠線 / 上下の位置とはみ出し / 縦書き・禁則, then opacity
+  under a rule with no heading — 透明度 would read inverted), held by
+  `catalogLabels.test.ts`'s partition over every key a style disclosure can
+  list; `blocksOf` (ungrouped keys first, empty groups dropped) and `rowsOf`
+  (two short controls per row).
+- `schema/ReadOnlyRow.tsx` — a value the control cannot show (`shows` is
+  false, or a kind with no control): the label, that it cannot be shown or
+  changed here, and where to edit it (the template file). The border sentence
+  is for a per-side map only (a plain record; an array gets the generic one). Writes nothing; the value survives edits around
+  it. A key with no control and no value draws nothing.
+- `schema/SchemaFields.tsx` — the renderer: places each field (control /
+  read-only / nothing), lays the blocks out, encodes the display a control
+  reports, and reports a `FieldEdit` only when the value moves — a refused
+  entry, a re-pick and a blur over the same display (`12` over the number
+  12) report nothing, the guard derived from `decode` like `shows`.
+- `schema/SchemaDisclosure.tsx` — 「その他の設定」, closed by default; closed
+  with values it says 「（{n}件設定済み）」 (n = listed keys the target sets),
+  open it drops the count; the open state is never written; no fields → no
+  disclosure.
+- Tests: `fieldEdit.test.ts` (pure), `catalogLabels.test.ts` (every key a
+  surface can list has an en label, every style enum spelling a word, the
+  new strings in all six catalogs, the group partition),
+  `SchemaFields.test.tsx` (one case per kind on the real named-style fields
+  over a live host: one changed line, empty removes, unchanged blur writes
+  nothing, undo byte-identical; out-of-set enum; per-side map read-only;
+  one value per `shows` leg on the read-only row),
+  `SchemaFieldKinds.test.tsx` (boolean / ref / map / opaque / unknown
+  composite over fixture fields; a number stepped from its initial and `-0`; `overflowText` with its `+{count}`
+  initial), `SchemaDisclosure.test.tsx` (the closed/count/open legs, opening
+  authors nothing, and the draft host: nothing written until save, then one
+  undo step). The two hosts are `testkit/schemaHost.tsx`.
 
 ## Diagnostics
 

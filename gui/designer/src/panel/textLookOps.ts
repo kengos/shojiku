@@ -6,7 +6,13 @@
 
 import type { Op } from '@shojiku/designer-core';
 import { stepLength } from '../canvas/lengths';
-import { composeDecoration, decorationOf, hasLineThrough, hasUnderline } from '../text/spanRuns';
+import {
+  composeDecoration,
+  type Decoration,
+  decorationOf,
+  hasLineThrough,
+  hasUnderline,
+} from '../text/spanRuns';
 import type { EffectiveValue } from '../toolbar/effective';
 
 /** The engine's letter-spacing bound (`invalid_letter_spacing` past it). */
@@ -49,22 +55,31 @@ export function opacityPercent(value: string): string {
   return String(Number((Number(value) * 100).toFixed(1)));
 }
 
-/** A committed percentage (with or without a trailing `%`): clamped to
- * 0..100 and authored as the 0..1 alpha; empty clears the own key. `null` when
- * it is not a number, or when it would author the value the item already
- * carries. */
-export function opacityOp(path: string, own: string, entry: string): Op | null {
+/** A typed percentage (with or without a trailing `%`) as the 0..1 fraction
+ * it stands for, clamped to 0..100 first; `undefined` for an empty entry and
+ * `null` for one that is not a number. */
+export function fractionFromPercent(entry: string): number | null | undefined {
   const text = entry.trim().replace(/%$/, '').trim();
-  const keys = ['style', 'opacity'];
   if (text === '') {
-    return own === '' ? null : { op: 'removeKey', path, keys };
+    return undefined;
   }
   if (text.length > MAX_CHARS || !SIGNED_NUMERAL.test(text)) {
     return null;
   }
   const percent = Math.min(100, Math.max(0, Number(text)));
-  const value = Number((percent / 100).toFixed(3));
-  if (own !== '' && Number(own) === value) {
+  return Number((percent / 100).toFixed(3));
+}
+
+/** A committed percentage, authored as the 0..1 alpha (`fractionFromPercent`);
+ * empty clears the own key. `null` when it is not a number, or when it would
+ * author the value the item already carries. */
+export function opacityOp(path: string, own: string, entry: string): Op | null {
+  const keys = ['style', 'opacity'];
+  const value = fractionFromPercent(entry);
+  if (value === undefined) {
+    return own === '' ? null : { op: 'removeKey', path, keys };
+  }
+  if (value === null || (own !== '' && Number(own) === value)) {
     return null;
   }
   return { op: 'setScalar', path, keys, value };
@@ -109,6 +124,22 @@ export function opacityStepOp(path: string, own: string, shown: string, dir: num
   return next === null ? null : opacityOp(path, own, next);
 }
 
+/** `current` with `line` flipped, keeping the other line — or, against an
+ * engine that takes one line at a time (`combined` false), dropping it when
+ * `line` turns on. */
+export function toggledDecoration(
+  current: Decoration,
+  line: 'underline' | 'line_through',
+  combined: boolean,
+): Decoration {
+  const underline = line === 'underline' ? !hasUnderline(current) : hasUnderline(current);
+  const lineThrough = line === 'line_through' ? !hasLineThrough(current) : hasLineThrough(current);
+  const turnedOn = line === 'underline' ? underline : lineThrough;
+  return combined || !turnedOn
+    ? composeDecoration(underline, lineThrough)
+    : composeDecoration(line === 'underline', line === 'line_through');
+}
+
 /** One decoration line's checkbox: flip `line` in the EFFECTIVE decoration
  * (what the page draws), keeping the other line — or, against an engine that
  * takes only one line at a time (`combined` false), dropping it. The result is
@@ -122,14 +153,7 @@ export function decorationToggleOp(
   line: 'underline' | 'line_through',
   combined: boolean,
 ): Op {
-  const current = decorationOf(effective.value);
-  const underline = line === 'underline' ? !hasUnderline(current) : hasUnderline(current);
-  const lineThrough = line === 'line_through' ? !hasLineThrough(current) : hasLineThrough(current);
-  const turnedOn = line === 'underline' ? underline : lineThrough;
-  const next =
-    combined || !turnedOn
-      ? composeDecoration(underline, lineThrough)
-      : composeDecoration(line === 'underline', line === 'line_through');
+  const next = toggledDecoration(decorationOf(effective.value), line, combined);
   const keys = ['style', 'textDecoration'];
   // A toggle always changes the effective value, so landing on what the
   // cascade gives means the item carried an own key that is now redundant.

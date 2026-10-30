@@ -41,6 +41,14 @@ const OPTION_KEYS: Readonly<Record<string, Readonly<Record<string, string>>>> = 
     visible: 'style.value.overflow.visible',
     hidden: 'style.value.overflow.hidden',
   },
+  // The border's one-value form, read by the catalog-driven section; the words
+  // are the border editor's own pen names.
+  borderStyle: {
+    solid: 'border.style.solid',
+    double: 'border.style.double',
+    dashed: 'border.style.dashed',
+    dotted: 'border.style.dotted',
+  },
   // The typesetting keys (`typesettingModel`); `textCombineUpright` is keyed by
   // the select's TOKENS, its `{ digits: N }` map read as `digitsN`.
   writingMode: {
