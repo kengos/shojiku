@@ -146,7 +146,7 @@ skrifa = "0.48"
 # exact-pins icu_properties to an older ICU4X minor than icu_segmenter's,
 # which would duplicate the ICU collections crate, and the built-in Unicode
 # tables it replaces are what shaping has always used.
-harfrust = "0.14"
+harfrust = "0.15"
 # Thai word segmentation for line breaking (ICU4X, Unicode-org): Thai writes
 # without inter-word spaces, so a greedy wrapper has no break opportunity to
 # find and falls through to breaking per character. Pure Rust, Unicode-3.0 —
