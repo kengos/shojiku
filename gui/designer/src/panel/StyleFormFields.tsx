@@ -26,6 +26,12 @@ export const STYLE_FORM_ROWS: readonly (readonly string[])[] = [
   ['color', 'backgroundColor'],
 ];
 
+/** The style keys this form's own controls edit, read off the row table they
+ * render from — the keys its 「その他の設定」 leaves out. */
+export function styleFormOwnedKeys(): readonly string[] {
+  return STYLE_FORM_ROWS.flat();
+}
+
 /** Colour fields render through the swatch picker, everything else through the
  * shared per-kind widget. */
 const COLOR_KEYS = new Set(['color', 'backgroundColor']);

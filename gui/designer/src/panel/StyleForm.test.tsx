@@ -71,6 +71,7 @@ function renderUpdate(
         existingNames={[props.name ?? 'body']}
         name={props.name ?? 'body'}
         current={props.current ?? { fontSize: '13', color: '#333333' }}
+        values={{}}
         usage={props.usage === undefined ? usageWith(props.name ?? 'body', 2) : props.usage}
       />
     </I18nProvider>,

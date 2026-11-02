@@ -13,6 +13,9 @@ describe('readStylesView', () => {
     // A non-STYLE_FIELDS prop (borderWidth) is not surfaced as a field value,
     // but the entry still exists (its value stays on the document untouched).
     expect(view[1].style.fontSize).toBe('');
+    // Every own key, editable or not, is carried as authored for the form's
+    // 「その他の設定」.
+    expect(view[1].values).toEqual({ borderWidth: 1 });
   });
 
   it('skips an empty-string name (unaddressable by the keys grammar)', () => {
@@ -25,5 +28,6 @@ describe('readStylesView', () => {
     expect(readStylesView('nope')).toEqual([]);
     // A non-map entry value degrades to empty field values, still listed.
     expect(readStylesView({ a: 42 })[0].style.fontSize).toBe('');
+    expect(readStylesView({ a: 42 })[0].values).toEqual({});
   });
 });

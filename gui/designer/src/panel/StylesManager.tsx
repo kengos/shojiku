@@ -33,6 +33,9 @@ type FormState =
 export interface StylesManagerProps {
   readonly controller: EditorController;
   readonly fontFamilies?: readonly string[];
+  /** The engine's capability keys, for the form's 「その他の設定」;
+   * `undefined` = all (see `hasCapability`). */
+  readonly capabilities?: readonly string[];
   /** The named-style usage index (name → references), threaded from Designer.
    * `null` (an unmaterialized document) forces a rename/delete to refuse — a
    * rewrite driven by no reference data would be unsafe. */
@@ -45,6 +48,7 @@ export interface StylesManagerProps {
 export function StylesManager({
   controller,
   fontFamilies = [],
+  capabilities,
   usage,
   titled = true,
 }: StylesManagerProps) {
@@ -141,6 +145,7 @@ export function StylesManager({
             controller={controller}
             existingNames={names}
             fontFamilies={fontFamilies}
+            capabilities={capabilities}
           />
         ) : (
           <StyleForm
@@ -151,8 +156,10 @@ export function StylesManager({
             controller={controller}
             existingNames={names}
             fontFamilies={fontFamilies}
+            capabilities={capabilities}
             name={form.entry.name}
             current={form.entry.style}
+            values={form.entry.values}
             usage={usage}
           />
         )

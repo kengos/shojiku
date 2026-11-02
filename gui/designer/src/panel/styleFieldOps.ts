@@ -8,12 +8,31 @@
 // uses, so a bare number stays a number (never a quoted string) and the GUI's
 // authored form matches what an AI would emit. Registry names are attacker
 // strings; each op addresses them by a literal `keys` path.
+//
+// The keys the form's 「その他の設定」 lists are edited as wire values, not
+// display strings (`WireEdits`): each one the author left at a new value
+// becomes the op a live host would dispatch for the same edit.
 
-import type { Op } from '@shojiku/designer-core';
+import type { Op, SnippetValue } from '@shojiku/designer-core';
 import { lengthOp, numberOp, plainTextOp } from './model';
+import { type FieldValues, fieldEditOp, sameValue, valueAt } from './schema/fieldEdit';
 import { STYLE_FIELDS, type StyleFieldSpec } from './styleFieldSpecs';
 import { refuse, type StyleOpPlan } from './stylePlan';
 import { MAX_STYLES } from './stylesModel';
+
+/** The listed keys the form edited: the wire value each was left at
+ * (`undefined` = removed), keyed by style key. A key never touched is absent. */
+export type WireEdits = Readonly<Record<string, SnippetValue | undefined>>;
+
+/** One op per edited key whose value differs from `saved` (the entry as it
+ * was read; empty for a create). */
+function wireOps(name: string, edits: WireEdits, saved: FieldValues): Op[] {
+  return Object.entries(edits).flatMap(([key, value]) =>
+    sameValue(valueAt(saved, key), value)
+      ? []
+      : [fieldEditOp(undefined, ['styles', name], { keys: [key], value })],
+  );
+}
 
 /** The op for one style field edit at `styles.<name>.<prop>`, dispatched by the
  * field kind (the panel's per-kind policy, reused): `number` may return `null`
@@ -40,6 +59,7 @@ export function createStyleWithFieldsOps(
   name: string,
   fields: Readonly<Record<string, string>>,
   existingNames: readonly string[],
+  edits: WireEdits = {},
 ): StyleOpPlan {
   if (name.length === 0) {
     return refuse('empty_name');
@@ -61,19 +81,24 @@ export function createStyleWithFieldsOps(
       ops.push(op);
     }
   }
+  ops.push(...wireOps(name, edits, {}));
   return { ok: true, ops };
 }
 
 /** Plan an update from the form: emit a canonical op ONLY for a field whose
  * value CHANGED against the current registry entry ("only touched keys
- * change"). Non-`STYLE_FIELDS` props (per-side border maps, etc.) are never
- * referenced, so they survive byte-intact — never a whole-map replace. A field
- * cleared to empty emits its `removeKey`; an unchanged field emits nothing. The
- * plan always succeeds (a no-change form yields an empty, inert batch). */
+ * change"). The listed keys' `edits` write the same way against `saved`, the
+ * entry's own map as the form read it. A prop the form did not change (a
+ * per-side border map, which the form only shows) is never referenced, so it
+ * survives byte-intact — never a whole-map replace. A field cleared to empty
+ * emits its `removeKey`; an unchanged field emits nothing. The plan always
+ * succeeds (a no-change form yields an empty, inert batch). */
 export function updateStyleFieldsOps(
   name: string,
   fields: Readonly<Record<string, string>>,
   current: Readonly<Record<string, string>>,
+  edits: WireEdits = {},
+  saved: FieldValues = {},
 ): StyleOpPlan {
   const ops: Op[] = [];
   for (const spec of STYLE_FIELDS) {
@@ -87,5 +112,6 @@ export function updateStyleFieldsOps(
       ops.push(op);
     }
   }
+  ops.push(...wireOps(name, edits, saved));
   return { ok: true, ops };
 }

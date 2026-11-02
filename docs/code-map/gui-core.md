@@ -238,7 +238,8 @@ files and `e2e/` excluded, with NO waiver list.
     `defaults.style` `x-shojiku-style-keys` / `item` of a `type` — its own
     keys less the structural set `type`/`id`/`box`/`style`/`styleNames`/
     `visible`/`data`). The keys a hand-made control already owns are the
-    caller's to take away; no capability filtering here.
+    caller's to take away; no capability filtering here (both live in the
+    designer's `panel/schema/listedFields.ts`).
 - `scripts/normalize-examples.ts` — the `normalize:examples` one-shot:
   rewrites every `examples/*/*/templates.yml` to the
   `serializeTemplate` fixed point.
