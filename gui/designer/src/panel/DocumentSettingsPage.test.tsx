@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { useEditor } from '../editor/useEditor';
@@ -94,6 +94,28 @@ describe('DocumentSettingsPage', () => {
     openSection('Locale & currency');
     expect(screen.getByLabelText('Locale')).toBeTruthy();
     expect(screen.queryByLabelText('Line height')).toBeNull();
+  });
+
+  it('hands the engine capabilities to both More settings disclosures', () => {
+    render(
+      <Harness
+        source={`styles:\n  heading: { fontWeight: bold }\n${BASE}`}
+        capabilities={['template.defaults', 'style.lineBreak']}
+      />,
+    );
+    openSection('Normal text');
+    fireEvent.click(screen.getByRole('button', { name: 'More settings' }));
+    expect(screen.getByLabelText('Line-break rules')).toBeTruthy();
+    expect(screen.queryByLabelText('Letter spacing')).toBeNull();
+    openSection('Styles');
+    const row = within(screen.getByRole('listitem'));
+    fireEvent.click(
+      row.getAllByRole('button').filter((el) => !el.hasAttribute('aria-haspopup'))[0],
+    );
+    const dialog = within(screen.getByRole('dialog'));
+    fireEvent.click(dialog.getByRole('button', { name: 'More settings' }));
+    expect(dialog.getByLabelText('Line-break rules')).toBeTruthy();
+    expect(dialog.queryByLabelText('Letter spacing')).toBeNull();
   });
 
   it('summarizes each section in its rail entry', () => {

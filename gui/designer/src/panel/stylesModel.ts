@@ -18,12 +18,14 @@ import { STYLE_FIELDS } from './styleFieldSpecs';
  * author a `too_many_styles`-warning template, so the model refuses instead. */
 export const MAX_STYLES = 256;
 
-/** One registry entry: its name and the display values of the editable style
- * fields (non-`STYLE_FIELDS` props — per-side border maps, etc. — are carried
- * on the document untouched and survive edits/rename byte-intact). */
+/** One registry entry: its name, the display values of the editable style
+ * fields, and the entry's own map as authored (what the form's 「その他の設定」
+ * reads; a prop nobody edits — a per-side border map — survives edits and
+ * renames byte-intact). */
 export interface StyleEntry {
   readonly name: string;
   readonly style: Readonly<Record<string, string>>;
+  readonly values: Readonly<Record<string, unknown>>;
 }
 
 function record(value: unknown): Record<string, unknown> | undefined {
@@ -74,6 +76,7 @@ export function readStylesView(raw: unknown): StyleEntry[] {
     entries.push({
       name,
       style: Object.fromEntries(STYLE_FIELDS.map((f) => [f.key, display(style[f.key])])),
+      values: style,
     });
   }
   return entries;

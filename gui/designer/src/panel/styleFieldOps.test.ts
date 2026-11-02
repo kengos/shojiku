@@ -97,6 +97,40 @@ describe('updateStyleFieldsOps', () => {
       ops: [],
     });
   });
+
+  it('writes a listed key only when its wire value moved from the saved one', () => {
+    const plan = updateStyleFieldsOps(
+      's',
+      {},
+      {},
+      // Re-picked as saved, cleared over `~`, never set and cleared, changed,
+      // removed, and a map value.
+      {
+        lineBreak: 'strict',
+        hangingPunctuation: undefined,
+        letterSpacing: undefined,
+        opacity: 0.5,
+        overflow: undefined,
+        borderWidth: { top: 1 },
+      },
+      { lineBreak: 'strict', hangingPunctuation: null, opacity: 1, overflow: 'hidden' },
+    );
+    expect(plan.ok && plan.ops).toEqual([
+      { op: 'setScalar', keys: ['styles', 's', 'opacity'], value: 0.5 },
+      { op: 'removeKey', keys: ['styles', 's', 'overflow'] },
+      { op: 'putValue', keys: ['styles', 's', 'borderWidth'], value: { top: 1 } },
+    ]);
+  });
+});
+
+describe('createStyleWithFieldsOps — listed keys', () => {
+  it('authors each listed key left at a value, after the entry', () => {
+    const plan = createStyleWithFieldsOps('s', {}, [], { lineBreak: 'loose', opacity: undefined });
+    expect(plan.ok && plan.ops).toEqual([
+      { op: 'putValue', keys: ['styles', 's'], value: {} },
+      { op: 'setScalar', keys: ['styles', 's', 'lineBreak'], value: 'loose' },
+    ]);
+  });
 });
 
 describe('styleFieldOp', () => {

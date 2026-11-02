@@ -56,6 +56,7 @@ export function DocumentDefaults({
       controller={controller}
       fontFamilies={fontFamilies}
       defaultFontFamily={defaultFontFamily}
+      capabilities={capabilities}
     />
   ) : null;
 }

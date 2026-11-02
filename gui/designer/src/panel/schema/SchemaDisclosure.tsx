@@ -1,4 +1,4 @@
-// 「その他の設定」: the closed disclosure at the end of a surface holding the
+// 「その他の設定」: the closed disclosure under a surface's own rows holding the
 // catalog keys no hand-made control there edits. Closed, it still says how
 // many of them the target sets — a value in effect behind a closed door is
 // the "why does it look like this?" a non-engineer cannot answer — and the

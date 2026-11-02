@@ -322,11 +322,15 @@ definitions
   datetime/currency/quantity variants), style, box, layout mode, page break
   behavior, visibility conditions, and signature field settings.
   It holds the style keys it edits, their enum vocabularies and the engine
-  default values as GUI-side data, and those tables are **hand-copied from
-  the engine today with no gate asserting the sets match**. The catalog
-  artifact now exists (`agents/engine.md` § The key catalog) — what is
-  still missing is this side: the tables are to be asserted
-  against it rather than maintained beside it. The panel may edit a deliberate SUBSET,
+  default values as GUI-side data. Those tables are checked against the
+  engine's key catalog (`agents/engine.md` § The key catalog) in
+  `panel/keyCatalog.test.ts`; its header and case names say which table is
+  held in which direction, and no gate holds the enum vocabularies yet.
+  The keys a hand-made surface has no control for are drawn from the catalog
+  itself, in a closed 「その他の設定」 / "More settings" disclosure under the
+  surface's own rows (the named-style form and `defaults.style` so far); each
+  surface states the keys it owns in one function read off the table its
+  rows render from. The panel may edit a deliberate SUBSET,
   but every key and value it does carry must be one the parser accepts,
   and a spelling the engine has retired must fail a gate rather than
   survive as a control that writes an unparseable document.

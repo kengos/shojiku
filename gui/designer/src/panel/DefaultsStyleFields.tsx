@@ -8,6 +8,11 @@
 // number-kind spec (line height) builds through `numberOp`, which writes no
 // op for a non-finite entry, and the value alone cannot express that.
 //
+// Under the rows sits 「その他の設定」: the `defaults.style` keys the rows do
+// not edit and the engine can read, drawn from the catalog, each unset field
+// naming the engine's initial value 「未設定（…）」. It is live too: one op per
+// edit.
+//
 // One arrangement — `DefaultsStyleSection`, the document-settings section
 // (rowed, with the intro line and the recommended-size hint). A second, flat
 // arrangement existed for a standalone stacked form that no product surface
@@ -20,8 +25,12 @@ import { ColorSwatchPicker } from '../ui/ColorSwatchPicker';
 import { FIELD_LABEL, PANEL_SWATCH_TRIGGER } from '../ui/chrome';
 import { defaultStyleOp, INHERITED_STYLE_FIELDS, readDefaultsView } from './defaultsModel';
 import { ENGINE_STYLE_DEFAULTS } from './engineDefaults';
+import { record } from './itemView';
 import { applyPanelOp } from './model';
 import { StyleFieldInput } from './StyleFieldInput';
+import { fieldEditOp } from './schema/fieldEdit';
+import { capableFields, listedFields } from './schema/listedFields';
+import { SchemaDisclosure } from './schema/SchemaDisclosure';
 import { styleOptionLabel, unsetLabel } from './styleLabels';
 
 /** The body size this surface RECOMMENDS for a document. The engine's own
@@ -42,6 +51,15 @@ const STYLE_ROWS: readonly (readonly string[])[] = [
   ['fontWeight', 'fontStyle'],
   ['textAlign', 'color'],
 ];
+
+/** The `defaults.style` keys this section's own controls edit, read off the
+ * row table they render from — the keys its 「その他の設定」 leaves out. */
+export function defaultsStyleOwnedKeys(): readonly string[] {
+  return STYLE_ROWS.flat();
+}
+
+/** The `defaults.style` keys no row edits, before the capability filter. */
+const LISTED = listedFields({ kind: 'defaultsStyle' }, defaultsStyleOwnedKeys());
 
 /** The spec for a laid-out key. Indexing a filtered list keeps this total
  * without a `find` whose miss is unreachable (the layout is drift-guarded). */
@@ -98,6 +116,9 @@ export interface DefaultsStyleFieldsProps {
    * seeded into the unset family field. Absent → that field shows a localized
    * placeholder instead of a seed value. */
   readonly defaultFontFamily?: string;
+  /** The engine's capability keys, for 「その他の設定」; `undefined` = all
+   * (see `hasCapability`). */
+  readonly capabilities?: readonly string[];
 }
 
 /** The one field renderer both arrangements lay out, bound to the live document
@@ -161,6 +182,12 @@ export function DefaultsStyleSection(props: DefaultsStyleFieldsProps) {
           {row.map((key) => styleField(fieldByKey(key)))}
         </div>
       ))}
+      <SchemaDisclosure
+        fields={capableFields(LISTED, props.capabilities)}
+        values={record(record(props.controller.read('defaults'))?.style) ?? {}}
+        context={{ unset: 'initial', capabilities: props.capabilities }}
+        onEdit={(edit) => dispatch(fieldEditOp(undefined, ['defaults', 'style'], edit))}
+      />
       <p className="mt-1 mb-0 text-sm text-muted">
         {t('defaults.sizeHint', { size: RECOMMENDED_FONT_SIZE })}{' '}
         <button

@@ -89,6 +89,7 @@ export function DocSectionBody(props: DocSectionBodyProps) {
         <StylesManager
           controller={controller}
           fontFamilies={fontFamilies}
+          capabilities={capabilities}
           usage={props.styleUsage}
           titled={false}
         />

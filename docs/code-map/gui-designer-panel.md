@@ -2157,8 +2157,9 @@ conditional rules the next section owns).
     `StyleOpRefusal`, `refuse`, and the exhaustive
     `REFUSAL_MESSAGE_KEY` (refusal → chrome catalog key).
   - `panel/stylesModel.ts` — what the registry IS and how it READS:
-    `MAX_STYLES`, `StyleEntry`, `readStylesView` (empty-string name
-    skipped — unaddressable), `dedupe` (the `styleNames` hygiene the
+    `MAX_STYLES`, `StyleEntry` (display strings of the form's rows +
+    `values`, the entry's own map for 「その他の設定」), `readStylesView`
+    (empty-string name skipped — unaddressable), `dedupe` (the `styleNames` hygiene the
     capture model reuses).
   - `panel/styleRefOps.ts` — what a rename/delete does to REFERENCES:
     `renameStyleOps`/`deleteStyleOps` rewrite the registry key AND
@@ -2167,7 +2168,9 @@ conditional rules the next section owns).
   - `panel/styleFieldOps.ts` — what a create/update writes to FIELDS
     (nothing here reads usage): `styleFieldOp` (per-kind dispatch),
     `createStyleWithFieldsOps`, `updateStyleFieldsOps` (changed fields
-    only — untouched keys byte-intact, never a whole-map replace).
+    only — untouched keys byte-intact, never a whole-map replace); both
+    also take the form's `WireEdits` (the listed keys' wire values) and
+    write each changed one as `fieldEditOp` would.
 - `panel/StyleFieldInput.tsx` — the ONE style-field widget shared by
   item panel / defaults / registry (enum select, fontFamily datalist,
   free text; `seedMode` keeps the unset option + placeholder fallback).
@@ -2198,7 +2201,10 @@ conditional rules the next section owns).
     `StyleFieldInput`; engine fallbacks as placeholders from
     `engineDefaults.ts` `ENGINE_STYLE_DEFAULTS`) in ONE arrangement,
     `DefaultsStyleSection` (the `STYLE_ROWS` grid, drift-guarded, with
-    the intro line and the recommended body-size one-click hint).
+    the intro line and the recommended body-size one-click hint), and
+    under the grid the LIVE 「その他の設定」 (`unset: 'initial'`, one op
+    per edit under `defaults.style`). `defaultsStyleOwnedKeys()` =
+    `STYLE_ROWS` flattened — what that disclosure leaves out.
 - `panel/DefaultsFormatFields.tsx` — the 表示形式 section's per-type half
   (`defaults.formats`): one `panel/FormatDefaultRow.tsx` per type, live
   over `controller.read('defaults')`. A row has TWO shapes and the
@@ -2283,7 +2289,11 @@ conditional rules the next section owns).
   read-only with the rename hint badge) and
   `panel/StyleFormFields.tsx` (the `STYLE_FORM_ROWS` layout
   (drift-guarded) + per-key widget routing; colors via
-  `ColorSwatchPicker`).
+  `ColorSwatchPicker`; `styleFormOwnedKeys()` = the rows flattened).
+  Under the rows, above the preview, the DRAFT 「その他の設定」 over the
+  16 other `Style` keys (`unset: 'blank'`): its edits are `WireEdits`
+  beside the string draft, written by the same save. Capabilities arrive
+  from `DocSectionBody` through `StylesManager`.
 
 ## The catalog-driven section (`panel/schema/`)
 
@@ -2291,7 +2301,8 @@ Controls drawn from the engine's key catalog instead of a hand table: the
 host hands `surfaceFields(surface, COMPOSITES)` (designer-core `catalog/`),
 less the keys it edits itself and the ones its capabilities lack, and gets
 one control per field. Nothing in the directory branches on a key name
-except the group table. Add-only so far: no surface mounts it yet.
+except the group table. Mounted by the named-style form (`StyleForm`,
+draft) and the `defaults.style` section (`DefaultsStyleSection`, live).
 
 - `schema/fieldEdit.ts` — `FieldEdit` = `{ keys, value | undefined }`
   relative to the edited object (`undefined` removes), the one thing the
@@ -2368,6 +2379,11 @@ except the group table. Add-only so far: no surface mounts it yet.
   reports, and reports a `FieldEdit` only when the value moves — a refused
   entry, a re-pick and a blur over the same display (`12` over the number
   12) report nothing, the guard derived from `decode` like `shows`.
+- `schema/listedFields.ts` — what a surface lists: `listedFields(surface,
+  owned)` = `surfaceFields` less the owned keys (each surface's ONE
+  owned-keys function, read off the table its rows render from), and
+  `capableFields(fields, capabilities)` (a gated key goes with its
+  capability; `undefined` keeps all).
 - `schema/SchemaDisclosure.tsx` — 「その他の設定」, closed by default; closed
   with values it says 「（{n}件設定済み）」 (n = listed keys the target sets),
   open it drops the count; the open state is never written; no fields → no
@@ -2384,6 +2400,15 @@ except the group table. Add-only so far: no surface mounts it yet.
   initial), `SchemaDisclosure.test.tsx` (the closed/count/open legs, opening
   authors nothing, and the draft host: nothing written until save, then one
   undo step). The two hosts are `testkit/schemaHost.tsx`.
+  `listedFields.test.ts` is the partition gate: per surface, owned ∩
+  listed = ∅, owned ∪ listed = the catalog's keys, sizes 16 / 7 pinned.
+  The mounts: `panel/StyleFormMore.test.tsx` (through `StylesManager`:
+  closed + count, draft until Save as one undo step with the rows' edits,
+  per-side map read-only and kept, create, capabilities) and
+  `panel/DefaultsStyleMore.test.tsx` (placement, 「未設定（…）」, one
+  key per edit, clear removes, undo, capabilities);
+  `panel/DocumentSettingsPage.test.tsx` holds the capability wiring from
+  the page down to both disclosures.
 
 ## Diagnostics
 
