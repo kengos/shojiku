@@ -1,7 +1,8 @@
 // The content tab: it routes each content-bearing item type to its surface and
 // owns the text/data pair the rest share (`text`/`qr_code`). The per-type
 // surfaces live in `contentImage.tsx` (image) and `contentParts.tsx` (page
-// number), the iterable section in `IterableSourceSection.tsx`, and a table's
+// number), the iterable section in `IterableSourceSection.tsx` (a list's
+// declarations and 「その他の設定」 under it in `ListMoreSettings.tsx`), and a table's
 // collapsible sections (columns, rows, pages, empty data, header groups) in
 // `TableContentSections.tsx`. Under the pair sit two leaves that carry their own
 // gates: `CharGridMarkupField.tsx` (the item type and an engine capability) and
@@ -23,6 +24,7 @@ import { IterableSourceSection } from './IterableSourceSection';
 import { type ImageMemory, keepsItemPaths } from './imageSourceOps';
 import type { ItemPanelProps } from './itemPanelProps';
 import { type ContentMode, MARK_TYPES } from './itemView';
+import { ListMoreSettings } from './ListMoreSettings';
 import { MarkSection } from './MarkSection';
 import { applyPanelOp, switchContentOps, textAsBinding } from './model';
 import { chipsFor, HelpfulHeading, itemBindingTarget } from './panelHelpers';
@@ -68,7 +70,7 @@ export function ContentSection(props: ItemPanelProps) {
     // own; a `list` has none.
     const framePath = `${path}.${view.type === 'repeat' ? 'cell' : 'item'}`;
     const frame = view.type === 'list' ? null : frameOf(controller.read, framePath);
-    return (
+    const source = (
       <IterableSourceSection
         controller={controller}
         path={path}
@@ -83,6 +85,16 @@ export function ContentSection(props: ItemPanelProps) {
           view.type === 'repeat_flow' ? <CardGapField controller={controller} path={path} /> : null
         }
       />
+    );
+    // A list's catalog keys the section does not edit sit under it.
+    return view.type === 'list' ? (
+      <>
+        {source}
+        {/* Keyed by path: an open form or confirm belongs to one list. */}
+        <ListMoreSettings key={path} {...props} />
+      </>
+    ) : (
+      source
     );
   }
   if (view.type === 'image') {

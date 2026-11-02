@@ -913,6 +913,37 @@ export const fil: LanguageCatalog = {
     'panel.schema.readOnly.value':
       'May value ang setting na ito na hindi maipapakita o mababago rito.',
     'panel.schema.readOnly.where': 'Maaari itong i-edit sa template file (YAML).',
+    'panel.field.key': 'Data key',
+    'panel.field.scope': 'Saan magbabasa',
+    'panel.binding.scope.element': 'Bawat row',
+    'panel.binding.scope.document': 'Dokumento',
+    'panel.bindings.title': 'Mga merge field',
+    'panel.bindings.titleCount': 'Mga merge field ({n, number})',
+    'panel.bindings.intro':
+      "Tinutukoy kung ano ang ilalagay sa bawat '{'pangalan'}' sa teksto ng bawat entry.",
+    'panel.bindings.uses': 'Gamit sa teksto ng bawat entry: {n, number}',
+    'panel.bindings.unused': 'Hindi ginagamit',
+    'panel.bindings.unusedNote':
+      'Hindi pa ito ginagamit ng teksto ng bawat entry. Tanggalin kung hindi kailangan.',
+    'panel.bindings.delete': 'Tanggalin',
+    'panel.bindings.cancel': 'Kanselahin',
+    'panel.bindings.deleteConfirm.title': 'Tanggalin ang “{name}”?',
+    'panel.bindings.deleteConfirm.unused': 'Hindi ito ginagamit kahit saan.',
+    'panel.bindings.deleteConfirm.same':
+      'Ang {wire} sa teksto ng bawat entry ({n, number} gamit) ay patuloy na magbabasa ng “{key}” ng row. Babalik ang format at placeholder kapag blangko nito sa sariling setting ng data item.',
+    'panel.bindings.deleteConfirm.other':
+      'Ang {wire} sa teksto ng bawat entry ({n, number} gamit) ay magbabasa ng “{name}” ng row sa halip na ng data key na “{key}”.',
+    'panel.bindings.deleteConfirm.document':
+      'Ang {wire} sa teksto ng bawat entry ({n, number} gamit) ay magbabasa ng “{name}” ng row sa halip na ng “{key}” ng dokumento.',
+    'panel.bindings.add': '+ Magdagdag ng merge field',
+    'panel.bindings.name': 'Pangalan',
+    'panel.bindings.name.hint':
+      'Gumamit ng ASCII na titik, digit, _ (underscore) at . (tuldok). Halimbawa: price',
+    'panel.bindings.name.charset': 'May mga character ang pangalang ito na hindi magagamit.',
+    'panel.bindings.name.taken': 'Ginagamit na ang pangalang ito.',
+    'panel.bindings.addSubmit': 'Idagdag',
+    'panel.overflowText.note':
+      "Kapag may mas maraming row kaysa kasya sa isang listahang may takdang taas, ipinapakita ng huling linya nito ang tekstong ito. Ang '{'count'}' ay papalitan ng bilang ng mga row na hindi naipakita. Iwanang blangko para bumalik sa “+'{'count'}'”.",
     'panel.itemSection.text.title': 'Teksto',
     'panel.itemSection.typesetting.title': 'Patayong teksto at line break',
     'panel.itemSection.typesetting.inheritHelp':

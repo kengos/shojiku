@@ -1,4 +1,4 @@
-// What each hand-made surface's 「その他の設定」 lists, against the committed
+// What each hand-made surface's catalog section lists, against the committed
 // catalog: the partition gate (every key the catalog gives a surface has
 // exactly one control there — a row of its own, or the disclosure), with the
 // sizes pinned so a catalog change reds here visibly; and the capability
@@ -7,6 +7,7 @@
 import { type CatalogSurface, surfaceKeys } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
 import { defaultsStyleOwnedKeys } from '../DefaultsStyleFields';
+import { listSourceOwnedKeys } from '../IterableSourceSection';
 import { styleFormOwnedKeys } from '../StyleFormFields';
 import { capableFields, listedFields } from './listedFields';
 
@@ -27,6 +28,12 @@ const SURFACES: readonly {
     surface: { kind: 'defaultsStyle' },
     owned: defaultsStyleOwnedKeys(),
     listed: 7,
+  },
+  {
+    name: 'the list content tab',
+    surface: { kind: 'item', type: 'list' },
+    owned: listSourceOwnedKeys(),
+    listed: 2,
   },
 ];
 
@@ -54,6 +61,9 @@ describe('the lists themselves', () => {
       'textOrientation',
       'textCombineUpright',
     ]);
+    expect(
+      listedFields({ kind: 'item', type: 'list' }, listSourceOwnedKeys()).map((f) => f.key),
+    ).toEqual(['bindings', 'overflowText']);
   });
 });
 

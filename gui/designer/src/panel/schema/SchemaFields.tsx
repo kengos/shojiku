@@ -10,7 +10,9 @@
 // (`12.0` over `12`, `12` over the number 12) report nothing. A value its
 // control cannot show (`shows`) is drawn on the read-only row and never
 // reported, so it survives every edit made around it; a key with no control
-// and no value draws nothing.
+// and no value draws nothing. Emptying a required key (a declaration's `key`)
+// reports nothing either: removing it would leave an object that no longer
+// parses.
 
 import type { CatalogField } from '@shojiku/designer-core';
 import { useI18n } from '../../i18n/context';
@@ -71,8 +73,10 @@ function FieldRow({
   const shown = value === undefined ? undefined : (widget.decode(value) as Shown);
   const onShown = (next: Shown) => {
     const wire = widget.encode(next, field);
+    // A required key is never cleared: the object would stop parsing.
     const moved =
       wire !== null &&
+      !(wire === undefined && field.required) &&
       !sameValue(value, wire) &&
       (wire === undefined || shown === undefined || widget.decode(wire) !== shown);
     if (moved) {

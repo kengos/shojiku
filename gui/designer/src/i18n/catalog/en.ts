@@ -1106,6 +1106,36 @@ export const en: LanguageCatalog = {
     'panel.schema.readOnly.sides': "Each side has its own border. This can't be changed here.",
     'panel.schema.readOnly.value': "This setting has a value that can't be shown or changed here.",
     'panel.schema.readOnly.where': 'You can edit it in the template file (YAML).',
+    'panel.field.key': 'Data key',
+    'panel.field.scope': 'Reads from',
+    'panel.binding.scope.element': 'Each row',
+    'panel.binding.scope.document': 'Document',
+    'panel.bindings.title': 'Merge fields',
+    'panel.bindings.titleCount': 'Merge fields ({n, number})',
+    'panel.bindings.intro': "Decides what goes into each '{'name'}' in the entry text.",
+    'panel.bindings.uses': 'Uses in the entry text: {n, number}',
+    'panel.bindings.unused': 'Not used',
+    'panel.bindings.unusedNote':
+      'The entry text does not use it yet. Delete it if you do not need it.',
+    'panel.bindings.delete': 'Delete',
+    'panel.bindings.cancel': 'Cancel',
+    'panel.bindings.deleteConfirm.title': 'Delete “{name}”?',
+    'panel.bindings.deleteConfirm.unused': 'It is not used anywhere.',
+    'panel.bindings.deleteConfirm.same':
+      '{wire} ({n, number} in the entry text) keeps reading the row’s “{key}”. Its format and blank placeholder go back to the data item’s own.',
+    'panel.bindings.deleteConfirm.other':
+      '{wire} ({n, number} in the entry text) will read the row’s “{name}” instead of the data key “{key}”.',
+    'panel.bindings.deleteConfirm.document':
+      '{wire} ({n, number} in the entry text) will read the row’s “{name}” instead of the document’s “{key}”.',
+    'panel.bindings.add': '+ Add a merge field',
+    'panel.bindings.name': 'Name',
+    'panel.bindings.name.hint':
+      'Use ASCII letters, digits, _ (underscore) and . (period). Example: price',
+    'panel.bindings.name.charset': 'This name has characters that cannot be used.',
+    'panel.bindings.name.taken': 'This name is already in use.',
+    'panel.bindings.addSubmit': 'Add',
+    'panel.overflowText.note':
+      "When a list with a fixed height has more rows than fit, its last line shows this text instead. '{'count'}' becomes the number of rows not shown. Leave it empty to go back to “+'{'count'}'”.",
     'panel.itemSection.text.title': 'Text',
     'panel.itemSection.typesetting.title': 'Vertical text & line breaks',
     'panel.itemSection.typesetting.inheritHelp':

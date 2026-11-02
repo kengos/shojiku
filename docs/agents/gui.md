@@ -328,9 +328,10 @@ definitions
   held in which direction, and no gate holds the enum vocabularies yet.
   The keys a hand-made surface has no control for are drawn from the catalog
   itself, in a closed 「その他の設定」 / "More settings" disclosure under the
-  surface's own rows (the named-style form and `defaults.style` so far); each
-  surface states the keys it owns in one function read off the table its
-  rows render from. The panel may edit a deliberate SUBSET,
+  surface's own rows (the named-style form, `defaults.style` and a list's
+  content tab, where the `bindings:` declarations get a disclosure of their
+  own); each surface states the keys it owns in one function read off the
+  table its rows render from. The panel may edit a deliberate SUBSET,
   but every key and value it does carry must be one the parser accepts,
   and a spelling the engine has retired must fail a gate rather than
   survive as a control that writes an unparseable document.

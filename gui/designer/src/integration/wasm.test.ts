@@ -52,6 +52,7 @@ import { planInsertDrop } from '../palette/drag';
 import { boundSnippet } from '../palette/dragSnippet';
 import { readDefinitionsView } from '../palette/model';
 import { buildUsage, fieldUsage } from '../palette/usage';
+import { addDeclarationOp } from '../panel/bindingsModel';
 import { toFlowOps } from '../panel/bodyFlow';
 import { toAbsoluteOps } from '../panel/bodyModel';
 import { regionOps } from '../panel/bodyRegion';
@@ -91,6 +92,7 @@ import { fillOrderOp, gridCountOp, gridGapOp, newPageOp, relativeGapOp } from '.
 import { addRuleOp, setRuleEqualsOp } from '../panel/rowConditionOps';
 import { addRubyOp, editRubyOp, readRuby, removeRubyOp, rubySizeOp } from '../panel/rubyModel';
 import { rulePresetOps } from '../panel/rulePresets';
+import { fieldEditOp } from '../panel/schema/fieldEdit';
 import { fillOp, readShapeStyle, strokeColorOp, strokeWidthOp } from '../panel/shapeStyle';
 import { sizeLimitOp } from '../panel/sizeLimits';
 import { plainFlowCommitOps } from '../panel/spanConversion';
@@ -3612,6 +3614,112 @@ describe('binding declarations reach the engine (receipt-us)', () => {
     const diags = await transport.validate(editor.text(), data, defs);
     // Not an error, not a warning — the page just prints the braces.
     expect(diags.items.filter((d) => d.severity !== 'info')).toHaveLength(0);
+  });
+});
+
+// A list's two catalog disclosures end to end: the add form's op declares a
+// name, the declaration card's format field and 「その他の設定」's
+// overflowText each write through the section's own `fieldEditOp`, and the
+// real engine draws the result. The unit suites prove what the panel writes
+// and the engine's prove what a declaration and overflowText do; only this
+// crosses the join. ASCII throughout, so the en-US font pack stays complete.
+describe('a list declaration and overflowText from the panel reach the engine', () => {
+  const P = 'sections.body.items[0]';
+  const SOURCE = [
+    'page: { margin: 20 }',
+    'sections:',
+    '  body:',
+    '    type: flow',
+    '    items:',
+    '      - type: list',
+    '        data: { key: rows }',
+    '        text: "{amt}"',
+    '        box: { w: 200, h: 40 }',
+    '',
+  ].join('\n');
+  const DEFS = [
+    'type: object',
+    'properties:',
+    '  rows:',
+    '    type: array',
+    '    items:',
+    '      type: object',
+    '      properties:',
+    '        amt: { type: number, title: Amount }',
+    '',
+  ].join('\n');
+  const PARAMS = JSON.stringify({ rows: Array.from({ length: 8 }, () => ({ amt: 0.5 })) });
+
+  /** How far right each drawn line of the list reaches (px from the box's
+   * left edge, at scale 1): the box index carries no per-line metrics for a
+   * list, so the lines are read off the raster as bands of ink. */
+  async function lines(text: string) {
+    const outcome = await transport.renderRaw(text, PARAMS, DEFS, { scale: 1 });
+    expect(outcome.ok, JSON.stringify(outcome.diagnostics.items)).toBe(true);
+    const box = outcome.inspect?.boxes.pages[0].find((b) => b.path === P)?.border;
+    if (box === undefined) throw new Error('no list box');
+    const page = outcome.pages[0];
+    const left = Math.floor(box.x);
+    const widths: number[] = [];
+    let inLine = false;
+    for (let y = Math.floor(box.y); y < Math.ceil(box.y + box.h); y++) {
+      let right = -1;
+      for (let x = left; x < Math.ceil(box.x + box.w); x++) {
+        if (page.rgba[(y * page.width + x) * 4] < 128) right = x - left;
+      }
+      if (right < 0) {
+        inLine = false;
+      } else if (inLine) {
+        widths[widths.length - 1] = Math.max(widths[widths.length - 1], right);
+      } else {
+        widths.push(right);
+        inLine = true;
+      }
+    }
+    return {
+      codes: outcome.diagnostics.items.filter((d) => d.severity !== 'info').map((d) => d.code),
+      widths,
+    };
+  }
+
+  function authored(format: string, overflowText: string): string {
+    const editor = Editor.create(SOURCE);
+    const ops: Op[] = [
+      // The add form's op over the list's (absent) `bindings:`.
+      addDeclarationOp(P, 'amt', 'amt', (editor.read(P) as { bindings?: unknown }).bindings),
+      fieldEditOp(P, ['bindings', 'amt'], { keys: ['format'], value: format }),
+      fieldEditOp(P, [], { keys: ['overflowText'], value: overflowText }),
+    ];
+    expect(editor.applyAll(ops).ok).toBe(true);
+    return editor.text();
+  }
+
+  it('draws the declared format on each row and the authored last line, warning-clean', async () => {
+    // The spelling is one the declaration card's format picker offers a number.
+    const catalog = await transport.formatCatalog?.(SOURCE, []);
+    const offered = formatOptions([], 'number', undefined, catalog ?? null).map((o) => o.spelling);
+    expect(offered).toContain('percentage');
+    const before = await lines(SOURCE);
+    expect(before.codes).toEqual([]);
+    const after = await lines(authored('percentage', 'MMMMMMMMMM {count}'));
+    expect(after.codes).toEqual([]);
+    // As many lines either way: the list reserves its last fitting line.
+    expect(after.widths).toHaveLength(before.widths.length);
+    expect(before.widths.length).toBeGreaterThan(1);
+    // `50%` is wider than `0.5`; the authored last line wider than `+N`.
+    expect(after.widths[0]).toBeGreaterThan(before.widths[0]);
+    expect(after.widths.at(-1)).toBeGreaterThan((before.widths.at(-1) ?? 0) + 30);
+  });
+
+  it('reads the format THROUGH the declaration: one the engine lacks warns for that key', async () => {
+    // `{amt}` itself names no format, so the variant can only come from the
+    // declaration the card edited.
+    const outcome = await transport.renderRaw(authored('nope', '+{count}'), PARAMS, DEFS, {
+      scale: 1,
+    });
+    const bad = outcome.diagnostics.items.filter((d) => d.code === 'unknown_format_variant');
+    expect(bad.map((d) => [d.path, d.args?.key])).toEqual([[P, 'amt']]);
+    expect(bad[0].message).toContain('`nope`');
   });
 });
 

@@ -347,6 +347,18 @@ describe('text', () => {
     blur('Font family', ' ');
     expect(doc()).not.toContain('fontFamily');
   });
+
+  it('never clears a required key: an emptied entry reports nothing, a new one writes', () => {
+    const src = source('fontFamily: Lato');
+    const edits: FieldEdit[] = [];
+    const required = fields('fontFamily').map((field) => ({ ...field, required: true }));
+    render(<LiveHost source={src} fields={required} edits={edits} />);
+    blur('Font family', ' ');
+    expect(edits).toEqual([]);
+    expect(doc()).toBe(src);
+    blur('Font family', 'Noto Serif JP');
+    expect(changed(src)).toEqual(['    fontFamily: Noto Serif JP', '    fontFamily: Lato']);
+  });
 });
 
 describe('layout', () => {

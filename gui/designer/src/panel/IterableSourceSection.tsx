@@ -16,6 +16,15 @@ import type { FrameKind } from './frameModel';
 import { bindingKeyOp, plainTextOp } from './model';
 import { sourceOptions, sourceScopeProps } from './sourceScope';
 
+/** The list key this section's entry-text field edits. */
+const ENTRY_TEXT_KEY = 'text';
+
+/** The `list` keys this section's own fields edit, read off the key its
+ * entry-text field writes — the keys the list's 「その他の設定」 leaves out. */
+export function listSourceOwnedKeys(): readonly string[] {
+  return [ENTRY_TEXT_KEY];
+}
+
 export interface IterableSourceSectionProps {
   readonly controller: EditorController;
   /** The selected `repeat_flow` / `repeat` / `list` item's structural path. */
@@ -88,7 +97,7 @@ export function IterableSourceSection({
             defaultValue={entryText}
             onBlur={(event) => {
               if (event.currentTarget.value !== entryText) {
-                dispatch(plainTextOp(path, ['text'], event.currentTarget.value));
+                dispatch(plainTextOp(path, [ENTRY_TEXT_KEY], event.currentTarget.value));
               }
             }}
           />
