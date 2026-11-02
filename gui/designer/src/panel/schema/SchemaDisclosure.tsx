@@ -6,13 +6,19 @@
 // state is component state and never reaches the template; a surface with no
 // field to list draws nothing.
 
-import { useId, useState } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 import { useI18n } from '../../i18n/context';
 import { DisclosureToggle } from '../DisclosureToggle';
 import { setCount } from './fieldEdit';
 import { SchemaFields, type SchemaFieldsProps } from './SchemaFields';
 
-export function SchemaDisclosure(props: SchemaFieldsProps) {
+export interface SchemaDisclosureProps extends SchemaFieldsProps {
+  /** A note under the fields, shown while open (what a listed key does when
+   * the label alone cannot say it). */
+  readonly footer?: ReactNode;
+}
+
+export function SchemaDisclosure({ footer = null, ...props }: SchemaDisclosureProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const bodyId = useId();
@@ -37,6 +43,7 @@ export function SchemaDisclosure(props: SchemaFieldsProps) {
       {open ? (
         <div id={bodyId} className="mt-1">
           <SchemaFields {...props} />
+          {footer}
         </div>
       ) : null}
     </div>

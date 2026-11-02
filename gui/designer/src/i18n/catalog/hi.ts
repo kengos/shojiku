@@ -871,6 +871,35 @@ export const hi: LanguageCatalog = {
     'panel.schema.readOnly.value':
       'इस सेटिंग में ऐसा मान है जिसे यहाँ न दिखाया जा सकता है, न बदला जा सकता है।',
     'panel.schema.readOnly.where': 'आप इसे टेम्पलेट फ़ाइल (YAML) में संपादित कर सकते हैं।',
+    'panel.field.key': 'डेटा कुंजी',
+    'panel.field.scope': 'कहाँ से पढ़ें',
+    'panel.binding.scope.element': 'प्रत्येक पंक्ति',
+    'panel.binding.scope.document': 'दस्तावेज़',
+    'panel.bindings.title': 'मर्ज फ़ील्ड',
+    'panel.bindings.titleCount': 'मर्ज फ़ील्ड ({n, number})',
+    'panel.bindings.intro': "तय करता है कि प्रत्येक पंक्ति के पाठ में हर '{'नाम'}' में क्या आए।",
+    'panel.bindings.uses': 'प्रत्येक पंक्ति के पाठ में उपयोग: {n, number}',
+    'panel.bindings.unused': 'उपयोग नहीं हुआ',
+    'panel.bindings.unusedNote': 'प्रत्येक पंक्ति का पाठ अभी इसका उपयोग नहीं करता। ज़रूरत न हो तो इसे हटाएँ।',
+    'panel.bindings.delete': 'हटाएँ',
+    'panel.bindings.cancel': 'रद्द करें',
+    'panel.bindings.deleteConfirm.title': '“{name}” हटाएँ?',
+    'panel.bindings.deleteConfirm.unused': 'इसका कहीं उपयोग नहीं हुआ है।',
+    'panel.bindings.deleteConfirm.same':
+      'प्रत्येक पंक्ति के पाठ में {wire} ({n, number} उपयोग) पंक्ति का “{key}” ही पढ़ता रहेगा। इसका फ़ॉर्मेट और रिक्त प्लेसहोल्डर डेटा आइटम की अपनी सेटिंग पर लौट आएँगे।',
+    'panel.bindings.deleteConfirm.other':
+      'प्रत्येक पंक्ति के पाठ में {wire} ({n, number} उपयोग) डेटा कुंजी “{key}” के बजाय पंक्ति का “{name}” पढ़ेगा।',
+    'panel.bindings.deleteConfirm.document':
+      'प्रत्येक पंक्ति के पाठ में {wire} ({n, number} उपयोग) दस्तावेज़ के “{key}” के बजाय पंक्ति का “{name}” पढ़ेगा।',
+    'panel.bindings.add': '+ मर्ज फ़ील्ड जोड़ें',
+    'panel.bindings.name': 'नाम',
+    'panel.bindings.name.hint':
+      'ASCII अक्षर, अंक, _ (अंडरस्कोर) और . (पूर्णविराम) का उपयोग करें। उदाहरण: price',
+    'panel.bindings.name.charset': 'इस नाम में ऐसे वर्ण हैं जिनका उपयोग नहीं हो सकता।',
+    'panel.bindings.name.taken': 'यह नाम पहले से उपयोग में है।',
+    'panel.bindings.addSubmit': 'जोड़ें',
+    'panel.overflowText.note':
+      "जब तय ऊँचाई वाली सूची में सभी पंक्तियाँ नहीं समातीं, तो उसकी अंतिम पंक्ति यह पाठ दिखाती है। '{'count'}' की जगह न दिखाई गई पंक्तियों की संख्या आती है। खाली छोड़ने पर “+'{'count'}'” पर लौट आता है।",
     'panel.itemSection.text.title': 'टेक्स्ट',
     'panel.itemSection.typesetting.title': 'ऊर्ध्वाधर टेक्स्ट और पंक्ति-विराम',
     'panel.itemSection.typesetting.inheritHelp':

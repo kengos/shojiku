@@ -28,6 +28,7 @@ import { SideButtonField } from './fields';
 import { DOCUMENT_SCOPE } from './model';
 import { PickerPopover } from './PickerPopover';
 import { filterOptions, type PickerOption } from './pickerModel';
+import { useReseedKey } from './useReseedKey';
 
 const NO_OPTIONS: readonly PickerOption[] = [];
 
@@ -76,6 +77,7 @@ export function FieldPicker({
   const { open, setOpen, rootRef } = usePopover();
   const [query, setQuery] = useState('');
   const id = useId();
+  const [inputKey, reseed] = useReseedKey(value);
   // Offerability is settled BEFORE the search filter, so an empty offer reads
   // as "no fields" rather than as a query that matched nothing.
   const offered = options.length + documentOptions.length;
@@ -142,14 +144,17 @@ export function FieldPicker({
         {/* `w-full` keeps the input inside its shrunken flex cell: an unsized
             input takes its default ~20ch and overflows the cell. */}
         <input
-          key={value}
+          key={inputKey}
           id={id}
           type="text"
           className={`${INPUT} w-full min-w-0 rounded-r-none`}
           defaultValue={value}
+          // A commit the caller refuses (an emptied required key) leaves the
+          // value as it was; the reseed puts the input back on it.
           onBlur={(event) => {
             if (event.currentTarget.value !== value) {
               onCommit(event.currentTarget.value);
+              reseed();
             }
           }}
         />

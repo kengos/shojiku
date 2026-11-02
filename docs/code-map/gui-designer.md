@@ -730,7 +730,9 @@ services/props; nothing in the component reads the singleton.
   the canvas dnd pipeline over real inspect geometry, zoomed render
   scale, the page-setup size table against the engine, and the names
   `ids/` writes (a named target resolving an anchor, a rename it follows, a
-  duplicated group with no `anchor_ambiguous_target`).
+  duplicated group with no `anchor_ambiguous_target`), and a list's
+  declaration format and `overflowText` written by the panel's own ops
+  (read off the raster: a list's box carries no line metrics).
 - `src/integration/sampleData.test.ts` — sample-data generation and the
   workshop stub against the real engine: params generated from a bundled
   definitions schema validate with no `params_*` diagnostics, and a

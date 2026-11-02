@@ -106,6 +106,15 @@ describe('FieldPicker', () => {
     expect(onCommit).toHaveBeenCalledWith('custom.key');
   });
 
+  it('goes back to the value when the caller refuses a typed commit', () => {
+    // The caller writes nothing, so `value` stays: the input must not keep
+    // showing text the document does not hold.
+    const onCommit = draw('order.code', OPTIONS);
+    fireEvent.blur(screen.getByLabelText('Data key'), { target: { value: '' } });
+    expect(onCommit).toHaveBeenCalledWith('');
+    expect((screen.getByLabelText('Data key') as HTMLInputElement).value).toBe('order.code');
+  });
+
   it('closes on Escape without committing', () => {
     const onCommit = draw('', OPTIONS);
     fireEvent.click(screen.getByRole('button', { name: 'Choose a data field' }));

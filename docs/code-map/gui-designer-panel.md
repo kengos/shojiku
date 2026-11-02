@@ -1110,7 +1110,9 @@ presence is not a text binding.
   for a key no offer matches). The badge moved there from between the input and
   the ▼: those two are one control now and share one border, and a rounded
   accent pill can be flush against neither. Row-scoped pickers split
-  row/document sections (free entry never re-scopes). `panel/PickerPopover.tsx` — the open popover, shared
+  row/document sections (free entry never re-scopes). Typed entry remounts
+  the input after its commit (`useReseedKey`), so a commit the caller
+  refuses puts the input back on the value. `panel/PickerPopover.tsx` — the open popover, shared
   with the chip editor's field menus (`text/FieldMenuButton`) so the two
   surfaces cannot drift into two looks: search, the three offer states,
   the rows (label / key / localized type / sample / document badge) and
@@ -1568,7 +1570,37 @@ presence is not a text binding.
   document does not carry as a map), and a kind-specific `footer` after the
   binding — a `repeat_flow`'s `CardGapField.tsx` (its own top-level `gap`, the
   n-up sheet's `relativeGapOp` ingress: `%` allowed, a negative 0, garbage
-  refused, empty removes).
+  refused, empty removes). `listSourceOwnedKeys()` is the list keys its own
+  field edits (`text`, the key the entry-text field writes).
+- `panel/ListMoreSettings.tsx` — under a `list`'s source section (mounted by
+  `ContentSection`): `listedFields({kind:'item', type:'list'},
+  listSourceOwnedKeys())` capability-filtered, `bindings` to
+  `BindingsDisclosure` and the rest (`overflowText`) to a LIVE
+  `SchemaDisclosure` (`unset: 'initial'`, so `+{count}` is the placeholder;
+  a footer note on what the line does; one op per edit at the list).
+- `panel/BindingsDisclosure.tsx` — 「差し込みの設定（{n}件）」, n = the
+  declarations (existence, kept while open): the intro line, one
+  `BindingCard` per declaration, and the add button / `BindingAddForm`. Data
+  keys offered = the list entry's fields (`pickerOptions` over the list's
+  `data.key`), formats = `boundFormatRows` for each card's key.
+- `panel/BindingCard.tsx` — one declaration: `{name}` read-only (no rename),
+  the use line or the 使われていません chip + note, the entry fields through
+  `SchemaFields` (`fieldEditOp` at `bindings.<name>`; an entry that is not a
+  map draws no fields), and 削除 behind an inline confirm whose sentence has
+  four arms (unused / reads the document / key == name / key != name).
+  `ContentSection` keys the mount by path, so an open form or confirm never
+  follows the selection to another list.
+- `panel/BindingAddForm.tsx` — data key FIRST (`FieldPicker`), the name
+  filled from `suggestedName` while the author has not typed one, the charset
+  hint, the refusal reason under the field, 追加 disabled until both are set
+  and the name is free; one `putValue` per add.
+- `panel/bindingsModel.ts` — `entryFields` (the catalog's declaration fields,
+  the required `key` first), `readDeclarations`, `usesOf` (the `{name}` count
+  through `parseSegments`), `suggestedName` / `nameProblem` (the charset is a
+  `chipWire` round trip, never a regex), `addDeclarationOp` (an entry in
+  the map, or the whole map where `bindings:` holds none — `~` included) and
+  `deleteDeclarationOp` (the whole entry, the map with the last one — never
+  `key` alone).
 - `panel/ColumnForm.tsx` — the single-column form a canvas click on a
   `…columns[n]` cell opens (a `cell:` column adds the jump into its
   `…cell` frame): label, the content block (`ColumnContentFields`), the
@@ -2378,7 +2410,8 @@ draft) and the `defaults.style` section (`DefaultsStyleSection`, live).
   read-only / nothing), lays the blocks out, encodes the display a control
   reports, and reports a `FieldEdit` only when the value moves — a refused
   entry, a re-pick and a blur over the same display (`12` over the number
-  12) report nothing, the guard derived from `decode` like `shows`.
+  12) report nothing, the guard derived from `decode` like `shows`; emptying
+  a `required` field (a declaration's `key`) reports nothing either.
 - `schema/listedFields.ts` — what a surface lists: `listedFields(surface,
   owned)` = `surfaceFields` less the owned keys (each surface's ONE
   owned-keys function, read off the table its rows render from), and
@@ -2387,7 +2420,7 @@ draft) and the `defaults.style` section (`DefaultsStyleSection`, live).
 - `schema/SchemaDisclosure.tsx` — 「その他の設定」, closed by default; closed
   with values it says 「（{n}件設定済み）」 (n = listed keys the target sets),
   open it drops the count; the open state is never written; no fields → no
-  disclosure.
+  disclosure; an optional `footer` sits under the fields.
 - Tests: `fieldEdit.test.ts` (pure), `catalogLabels.test.ts` (every key a
   surface can list has an en label, every style enum spelling a word, the
   new strings in all six catalogs, the group partition),
@@ -2401,14 +2434,20 @@ draft) and the `defaults.style` section (`DefaultsStyleSection`, live).
   authors nothing, and the draft host: nothing written until save, then one
   undo step). The two hosts are `testkit/schemaHost.tsx`.
   `listedFields.test.ts` is the partition gate: per surface, owned ∩
-  listed = ∅, owned ∪ listed = the catalog's keys, sizes 16 / 7 pinned.
+  listed = ∅, owned ∪ listed = the catalog's keys, sizes 16 / 7 / 2 pinned.
   The mounts: `panel/StyleFormMore.test.tsx` (through `StylesManager`:
   closed + count, draft until Save as one undo step with the rows' edits,
   per-side map read-only and kept, create, capabilities) and
   `panel/DefaultsStyleMore.test.tsx` (placement, 「未設定（…）」, one
   key per edit, clear removes, undo, capabilities);
   `panel/DocumentSettingsPage.test.tsx` holds the capability wiring from
-  the page down to both disclosures.
+  the page down to both disclosures. `panel/ListMoreSettings.test.tsx`
+  drives a list's two disclosures through `PropertyPanel` (closed + counts,
+  overflowText's initial / one line / undo, each card field as one op, the
+  required key kept, the unused chip, each delete-confirm arm, add with the
+  suggested name and its refusals, capabilities); `bindingsModel.test.ts`
+  the pure half; `integration/wasm.test.ts` renders a list whose
+  declaration format and overflowText were written by these ops.
 
 ## Diagnostics
 

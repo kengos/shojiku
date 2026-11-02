@@ -83,6 +83,14 @@ const OPTION_KEYS: Readonly<Record<string, Readonly<Record<string, string>>>> = 
     allow_end: 'style.value.hangingPunctuation.allow_end',
     force_end: 'style.value.hangingPunctuation.force_end',
   },
+  // Not a style key: a binding declaration's `scope`, which the catalog
+  // section draws with the same select (`bindingsModel`). Looked up by the
+  // key's name alone, like every row here: a `scope` elsewhere meaning
+  // something else would need its own wording.
+  scope: {
+    element: 'panel.binding.scope.element',
+    document: 'panel.binding.scope.document',
+  },
 };
 
 /** A translate function of the shape `useI18n().t`. */

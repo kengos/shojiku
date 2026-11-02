@@ -1124,6 +1124,36 @@ export const ja: LanguageCatalog = {
       '上下左右で別々の枠線が設定されています。この画面では変更できません。',
     'panel.schema.readOnly.value': 'この画面では表示も変更もできない値が設定されています。',
     'panel.schema.readOnly.where': 'テンプレートのファイル（YAML）で編集できます。',
+    'panel.field.key': 'データキー',
+    'panel.field.scope': '読む範囲',
+    'panel.binding.scope.element': '各行',
+    'panel.binding.scope.document': '文書',
+    'panel.bindings.title': '差し込みの設定',
+    'panel.bindings.titleCount': '差し込みの設定（{n, number}件）',
+    'panel.bindings.intro': "各行の表示の '{'名前'}' に何を入れるかを決めます。",
+    'panel.bindings.uses': '各行の表示で{n, number}か所に使用中',
+    'panel.bindings.unused': '使われていません',
+    'panel.bindings.unusedNote':
+      '各行の表示でまだ使われていません。使わない場合は削除してください。',
+    'panel.bindings.delete': '削除',
+    'panel.bindings.cancel': 'キャンセル',
+    'panel.bindings.deleteConfirm.title': '「{name}」を削除しますか？',
+    'panel.bindings.deleteConfirm.unused': 'どこでも使われていません。',
+    'panel.bindings.deleteConfirm.same':
+      '各行の表示の {wire}（{n, number}か所）は、このまま行のデータの「{key}」を読みます。フォーマットと空欄時の表示は、データ項目の設定に戻ります。',
+    'panel.bindings.deleteConfirm.other':
+      '各行の表示の {wire}（{n, number}か所）は、データキー「{key}」ではなく、行のデータの「{name}」を読むようになります。',
+    'panel.bindings.deleteConfirm.document':
+      '各行の表示の {wire}（{n, number}か所）は、文書のデータの「{key}」ではなく、行のデータの「{name}」を読むようになります。',
+    'panel.bindings.add': '＋ 差し込みの設定を追加',
+    'panel.bindings.name': '名前',
+    'panel.bindings.name.hint':
+      '半角の英字・数字と、_（アンダーバー）・.（ピリオド）が使えます。例: price',
+    'panel.bindings.name.charset': '使えない文字が入っています。',
+    'panel.bindings.name.taken': 'この名前はもう使われています。',
+    'panel.bindings.addSubmit': '追加',
+    'panel.overflowText.note':
+      "高さを決めたリストに入りきらない行があるとき、最後の1行がこの文になります。'{'count'}' には出せなかった件数が入ります。空欄にすると「+'{'count'}'」に戻ります。",
     'panel.itemSection.text.title': '文字',
     'panel.itemSection.typesetting.title': '縦書き・禁則',
     'panel.itemSection.typesetting.inheritHelp':

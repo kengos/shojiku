@@ -50,6 +50,20 @@ platform binaries.
   in the file. The grid's size and alignment fields also stop showing a value
   inherited from a container or the document defaults, which the grid never
   uses.
+- **The Designer reaches the style keys and list settings it had no field
+  for.** A named style, the document's default text and a list each gain a
+  closed "More settings" disclosure under their own fields, listing the keys
+  those fields do not edit — letter spacing, underline, borders, vertical
+  writing, line breaking and opacity on a style; the last line a list with a
+  fixed height draws when its rows do not fit (`overflowText`) — drawn from
+  the engine's key catalog. A key the connected engine does not support is
+  left out, and a value the disclosure cannot show stays as written. Closed,
+  it says how many of its keys are set. A list also gets "Merge fields", its
+  `bindings:` declarations: each `{name}` in the entry text picks its data
+  key, format, blank placeholder and which data it reads, says how often the
+  text uses it, and can be added with the name taken from the picked key, or
+  deleted with a note on what the text reads afterwards. Until now these
+  could only be written in the file.
 
 ### Changed
 

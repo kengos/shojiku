@@ -2,12 +2,14 @@
 // key the engine adds to a surface must arrive with a label (else the section
 // would show `panel.field.<key>`), every enum spelling a style surface offers
 // with its localized wording, and the group table must partition exactly the
-// keys a style disclosure can list. Every new string is in all six catalogs.
+// keys a style disclosure can list; a list declaration's fields and reading
+// scopes are worded too. Every new string is in all six catalogs.
 
 import { styleKeys, surfaceFields, surfaceKeys } from '@shojiku/designer-core';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CATALOG as CATALOG } from '../../i18n/catalog';
 import { translate } from '../../i18n/render';
+import { entryFields } from '../bindingsModel';
 import { INHERITED_STYLE_FIELDS } from '../defaultsModel';
 import { STYLE_FIELDS } from '../styleFieldSpecs';
 import { styleOptionLabel } from '../styleLabels';
@@ -60,6 +62,48 @@ describe('labels', () => {
       ]);
     }
     expect(Object.keys(CATALOG)).toHaveLength(6);
+  });
+});
+
+describe('the list declaration cards', () => {
+  const [bindings] = surfaceFields({ kind: 'item', type: 'list' }, COMPOSITES);
+  const entry = entryFields(bindings);
+
+  it('label every field of a declaration, and word every reading scope', () => {
+    expect(entry.map((field) => field.key).sort()).toEqual([
+      'format',
+      'key',
+      'placeholder',
+      'scope',
+    ]);
+    expect(entry.filter((field) => !Object.hasOwn(en, `panel.field.${field.key}`))).toEqual([]);
+    const scope = entry.find((field) => field.key === 'scope')?.spec;
+    expect(scope).toEqual({ kind: 'enum', values: ['element', 'document'] });
+    expect(['element', 'document'].map((value) => styleOptionLabel(t, 'scope', value))).toEqual([
+      'Each row',
+      'Document',
+    ]);
+  });
+
+  it('carry every string they added in all six languages', () => {
+    const added = Object.keys(en).filter(
+      (key) =>
+        key.startsWith('panel.bindings.') ||
+        key.startsWith('panel.binding.') ||
+        ['panel.field.key', 'panel.field.scope', 'panel.overflowText.note'].includes(key),
+    );
+    expect(added).toHaveLength(24);
+    for (const [language, catalog] of Object.entries(CATALOG)) {
+      expect([language, added.filter((key) => !Object.hasOwn(catalog.chrome, key))]).toEqual([
+        language,
+        [],
+      ]);
+    }
+  });
+
+  it('show the literal braces their copy names', () => {
+    expect(t('panel.bindings.intro')).toBe('Decides what goes into each {name} in the entry text.');
+    expect(t('panel.overflowText.note')).toContain('back to “+{count}”');
   });
 });
 
