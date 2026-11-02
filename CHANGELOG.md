@@ -283,6 +283,12 @@ platform binaries.
   request that moves one of those pins ahead of the image (a `wasm-bindgen`
   bump, say) fetches that checksum-checked release into the cargo volume
   instead of running the image's older copy.
+- `make docker:scan` runs a trivy image pinned by digest
+  (`TRIVY_IMAGE` in the Makefile) instead of `aquasec/trivy:latest`. The
+  scanner is handed the docker socket, so a moved tag no longer reaches the
+  host. The vulnerability database is still downloaded fresh on every scan;
+  a new trivy release, with its newer detection logic, waits for someone
+  to bump the pin by hand.
 
 ## [0.3.0] - 2026-10-14
 
