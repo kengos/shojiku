@@ -294,7 +294,22 @@ CARGO_DENY_SHA256_aarch64 := 995c82be0defc7a025cae49a2aa2644ce8245c9a3318fc41039
 TOOLCHAIN_TAG    := 1.99.0-llvmcov0.9.1
 TOOLCHAIN_DIGEST := sha256:0d631062b245b823cf952225f77621d83290161402ba86b045a6dafb06479b81
 RUST_IMAGE   := ghcr.io/kengos/shojiku-toolchain@$(TOOLCHAIN_DIGEST)
-TRIVY_IMAGE  := aquasec/trivy:latest
+# Pinned to a DIGEST like SYFT_IMAGE below. `docker:scan` hands this image the
+# docker socket, root on the docker host (the CI runner included), so a mutable
+# tag would let whoever moves it run anything there. Pinning the scanner does
+# not age the scan: the database is fetched separately from the binary, and
+# `_docker-scan` runs it `--rm` with no cache volume, so every run downloads
+# it fresh. What a pin holds back is the binary's own detection logic (new
+# distro releases, matching fixes); worse, trivy publishes the database per
+# schema version, and once it moves to a new schema the old one can stop
+# getting new advisories without the scan failing. So bump it on trivy
+# releases. Dependabot cannot parse a Makefile; bump by hand:
+#   docker buildx imagetools inspect aquasec/trivy:<X.Y.Z>
+# and copy its top-level `Digest:` (the multi-arch index; the per-platform
+# `Name: …@sha256:` lines under `Manifests:` are not it) after the new tag.
+# Change the tag and the digest together: docker pulls by the digest alone,
+# so a new tag over an old digest still runs the old scanner.
+TRIVY_IMAGE  := aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c
 # Pinned to a DIGEST, and the pin is load-bearing: `make sbom:check` compares
 # the committed inventories against a fresh scan byte-for-byte, so a floating
 # tag would red the gate on a tree nobody touched the day anchore changes a
@@ -304,9 +319,7 @@ TRIVY_IMAGE  := aquasec/trivy:latest
 # generator itself substitutable, which is the same class of gap the rest of
 # this change closes. Same form as the distroless runtime base in
 # docker/Dockerfile. Dependabot cannot parse a Makefile, so bumping it is
-# manual — as with RUST_VERSION. TRIVY_IMAGE above stays floating on purpose:
-# a scanner's value IS a fresh vulnerability database, and it feeds no
-# committed artifact.
+# manual — as with RUST_VERSION, and the same way as TRIVY_IMAGE above.
 SYFT_IMAGE   := anchore/syft:v1.46.0@sha256:473a60e3a58e29aca3aedb3e99e787bb4ef273917e44d10fcbea4330a07320bb
 # Parallel-session isolation. Image tags, container names and host ports are
 # GLOBAL to the docker daemon — a second worktree building the same tag retags
