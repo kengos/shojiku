@@ -5,19 +5,30 @@ name: Publish packages
 #
 #   * its name is in the `registries` input (so one bad upload never turns
 #     into five), and
-#   * its secret exists (the Docker Hub pattern — a fork or a half-configured
-#     repository skips rather than fails).
+#   * its credential is available — a fork or a half-configured repository
+#     skips rather than fails.
 #
-# NuGet and RubyGems are the exceptions to the second rule: they publish by
-# OIDC Trusted Publishing, so they have no secret to test. Their guard is
-# the repository itself, which keeps the fork-skips-rather-than-fails
-# property. RubyGems' trusted publisher is registered against THIS
-# workflow's filename, so renaming this file breaks the ruby push.
+# RubyGems, PyPI, npm, NuGet and crates.io publish by OIDC Trusted
+# Publishing: each registry trades this run's GitHub-signed identity for a
+# short-lived credential, so there is no long-lived token to leak or to
+# expire mid-release (the crates.io token did, during the 0.3.0 run). They
+# have no secret to test, so their guard is the repository itself, which
+# keeps the fork-skips-rather-than-fails property. Every registry's trusted
+# publisher is registered against owner `kengos`, repository `shojiku` and
+# THIS workflow's filename, so renaming this file breaks all five pushes.
+# PyPI, npm and crates.io are registered with the `release` environment as
+# well, which is why the `publish` and `crates` jobs run in it. A
+# deployment-branch rule set on that environment in the repository settings
+# is what limits those two jobs to `main` (and so also refuses a dry run
+# dispatched from another branch); nothing in this file can check that the
+# rule exists. The `php` job is outside it: its push uses a PAT, not OIDC.
 #
-# Secrets, all repository secrets, added as the release ceremony reaches
-# each registry:
-#   PYPI_API_TOKEN     account-scoped token (rescope to the project after)
-#   NPM_API_TOKEN      automation token (granular, All packages)
+# npm and crates.io register a trusted publisher only on a package that
+# already exists. So a NEW crate or a NEW npm package — a sixth platform,
+# say — is first published by hand with a personal token, then registered,
+# and only then published from here.
+#
+# Secrets, all repository secrets, for the registries that still need one:
 #   CENTRAL_API_TOKEN      Sonatype Portal user token as `user:password`
 #   GPG_PRIVATE_KEY    ASCII-armored private key (Central signs artifacts)
 #   GPG_PASSPHRASE     its passphrase
@@ -43,7 +54,7 @@ name: Publish packages
 # against the batch because nothing in it feeds them. A failing step aborts
 # the run, so the batch is re-dispatched WHOLE — which is why skipping what
 # is already published is the DEFAULT: gem reads "already been pushed" as
-# success, twine takes --skip-existing, npm reads E403 "previously
+# success, the PyPI action takes skip-existing, npm reads E403 "previously
 # published", nuget takes --skip-duplicate, and an existing Release is left
 # untouched. Maven is the one that does not self-heal — re-uploading a
 # published version leaves a deployment that FAILS validation in the Portal;
@@ -59,8 +70,9 @@ name: Publish packages
 # `dry_run` stops each step at the last action before its registry is
 # touched, but runs everything up to there for real: twine check, npm
 # publish --dry-run, gpg --verify over every Central signature,
-# sha256sum -c over the Release assets. It never mints the NuGet OIDC key,
-# which is single-use.
+# sha256sum -c over the Release assets. None of the credential-minting
+# steps runs on a dry run (the NuGet key is single-use); whether
+# `npm publish --dry-run` performs its own OIDC exchange is npm's call.
 on:
   workflow_dispatch:
     inputs:
@@ -89,6 +101,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # The environment PyPI's and npm's trusted publishers name. RubyGems and
+    # NuGet are registered without one.
+    environment: release
     # Job-level so every publish step sees it without repeating it in seven
     # `env:` blocks. Steps merge job env with their own.
     env:
@@ -133,11 +148,11 @@ jobs:
           echo "== inventory =="
           cat dist/release/packages/SHA256SUMS
 
-      # RubyGems publishes by OIDC Trusted Publishing, so like NuGet it has
-      # no secret to test and its guard is the repository itself. An API key
-      # is not merely unnecessary here, it does not WORK: the account has MFA
-      # enabled, so `gem push` blocks on a WebAuthn prompt no runner can
-      # answer and dies at the client timeout with `execution expired`
+      # RubyGems publishes by OIDC Trusted Publishing (see the header). An
+      # API key is not merely unnecessary here, it does not WORK: the
+      # account has MFA enabled, so `gem push` blocks on a WebAuthn prompt
+      # no runner can answer and dies at the client timeout with
+      # `execution expired`
       # (runs 30704974839 / 30705072838 / 30705395788 / 30724747817, all of
       # which looked like a network fault and were not).
       # SHA-pinned rather than tag-pinned like the actions around it: this
@@ -195,34 +210,53 @@ jobs:
             push_gem "$gem"
           done
 
-      - name: Publish to PyPI
-        if: contains(steps.sel.outputs.registries, 'python') && env.KEY != ''
-        env:
-          KEY: ${{ secrets.PYPI_API_TOKEN }}
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        # --skip-existing: a batch run that stops midway is re-dispatched as
-        # a whole, so every step has to tolerate the versions it already
-        # published. Without it PyPI 400s on the re-run and the steps after
-        # it never execute.
+      # `twine check` is the real metadata validation PyPI applies — a dry run
+      # that skipped it would prove nothing.
+      - name: Check the PyPI wheels (dry run)
+        if: contains(steps.sel.outputs.registries, 'python') && github.repository_owner == 'kengos' && inputs.dry_run
         run: |
-          if [ "$DRY_RUN" = true ]; then
-            # `twine check` is the real metadata validation PyPI applies —
-            # a dry run that skipped it would prove nothing.
-            echo "DRY RUN — not uploading. Running twine check instead:"
-            pipx run twine check dist/release/packages/python/*.whl
-            exit 0
-          fi
-          [ "$FORCE" = true ] && SKIP= || SKIP=--skip-existing
-          pipx run twine upload $SKIP dist/release/packages/python/*.whl
+          echo "DRY RUN — not uploading. Running twine check instead:"
+          pipx run twine check dist/release/packages/python/*.whl
 
-      - name: Publish to npm
-        if: contains(steps.sel.outputs.registries, 'npm') && env.KEY != ''
-        env:
-          KEY: ${{ secrets.NPM_API_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_API_TOKEN }}
+      # SHA-pinned for the same reason as the RubyGems action: it mints the
+      # publishing credential. It also signs a PEP 740 attestation per wheel.
+      # skip-existing: a batch run that stops midway is re-dispatched as a
+      # whole, so every step has to tolerate the versions it already
+      # published. Without it PyPI 400s on the re-run and the steps after it
+      # never execute.
+      - name: Publish to PyPI (OIDC Trusted Publishing)
+        if: contains(steps.sel.outputs.registries, 'python') && github.repository_owner == 'kengos' && !inputs.dry_run
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          packages-dir: dist/release/packages/python/
+          skip-existing: ${{ !inputs.force }}
+
+      # npm's OIDC exchange needs npm 11.5.1+ on Node 22.14+, which the
+      # runner's preinstalled Node is not guaranteed to carry.
+      - name: Set up Node for npm
+        if: contains(steps.sel.outputs.registries, 'npm') && github.repository_owner == 'kengos'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          # The newest 24.x rather than whichever one the runner has cached:
+          # early 24.x releases bundled an npm older than 11.5.1.
+          check-latest: true
+
+      # No token and no `.npmrc`: npm publish finds the OIDC environment on
+      # its own, exchanges it for a credential scoped to the one package, and
+      # attaches provenance because the repository and the packages are
+      # public.
+      - name: Publish to npm (OIDC Trusted Publishing)
+        if: contains(steps.sel.outputs.registries, 'npm') && github.repository_owner == 'kengos'
         run: |
-          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+          # An older npm does not attempt the exchange at all and dies on a
+          # bare E401/ENEEDAUTH, so say which requirement failed instead.
+          v=$(npm --version)
+          echo "npm $v"
+          [ "$(printf '%s\n' 11.5.1 "$v" | sort -V | head -1)" = 11.5.1 ] || {
+            echo "npm $v cannot publish by OIDC — trusted publishing needs 11.5.1 or newer"
+            exit 1
+          }
           cd dist/release/packages/npm
           # npm has no --skip-existing, and re-publishing a version is a hard
           # E403. A re-dispatched batch must survive that, so the already-
@@ -395,11 +429,26 @@ jobs:
   crates:
     if: contains(inputs.registries, 'crates') || inputs.registries == 'all'
     runs-on: ubuntu-latest
+    environment: release
     env:
       DRY_RUN: ${{ inputs.dry_run }}
       FORCE: ${{ inputs.force }}
+    # `id-token` is what the crates.io exchange reads; naming it drops the
+    # defaults, so `contents` is named for the checkout.
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v7
+
+      # SHA-pinned for the same reason as the RubyGems action. The token it
+      # returns lives 30 minutes (crates.io's fixed lifetime) and its post
+      # step revokes it when the job ends. Not minted on a dry run, which
+      # uploads nothing.
+      - name: crates.io credentials (OIDC Trusted Publishing)
+        if: github.repository_owner == 'kengos' && !inputs.dry_run
+        id: crates-auth
+        uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
 
       # The runner's preinstalled stable Rust, deliberately NOT the pinned
       # container the gates use: publishing packages source and re-verifies a
@@ -411,18 +460,23 @@ jobs:
       # ordering; the version is printed so a failure names the toolchain.
       - name: Publish to crates.io
         env:
-          KEY: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-auth.outputs.token }}
         working-directory: engine
         run: |
+          # Taken before anything else so the deadline below counts from
+          # (just after) the moment the token was minted.
+          minted=$(date +%s)
+          # The latest second after that a publish may still start (the
+          # publish loop says why it is 20 minutes and not 30).
+          last_start=1200
           cargo --version
           if [ "$DRY_RUN" = true ]; then
             echo "DRY RUN — packaging and verifying every crate, uploading none:"
             cargo publish --workspace --dry-run --locked
             exit 0
           fi
-          if [ -z "$KEY" ]; then
-            echo "CARGO_REGISTRY_TOKEN is not set — skipping (fork or half-configured repo)"
+          if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
+            echo "no crates.io credential (not the kengos repository) — skipping"
             exit 0
           fi
           # NOT `cargo publish --workspace`: it is all-or-nothing. Finding one
@@ -431,13 +485,20 @@ jobs:
           # publishes NOTHING further, so it cannot resume a partial release.
           # It has to resume, because crates.io rate-limits NEW crates
           # (observed: a burst of 5, then roughly one per 10 minutes), and this
-          # workspace has 17. So: publish one at a time, skip what is already
-          # up, and wait out a 429 rather than dying on it. (17 members, 16 of
-          # them publishable: `shojiku-mcp` sets `publish = false` because it
-          # embeds files from outside its own directory, which a crates.io
-          # tarball cannot carry.) `cargo publish -p`
-          # waits for each crate to be live before returning, which is what
-          # keeps a dependency available for the crate that follows it.
+          # workspace has 17, and because the short-lived token can run out
+          # before the last crate. So: publish one at a time, skip what is
+          # already up, and stop rather than die mid-way: one 429 in the first
+          # 9 minutes is waited out, anything later leaves the rest to a
+          # re-dispatch. A NEW crate cannot be published from here at all: a
+          # trusted publisher can only be registered on a crate that already
+          # exists, so its first version is a manual `cargo publish` with a
+          # personal token, then the registration, then a re-dispatch. (17
+          # members, 16 of them publishable: `shojiku-mcp` sets
+          # `publish = false` because it embeds files from outside its own
+          # directory, which a crates.io tarball cannot carry.)
+          # `cargo publish -p` waits for each crate to be live before
+          # returning, which is what keeps a dependency available for the
+          # crate that follows it.
           #
           # The ORDER is computed from cargo's own metadata rather than listed
           # here, so adding a crate cannot leave a stale sequence behind.
@@ -473,18 +534,36 @@ jobs:
             [ "$code" = 200 ] && { echo "== $c@$ver is already on crates.io — skipping"; continue; }
             attempt=1
             while :; do
+              # The token dies 30 minutes after it was minted, and the upload
+              # comes at the END of a publish, after packaging and the verify
+              # build. So no publish STARTS later than 20 minutes in; the rest
+              # is left to a re-dispatch, which mints a fresh token and
+              # resumes where this run stopped. A build slower than the
+              # remaining 10 minutes still fails, on the auth branch below.
+              if [ $(( $(date +%s) - minted )) -ge $last_start ]; then
+                echo "the crates.io token is about to expire — stopping before $c"
+                break 2
+              fi
               echo "== publishing $c (attempt $attempt)"
               out=$(cargo publish -p "$c" --locked 2>&1) && { echo "$out"; break; }
               echo "$out"
               case "$out" in
                 *"429"*|*"Too Many Requests"*)
-                  [ "$attempt" -ge 8 ] && { echo "still rate-limited after $attempt tries"; break 2; }
                   # The window the registry names is ~10 min; overshoot it
-                  # slightly rather than racing the same 429 again.
+                  # slightly rather than racing the same 429 again — unless
+                  # the token would not outlive the wait.
+                  [ $(( $(date +%s) - minted + 660 )) -ge $last_start ] && {
+                    echo "rate-limited, and the crates.io token would expire during the wait — stopping"
+                    break 2
+                  }
                   echo "rate-limited — waiting 11 minutes"
                   sleep 660
                   attempt=$((attempt + 1)) ;;
                 *"already exists"*) echo "  (landed despite the error — continuing)"; break ;;
+                # cargo reports an HTTP error as "(status 403 Forbidden)".
+                *"status 401"*|*"status 403"*)
+                  echo "crates.io refused the credential for $c — it expired, the crate has no trusted publisher for this workflow, or the crate is NEW (its first version has to be published by hand)"
+                  break 2 ;;
                 *) echo "publish of $c failed for a non-rate-limit reason"; break 2 ;;
               esac
             done
@@ -506,7 +585,7 @@ jobs:
           done
           [ -z "$missing" ] || {
             echo "not published at $ver:$missing"
-            echo "re-dispatch after the rate-limit window; publishing is resumable."
+            echo "re-dispatch (after the rate-limit window, if one was hit); publishing is resumable."
             exit 1
           }
           echo "all workspace crates are on crates.io at $ver"
