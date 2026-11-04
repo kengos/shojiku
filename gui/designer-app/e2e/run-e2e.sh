@@ -27,9 +27,13 @@ until curl -fso /dev/null "http://localhost:$PORT/"; do
   sleep 1
 done
 
+# The deployment's _headers goes in read-only: the suite reads the Designer's
+# production CSP out of it (e2e/csp.js) and runs every test under that policy.
 docker run --rm \
   --add-host=host.docker.internal:host-gateway \
   -e BASE_URL="http://host.docker.internal:$PORT" \
+  -e CSP_HEADERS_FILE=/headers/_headers \
+  -v "$PWD/site/public/_headers:/headers/_headers:ro" \
   -v "$PWD/gui/designer-app/e2e:/work" -w /work \
   "$PLAYWRIGHT_IMAGE" \
   sh -c 'npm install --no-audit --no-fund >/dev/null 2>&1 && npx playwright test'

@@ -1,9 +1,27 @@
 // Minimal Playwright config for the app golden path. BASE_URL points at the
 // nginx container serving the built + assembled app (run-e2e.sh sets it).
+const { readdirSync, readFileSync } = require('node:fs');
+const path = require('node:path');
 const { defineConfig } = require('@playwright/test');
 
+// A test file that takes `test` from Playwright (`@playwright/test`, or its
+// `playwright/test` alias) instead of `./csp` runs without the production CSP
+// and passes whatever the policy blocks — so the run refuses to start rather
+// than letting one in. Every script under
+// tests/ is read, subdirectories included, since any of them can hold tests; a
+// helper outside tests/ that re-exports Playwright's `test` is not looked at.
+const testDir = path.join(__dirname, 'tests');
+const withoutCsp = readdirSync(testDir, { recursive: true })
+  .filter((f) => /\.[cm]?[jt]sx?$/.test(f))
+  .filter((f) => /['"]@?playwright\/test['"]/.test(readFileSync(path.join(testDir, f), 'utf8')));
+if (withoutCsp.length > 0) {
+  throw new Error(
+    `take test/expect from e2e/csp.js, not Playwright directly: ${withoutCsp.join(', ')}`,
+  );
+}
+
 module.exports = defineConfig({
-  testDir: './tests',
+  testDir,
   timeout: 90000,
   // Deliberately NO retries. A retry policy written before a single observed
   // flake is a guess, and it is the kind that makes a gate fail-open — so a red

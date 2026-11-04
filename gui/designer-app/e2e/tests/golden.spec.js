@@ -1,8 +1,9 @@
 // The app golden path: open the standalone shell, pick a preset from the
 // catalog, let the embedded Designer boot the engine + paint a preview, and
-// export the template — asserting the loop held with no console/page errors.
+// export the template — asserting the loop held with no console/page errors,
+// under the production CSP (`../csp`).
 const { readFileSync } = require('node:fs');
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('../csp');
 
 test('open a preset, preview it client-side, and export', async ({ page }) => {
   const consoleErrors = [];

@@ -19,6 +19,8 @@
 # The Designer keeps ITS policy verbatim (gui/designer-app/public/_headers is
 # the canonical text; src/headers.test.ts pins the two in sync). `!` detaches
 # the site-scope value so the two CSPs never stack into an intersection.
+# `make gui:e2e` runs every Designer browser test under the policy this file
+# resolves to for /designer/ (gui/designer-app/e2e/csp.js reads it, `!` and all).
 /designer/*
   ! Content-Security-Policy
   Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://raw.githubusercontent.com; worker-src 'self'; frame-src blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
