@@ -39,7 +39,7 @@ slices.
 
 - **`<scope>:verify`** is that scope's whole bar — budget + lint + tests
   plus whatever else the scope needs (100% coverage, cargo-deny, the
-  key-catalog drift gate, example byte-compare and the WASM build for
+  publish dry-run, the key-catalog drift gate, example byte-compare and the WASM build for
   `engine`). It is the slow,
   conclusive one.
 - **`:budget` / `:lint` / `:test`** are the fast slices to iterate on.
@@ -49,6 +49,12 @@ slices.
   second, verbose spelling of a target to pick between.
 - **`make verify`** is every scope at once: the full CI mirror, and the
   bar a change must clear before it ships.
+- **`make engine:package`** builds every published crate from the tarball
+  crates.io would receive (`cargo publish --workspace --dry-run`, the
+  release workflow's dry run, here on every pull request). It is the only
+  pull-request gate that notices a crate reading a file the tarball does
+  not carry — one outside the crate's directory, or one its manifest
+  excludes — which every in-place build still finds.
 - **`make quiet T=<target>`** gives anything that is not already a gate
   the same treatment.
 - **`make engine:map`** regenerates `docs/code-map/engine-structure.md`, the

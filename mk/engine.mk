@@ -37,10 +37,10 @@ engine\:update: ## Bump engine/ deps within their Cargo.toml ranges (then: git a
 # The scope's WHOLE bar, which is why it is the slow one; engine:budget /
 # engine:fmt / engine:clippy / engine:test are the fast slices to iterate on.
 # Same member set the old `verify:engine` ran, in the same order.
-engine\:verify: ## Verify engine/ — budget + lint + tests at 100% coverage, deny, examples, wasm
+engine\:verify: ## Verify engine/ — budget + lint + tests at 100% coverage, deny, package, examples, wasm
 	@$(call gate,_engine-verify,engine:verify)
 
-_engine-verify: _engine-lint _engine-coverage _engine-deny _reference-check _examples-check _engine-wasm
+_engine-verify: _engine-lint _engine-coverage _engine-deny _engine-package _reference-check _examples-check _engine-wasm
 
 
 engine\:lint: ## engine/ line budget + //! headers + toolchain pins + fmt --check + clippy -D warnings
@@ -205,6 +205,34 @@ _engine-deny:
 	@echo "== cargo deny =="
 	$(CARGO_IN_DOCKER) '$(PINNED_TOOLS) pinned_tool cargo-deny; \
 		cargo deny --all-features check advisories licenses bans sources'
+
+## ---- job: package ------------------------------------------------------
+
+# Does every published crate still build from its OWN tarball? A workspace
+# build cannot say: it compiles each crate in place, where a path that climbs
+# out of the package root (`include_str!("../../../examples/…")`) still
+# resolves. `cargo package` copies only what sits under the package root, so
+# such a crate builds in every gate here and fails on crates.io. This packages
+# each member and builds the extracted tarball.
+#
+# `--workspace`, not a `cargo package -p` loop: per crate, the path
+# dependencies resolve to the versions ALREADY on crates.io, so a crate using
+# a symbol its unreleased sibling just gained fails for no real reason. With
+# `--workspace` cargo resolves the siblings to their own fresh tarballs
+# (cargo 1.90+), whether or not that version has been published. Members with
+# `publish = false` (engine/mcp) are skipped. A version already on the index
+# is a warning on a dry run, not an error.
+#
+# `--allow-dirty` is the one flag the release workflow's dry run does not
+# pass. The checkout is mounted with its `.git`, so in a plain clone cargo
+# would refuse uncommitted edits — the normal state when you run a gate
+# before committing. CI's checkout is clean, so the flag skips nothing there.
+engine\:package: ## cargo publish --workspace --dry-run: every published crate builds from its own tarball
+	@$(call gate,_engine-package,engine:package)
+
+_engine-package:
+	@echo "== cargo publish --dry-run =="
+	$(CARGO_IN_DOCKER) 'cargo --version; cargo publish --workspace --dry-run --locked --allow-dirty'
 
 ## ---- wasm --------------------------------------------------------------
 

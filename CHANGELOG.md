@@ -289,6 +289,12 @@ platform binaries.
   host. The vulnerability database is still downloaded fresh on every scan;
   a new trivy release, with its newer detection logic, waits for someone
   to bump the pin by hand.
+- `make engine:package` builds every published crate from the tarball
+  crates.io would receive (`cargo publish --workspace --dry-run`), and CI
+  runs it on every pull request. A crate that reads a file the tarball does
+  not carry — one outside its own directory — used to pass every gate and
+  fail only on crates.io; it now fails in the pull request that adds it.
+  `engine:verify` and `make verify` include it.
 
 ## [0.3.0] - 2026-10-14
 

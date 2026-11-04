@@ -13,6 +13,7 @@
 #     make engine:verify        engine: budget + lint + tests
 #     make gui:verify           gui: budget + typecheck + lint + coverage
 #     make site:verify          make docker:verify      make sdk:<lang>:verify
+#     make engine:package       each published crate builds from its own tarball
 #     make make:check           the gate surface itself — a misnamed target, or
 #                               any tracked file naming a command that is gone
 #     make hooks:verify         the tracked .claude/hooks still decide — and
@@ -110,6 +111,9 @@ endif
 #   engine:lint       -> job "rust"      (budget + fmt --check + clippy)
 #   engine:coverage   -> job "coverage"  (100% lines, blocking)
 #   engine:deny       -> job "deny"
+#   engine:package    -> job "package"   (cargo publish --workspace --dry-run:
+#                                         every published crate builds from
+#                                         its own tarball)
 #   docker:*          -> job "docker"    (build, render+verify PDF, trivy scan)
 #   examples:check    -> job "examples"  (committed outputs == fresh render,
 #                                         plus skills/*/template == its example,
@@ -610,7 +614,7 @@ include mk/proof.mk
 include mk/investigate.mk
 .PHONY: _docker-build _docker-render _docker-scan _docker-toolchain _docker-verify _engine-budget \
         _engine-capi-dist _engine-capi-lib _engine-cli-bin _engine-cli-dist \
-        _engine-clippy _engine-coverage _engine-deny _engine-fmt _engine-fuzz \
+        _engine-clippy _engine-coverage _engine-deny _engine-fmt _engine-fuzz _engine-package \
         _engine-lint _engine-map-check _engine-napi _engine-preview _engine-render _engine-test _engine-toolchain _engine-verify _engine-wasm \
         _engine-wasm-e2e _examples-check _gui-budget _gui-e2e _gui-lint _gui-test \
         _gui-verify _make-check _proof _proof-deploy _proof-dotnet _proof-go \
@@ -630,7 +634,7 @@ include mk/investigate.mk
         engine\:capi-dist engine\:capi-lib engine\:cli-bin engine\:cli-dist \
         engine\:clippy engine\:coverage engine\:coverage-why engine\:deny \
         engine\:fmt engine\:format engine\:fuzz engine\:lint engine\:lock engine\:map engine\:map-check \
-        engine\:napi engine\:preview engine\:render engine\:test engine\:update \
+        engine\:napi engine\:package engine\:preview engine\:render engine\:test engine\:update \
         engine\:verify engine\:wasm \
         engine\:wasm-e2e examples\:check examples\:render gui\:budget gui\:dev \
         gui\:e2e gui\:format gui\:lint gui\:lock gui\:normalize-examples \
@@ -669,7 +673,7 @@ verify: ## Nearly the full local CI mirror — see the note above _verify
 # `skills:verify` needs host python + PyYAML, and this target's contract is
 # "Docker and make, nothing else". Both run in CI. Run them by hand before a
 # push; saying so beats a success line that overstates what was checked.
-_verify: _make-check _engine-lint _engine-wasm _engine-coverage _engine-deny _reference-check _examples-check _sbom-lint _version-check _engine-napi _gui-verify _site-gates _site-check _sdk-ruby-verify _sdk-python-verify _sdk-dotnet-verify _sdk-java-verify _sdk-js-verify _sdk-php-verify _sdk-go-verify _docker-verify
+_verify: _make-check _engine-lint _engine-wasm _engine-coverage _engine-deny _engine-package _reference-check _examples-check _sbom-lint _version-check _engine-napi _gui-verify _site-gates _site-check _sdk-ruby-verify _sdk-python-verify _sdk-dotnet-verify _sdk-java-verify _sdk-js-verify _sdk-php-verify _sdk-go-verify _docker-verify
 	@echo "\n✅ verify passed. NOTE: hooks:verify and skills:verify are CI-only (host jq / python) — run them too before pushing."
 
 # NAME labels the run; it defaults to T so `make quiet T=<x>` is unchanged.
