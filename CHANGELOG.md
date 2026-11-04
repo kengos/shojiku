@@ -302,6 +302,16 @@ platform binaries.
   images and PDF preview used to pass every browser test and show up only
   on the hosted preview. A new test places an image, which loads it through
   a `blob:` URL.
+- `make proof:published:image` checks the published container image the
+  way the other `proof:published:*` targets check the SDK packages: it
+  pulls the version's tag from ghcr.io and Docker Hub, fails unless both
+  hold the same digest with amd64 and arm64 images, and runs that digest
+  from each registry to check its version, render the bundled example, sign
+  and verify the result, and start the MCP server. The image publishing
+  workflow runs it right after each push, on both architectures, so an
+  image that was pushed but does not run turns that publish run red. The
+  tags are already public by then: the proof reports a broken image, it
+  does not hold one back. `make proof:published` now includes it.
 
 ## [0.3.0] - 2026-10-14
 

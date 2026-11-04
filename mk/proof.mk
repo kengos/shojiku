@@ -104,10 +104,21 @@ proof\:published\:crates: ## Published-install proof: cargo install shojiku-cli 
 _proof-published-crates:
 	@RUST_VER=$(RUST_VERSION) sh scripts/install-proof/published-crates.sh
 
+# The container image is the published artifact no package manager installs:
+# it is pulled by the tag a release pushes, from ghcr AND Docker Hub, and the
+# two must hold the same digest before it is run by that digest. Its inputs
+# (tag, expected digest, which registries) are in the script's header.
+# publish-image.yml runs this right after it pushes, on both architectures.
+proof\:published\:image: ## Published-install proof: the container image from ghcr and Docker Hub, by tag and digest
+	@$(call gate,_proof-published-image,proof:published:image)
+
+_proof-published-image:
+	@PYTHON_VER=$(PYTHON_VER) sh scripts/install-proof/published-image.sh
+
 proof\:published: ## All published-install proofs
 	@$(call gate,_proof-published,proof:published)
 
-_proof-published: _proof-published-python _proof-published-ruby _proof-published-dotnet _proof-published-java _proof-published-js _proof-published-php _proof-published-crates
+_proof-published: _proof-published-python _proof-published-ruby _proof-published-dotnet _proof-published-java _proof-published-js _proof-published-php _proof-published-crates _proof-published-image
 
 proof\:deploy: ## Run every deploy-recipe proof against the public registries (network; on demand)
 	@$(call gate,_proof-deploy,proof:deploy)

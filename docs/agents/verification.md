@@ -120,6 +120,32 @@ sibling dependency resolves to the version already published, so the
 loop goes red on a symbol the unreleased sibling just gained and says
 nothing true about the release.
 
+## A published artifact is proven from the registry
+
+Every gate above checks something built from this tree. What a user
+installs is the registry's copy, so the `proof:published:<x>` targets
+(`mk/proof.mk`) fetch that copy, with nothing local staged, and render
+through it. They need the network and a version that is already
+published, so `make verify` does not run them, and neither does any
+`ci.yml` job: a pull request that bumps the version would go red over a
+release that has not happened yet. Each one asks about ONE version,
+this tree's `[workspace.package]` unless `SHOJIKU_VERSION` names
+another, never the registry's "latest".
+
+`make proof:published:image` is the container image's arm. It resolves
+the tag in ghcr and Docker Hub, requires the same index digest in both
+(Docker Hub is mirrored from ghcr's digests, so the same bytes are the
+contract) and both architectures in it, then runs that digest from each
+registry: its user, its version, the default render, a sign-and-verify
+round trip and an MCP handshake, all with no network. It is also the
+one published proof with a CI home: `publish-image.yml`'s `proof` job
+runs it right after the push, on both architectures, pinned to the
+digest it just assembled, and checks Docker Hub only when the run
+pushed there (its secret is set). The tags are public by then, so a red
+proof reports a broken image rather than withholding it. The SDK
+packages have no such job yet, so they are run by hand once the
+registries hold the version.
+
 ## A green run does not expire on every edit
 
 The same reasoning applies to whatever you last ran, `make verify`

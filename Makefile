@@ -60,6 +60,15 @@
 #                               needs
 #     make clean:target         this tree's host engine/target
 #
+#   Is what we PUBLISHED usable? (network; asks the registry, not this tree)
+#     make proof:published      every published package and the image, at
+#                               this tree's version (SHOJIKU_VERSION=x.y.z
+#                               for another)
+#     make proof:published:image  the container image, by tag and digest, from
+#                               ghcr and Docker Hub: same digest in both, both
+#                               architectures, its version, nonroot, renders,
+#                               signs, verifies and answers MCP initialize
+#
 #   Where did it break?
 #     cat .make-logs/last-error.log                always the last failure
 #
@@ -107,7 +116,7 @@ ifneq (,$(findstring n,$(firstword -$(MAKEFLAGS))))
 $(error `make -n` executes this Makefile's $$(MAKE) delegations for real (it can take the gate lock and kill a running gate). Read the recipe instead, or run `make help`)
 endif
 #
-# Target -> CI job (.github/workflows/ci.yml):
+# Target -> CI job (.github/workflows/ci.yml unless another workflow is named):
 #   engine:lint       -> job "rust"      (budget + fmt --check + clippy)
 #   engine:coverage   -> job "coverage"  (100% lines, blocking)
 #   engine:deny       -> job "deny"
@@ -133,6 +142,12 @@ endif
 #                                         checklist — rather than reddening
 #                                         every dependabot PR that moves a
 #                                         lockfile, which dependabot cannot fix)
+#   proof:published:image -> publish-image.yml job "proof" (right after the
+#                                         push, once per architecture, pinned
+#                                         to the digest it just assembled. The
+#                                         other proof:published:* have NO job:
+#                                         they are run by hand once the
+#                                         registries hold the version)
 #   make:check        -> job "versions" (the make surface's own invariant: no
 #                                         misnamed target, no doc or script
 #                                         naming a target that does not exist.
@@ -619,8 +634,8 @@ include mk/investigate.mk
         _engine-wasm-e2e _examples-check _gui-budget _gui-e2e _gui-lint _gui-test \
         _gui-verify _make-check _proof _proof-deploy _proof-dotnet _proof-go \
         _proof-java _proof-js _proof-php _proof-published _proof-published-crates \
-        _proof-published-dotnet _proof-published-java _proof-published-js \
-        _proof-published-php _proof-published-python _proof-published-ruby \
+        _proof-published-dotnet _proof-published-image _proof-published-java \
+        _proof-published-js _proof-published-php _proof-published-python _proof-published-ruby \
         _proof-python _proof-ruby _reference-check _reference-docs _sbom-check _sbom-lint \
         _sdk-dotnet-lint _sdk-dotnet-test _sdk-dotnet-verify _sdk-go-lint \
         _sdk-go-test _sdk-go-verify _sdk-java-lint _sdk-java-test _sdk-java-verify \
@@ -641,8 +656,9 @@ include mk/investigate.mk
         gui\:serve gui\:shot gui\:test gui\:update gui\:verify help make\:check \
         proof proof\:deploy proof\:dotnet proof\:go proof\:java proof\:js \
         proof\:php proof\:published proof\:published\:crates \
-        proof\:published\:dotnet proof\:published\:java proof\:published\:js \
-        proof\:published\:php proof\:published\:python proof\:published\:ruby \
+        proof\:published\:dotnet proof\:published\:image proof\:published\:java \
+        proof\:published\:js proof\:published\:php proof\:published\:python \
+        proof\:published\:ruby \
         proof\:python proof\:ruby quiet reference\:check reference\:docs reference\:generate \
         sbom\:check sbom\:generate sbom\:lint sdk\:dotnet\:lint sdk\:dotnet\:test \
         sdk\:dotnet\:verify sdk\:go\:lint sdk\:go\:test sdk\:go\:verify \

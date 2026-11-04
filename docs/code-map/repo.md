@@ -728,10 +728,10 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   (RID / platform package / classifier) derives from `uname -m` — an
   arm64 payload filed under linux-x64 is correctly refused by the
   consuming runtime.
-  `published-*.sh` (`make proof:published` for all seven, or
+  `published-*.sh` (`make proof:published` for all of them, or
   `make proof:published:<lang>` for one) asks the same question
   of the REGISTRY copy and takes no local artifact at all; go needs none,
-  since its publish IS a repo tag. All seven ask about ONE version,
+  since its publish IS a repo tag. Every one asks about ONE version,
   resolved in `common.sh` as `SHOJIKU_VERSION` or else the tree's own
   `[workspace.package]` — never the registry's "latest", which during a
   release means the PREVIOUS release and made a bare run a true statement
@@ -739,6 +739,20 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   two publish channels — the composer package from Packagist and the CLI
   from the GitHub Release, archive chosen by `uname -m` — because that
   package drives a binary rather than carrying one.
+  `published-image.sh` (`make proof:published:image`, part of
+  `proof:published`) is the container image's arm: it resolves the tag
+  (`SHOJIKU_IMAGE_TAG`, default the proof version) in every repository of
+  `SHOJIKU_IMAGE_REPOS` (default ghcr and Docker Hub), requires one index
+  digest across them (and `SHOJIKU_IMAGE_DIGEST` when given) carrying
+  amd64 and arm64, then runs that digest from each: its user (the
+  nonroot uid), `--version`, the
+  default render, sign + verify with keys from `gen-test-keys.sh` (run
+  in the python image), and an MCP `initialize`; the image itself always
+  runs under `--network none`. It removes the image from the local store
+  before each pull, so a fresh runner downloads every registry's layers
+  (a workstation may still share base layers with other images).
+  `publish-image.yml`'s `proof` job runs it after the push on both
+  architectures; no other published proof has a CI job.
 - (The throwaway `spike/wasm-preview/` is removed — the production
   bindings shipped as `engine/wasm`; its baseline numbers live in
   docs/engine/features.md § Decision log.)
