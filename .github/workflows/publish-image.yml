@@ -90,6 +90,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      digest: ${{ steps.index.outputs.digest }}
+      hub: ${{ steps.hub.outputs.enabled }}
     steps:
       - uses: actions/download-artifact@v7
         with:
@@ -112,6 +115,14 @@ jobs:
             -t "${GHCR_IMAGE}:${{ inputs.tag }}" \
             $(for d in *; do echo "${GHCR_IMAGE}@sha256:$d"; done)
           docker buildx imagetools inspect "${GHCR_IMAGE}:${{ inputs.tag }}"
+
+      # The digest of the index just created, handed to the proof below so it
+      # checks THIS push rather than whatever the tag points at by then.
+      - name: Record the index digest
+        id: index
+        run: |
+          echo "digest=$(docker buildx imagetools inspect --format '{{.Manifest.Digest}}' \
+            "${GHCR_IMAGE}:${{ inputs.tag }}")" >> "$GITHUB_OUTPUT"
 
       # Everything below is Docker Hub, and every step is conditional on the
       # secret existing, so a fork or a not-yet-configured repository publishes
@@ -143,3 +154,42 @@ jobs:
             -t "${DOCKERHUB_IMAGE}:${{ inputs.tag }}" \
             $(for d in *; do echo "${GHCR_IMAGE}@sha256:$d"; done)
           docker buildx imagetools inspect "${DOCKERHUB_IMAGE}:${{ inputs.tag }}"
+
+  # The image's published-install proof (mk/proof.mk), asked while the push is
+  # fresh: pull the tag from every registry it went to,
+  # require one digest everywhere (and that it is the one assembled above), then
+  # run that digest — its version, the default render, a sign-and-verify round
+  # trip, an MCP handshake. Once per architecture, on its native runner,
+  # because each half is a separate build and the pull resolves to the
+  # runner's own. The tags are public before this job starts, so a red proof
+  # REPORTS a broken push; it does not keep the image from users.
+  proof:
+    name: proof ${{ matrix.platform }}
+    needs: manifest
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      # The proof resolves tags with `docker buildx imagetools`.
+      - uses: docker/setup-buildx-action@v3
+      - run: make proof:published:image
+        env:
+          # Raw output in the job log, as ci.yml sets for every gate: the
+          # digests and versions it printed are the evidence, and the quiet
+          # log under .make-logs/ goes away with the runner.
+          V: 1
+          SHOJIKU_IMAGE_TAG: ${{ inputs.tag }}
+          SHOJIKU_IMAGE_DIGEST: ${{ needs.manifest.outputs.digest }}
+          # Docker Hub is proven exactly when it was published to.
+          SHOJIKU_IMAGE_REPOS: >-
+            ${{ env.GHCR_IMAGE }}${{ needs.manifest.outputs.hub == 'true'
+            && format(' docker.io/{0}', env.DOCKERHUB_IMAGE) || '' }}
