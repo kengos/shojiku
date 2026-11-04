@@ -295,6 +295,13 @@ platform binaries.
   not carry — one outside its own directory — used to pass every gate and
   fail only on crates.io; it now fails in the pull request that adds it.
   `engine:verify` and `make verify` include it.
+- `make gui:e2e` runs every Designer browser test under the
+  Content-Security-Policy production serves the Designer with, read from
+  `site/public/_headers`, and a test fails on any CSP violation. The test
+  server sends no CSP, so a policy that blocked the Designer's own `blob:`
+  images and PDF preview used to pass every browser test and show up only
+  on the hosted preview. A new test places an image, which loads it through
+  a `blob:` URL.
 
 ## [0.3.0] - 2026-10-14
 

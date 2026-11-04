@@ -428,9 +428,19 @@ docs/designer-mount.md; hook registry: docs/designer-hooks.md.
   CSP — same-origin + `wasm-unsafe-eval`; `connect-src` additionally
   allows raw.githubusercontent.com for the picker) + an explicit
   standalone `config.json` (`{}`).
-- Browser e2e (`e2e/tests/golden.spec.js`, `make gui:e2e` — on-demand locally
+- Browser e2e (`e2e/tests/golden.spec.js` + `csp.spec.js`, `make gui:e2e` — on-demand locally
   and not part of `make verify`, but it IS a CI job, the only one that drives a
-  real browser and so the only one that reads layout): the golden path (preset → panel
+  real browser and so the only one that reads layout). **Every spec takes
+  `test`/`expect` from `e2e/csp.js`**, an auto fixture that resolves the
+  Designer's CSP out of the mounted `site/public/_headers` (Cloudflare's
+  `/designer/*` + `!` semantics, no copy), adds it to every document fetched
+  over the network via `context.route` (the nginx image sends none; a `blob:`
+  frame such as the PDF preview inherits its minting document's policy), and
+  fails the test on any `securitypolicyviolation` (`playwright.config.js`
+  refuses to start when a file under `tests/` names `@playwright/test`);
+  `csp.spec.js` holds the positive control (a
+  forbidden load IS reported) and an image placement, the `img-src blob:` path
+  (the golden path's PDF dialog walks `frame-src blob:`). The golden path (preset → panel
   edit painted on canvas → a line break through to the exported YAML → band +
   page number → page size → export → PDF), a shipped-locale preset whose pack
   and CJK font are FETCHED, and the link badge's click PASS-THROUGH. That last
