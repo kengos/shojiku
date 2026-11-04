@@ -95,6 +95,31 @@ before it reaches CI. It is still correct, just no longer routine.
 Note the trigger: CI fires on `pull_request`, so opening the PR is what
 starts it — pushing a feature branch alone runs nothing.
 
+## A green workspace build is not a publishable crate
+
+Every engine gate except one compiles each crate where it sits in the
+checkout. A path that climbs out of a crate's root — an `include_str!`
+reaching the repo-root `examples/` — resolves there, so every one of
+those gates stays green over a crate that crates.io cannot build: the
+tarball `cargo package` makes holds only what is under the package root.
+`engine/mcp` is `publish = false` for exactly that reason (its manifest
+says why).
+
+`make engine:package` is the gate for it (CI job `package`). It runs
+`cargo publish --workspace --dry-run`, which packages every published
+member and builds each one from its extracted tarball, resolving the
+sibling crates to their own fresh tarballs rather than to whatever is on
+crates.io. It is the release workflow's dry run (`publish-packages.yml`),
+also run on every pull request, so the break shows up in the change that
+causes it. Two differences: it runs on the pinned toolchain rather than
+the runner's stable Rust, and it passes `--allow-dirty`, because a gate
+is normally run before committing.
+
+A `cargo package -p` loop is NOT a substitute: one crate at a time, a
+sibling dependency resolves to the version already published, so the
+loop goes red on a symbol the unreleased sibling just gained and says
+nothing true about the release.
+
 ## A green run does not expire on every edit
 
 The same reasoning applies to whatever you last ran, `make verify`

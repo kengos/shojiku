@@ -116,6 +116,22 @@ jobs:
           target: engine:deny
           key: deny
 
+  package:
+    # Every other engine job builds the workspace IN PLACE, where a path that
+    # leaves a crate's root still resolves. This builds each published crate
+    # from the tarball crates.io would receive, which is the only build that
+    # notices a file the tarball does not carry. Its own cache entry: the
+    # tarball builds live under engine/target/package, apart from every other
+    # job's profile.
+    name: package (every crate builds from its own tarball)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/engine-cache
+        with:
+          target: engine:package
+          key: package
+
   sbom:
     # NOT the drift check. `make sbom:check` — do the committed inventories
     # still describe their lockfiles — is a RELEASE-time gate: an SBOM is a
