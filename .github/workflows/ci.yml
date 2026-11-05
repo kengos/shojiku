@@ -36,6 +36,16 @@ on:
       - '.gitignore'
       - 'LICENSE*'
 
+# The token reads the repository and nothing else. No job here writes to
+# GitHub through it: the cache and artifact actions authenticate with the
+# Actions runtime token (`ACTIONS_RUNTIME_TOKEN`), which `permissions:` does
+# not govern, and the pinned images are pulled without logging in. A job that
+# one day needs more asks for it on that job, not here, and lists
+# `contents: read` there again: a job-level block replaces this one rather
+# than adding to it.
+permissions:
+  contents: read
+
 # A newer push to the same ref supersedes the run in flight: nobody acts on
 # the older commit's result, so paying for it is wasted signal.
 # Every `<scope>:<job>` target is quiet by default (one PASS/FAIL line, full

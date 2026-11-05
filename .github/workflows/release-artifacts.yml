@@ -20,6 +20,14 @@ name: Release artifacts
 on:
   workflow_dispatch:
 
+# Read-only token. The jobs build and upload workflow artifacts, which
+# authenticate with the Actions runtime token that `permissions:` does not
+# govern. Publishing them is the separate act in publish-packages.yml, which
+# downloads this run's artifacts by run id and asks for its own permissions
+# there, so nothing here writes to the repository.
+permissions:
+  contents: read
+
 env:
   # Keep in sync with Makefile RUST_VERSION (which ci.yml runs through) and the
   # three Dockerfile builders.
