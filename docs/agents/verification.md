@@ -146,6 +146,38 @@ proof reports a broken image rather than withholding it. The SDK
 packages have no such job yet, so they are run by hand once the
 registries hold the version.
 
+## Code scanning is the one check outside the make grid
+
+`.github/workflows/codeql.yml` runs CodeQL over the workflows, and only
+the workflows (language `actions`). It is the one CI analysis that is
+not a `make` target, and cannot be: the analysis runs on GitHub, its
+queries come from the action's bundle rather than from this tree, and
+its result is an upload to code scanning rather than an exit code. So
+there is no local command that reproduces it, and none should be
+invented.
+
+What it says is narrow. A finding is about a workflow file: an untrusted
+`${{ }}` expression expanded into a `run:` script, a privileged trigger
+checking out a pull request's code, cache or artifact poisoning, a job
+left on the default token permissions (no `permissions:` on it or on its
+workflow). It says nothing about the engine, the GUI or the SDKs, so it
+is never the evidence for a correctness claim about them; those come
+from the grid above. Analysing only the
+workflows is a scoping decision, not a claim that those gates look for
+what CodeQL's other languages would.
+
+It runs on a pull request or a `main` push that touches
+`.github/workflows/` or `.github/actions/`, and on no schedule: the
+queries come from the bundle the SHA-pinned action ships with
+(`tools: linked`, rather than the "recommended" bundle GitHub may move
+ahead on its own), so they change only when Dependabot bumps that pin,
+and that bump is itself a pull request touching the workflow. The workflow's own job fails only when
+the analysis breaks; a new alert at the severity threshold set in the
+repository settings fails the separate "CodeQL" check code scanning puts
+on the pull request, and the alerts themselves are in the Security tab.
+It uses advanced setup (the workflow file), so the repository's default
+setup must stay off: GitHub refuses the upload while both are on.
+
 ## A green run does not expire on every edit
 
 The same reasoning applies to whatever you last ran, `make verify`

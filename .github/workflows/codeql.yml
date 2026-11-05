@@ -1,0 +1,82 @@
+name: CodeQL (workflows)
+
+# THE ONE ANALYSIS OUTSIDE THE MAKE GRID. Every `ci.yml` job runs a `make`
+# target a contributor can run locally in the same pinned container. CodeQL
+# cannot be one: the analysis runs on GitHub's side, its query packs come
+# from the action's bundle rather than from this tree, and its result is an
+# upload to code scanning, not an exit code. So it is not a correctness
+# claim about the engine or the GUI. What it adds is the one thing no gate
+# here reads: the workflows themselves — an untrusted `${{ }}` expanded
+# into a `run:` script, a privileged trigger checking out a pull request's
+# code, cache or artifact poisoning, a job left on the default token
+# permissions (no `permissions:` on it or on its workflow). The workflows
+# that publish (`publish-packages.yml`, `publish-image.yml`) and the one
+# that builds the release binaries (`release-artifacts.yml`) are why it is
+# worth having.
+# The rule is written down in docs/agents/verification.md.
+#
+# WHY ONLY `actions`, and WHY ADVANCED SETUP. Scanning the workflows alone
+# was a decision, not a claim that the other languages are covered the same
+# way elsewhere; widening it is a change to this file. The repository's
+# default setup analyses every language it detects and lives in the
+# settings, where a review cannot see it. Default setup must stay OFF while
+# this file exists — GitHub refuses an advanced upload when it is on.
+#
+# WHEN IT RUNS. The `actions` language reads only `.github/workflows/` and
+# `.github/actions/`, so a pull request or a main push that touches neither
+# has nothing new to analyse. There is no scheduled run: the queries come
+# from the bundle the pinned action ships (`tools: linked`), so re-running
+# unchanged files on a timer would repeat the same answer. New queries
+# arrive with the Dependabot bump of the pin below, and that pull request
+# touches this file, so it is analysed like any other.
+#
+# WHAT FAILS. The analysis job fails only when the analysis itself breaks.
+# A finding is reported by code scanning's own "CodeQL" check on the pull
+# request, which fails on a NEW alert at the severity threshold set in the
+# repository settings. Neither is a required check.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - '.github/actions/**'
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - '.github/actions/**'
+
+permissions: {}
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: CodeQL — actions
+    runs-on: ubuntu-latest
+    # A workflow-only analysis takes a few minutes; the cap keeps a hung
+    # bundle download from holding a runner for the 6-hour default.
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # SHA-pinned rather than tag-pinned like checkout: this action holds a
+      # token that writes to code scanning. Dependabot bumps the SHA and the
+      # comment together.
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: actions
+          build-mode: none
+          # The bundle this action release ships with, not the "recommended"
+          # one GitHub may move ahead on its own: the queries then change only
+          # when the pin does, which is what makes no schedule correct.
+          tools: linked
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          category: /language:actions

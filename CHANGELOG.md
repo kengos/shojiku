@@ -289,6 +289,12 @@ platform binaries.
   host. The vulnerability database is still downloaded fresh on every scan;
   a new trivy release, with its newer detection logic, waits for someone
   to bump the pin by hand.
+- CodeQL scans the GitHub Actions workflows (`.github/workflows/codeql.yml`)
+  on every pull request and `main` push that touches them. It looks for
+  script injection, a privileged trigger checking out a pull request's
+  code, cache or artifact poisoning, and jobs left on the default token
+  permissions, including in the workflows that publish. It analyses only the
+  workflows, not the Rust, TypeScript or SDK code.
 - `make engine:package` builds every published crate from the tarball
   crates.io would receive (`cargo publish --workspace --dry-run`), and CI
   runs it on every pull request. A crate that reads a file the tarball does

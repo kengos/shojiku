@@ -319,6 +319,12 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   ignores); `make site:wasm-release` is release-only and in no gate. Font tiers: immediate = noto-sans Regular+Bold (~1.2 MB),
   lazy-ja = BIZ UDP pair (~8.9 MB — ja-JP's default family);
   ipamj-anything stays static-PNG only (45 MB > the 25 MiB cap).
+- `.github/workflows/codeql.yml` — CodeQL over the workflows only
+  (language `actions`, advanced setup; default setup must stay off). The
+  one CI analysis that is not a `make` target; why, and what it can and
+  cannot say, is `docs/agents/verification.md` § Code scanning. Runs on
+  PRs and `main` pushes touching `.github/workflows/` or
+  `.github/actions/` (no schedule); `github/codeql-action` is SHA-pinned.
 - `docs/` — the doc set (`docs/engine/` = the per-feature template
   reference; `docs/migration-thinreports.md` = the worked migration
   walkthrough; `docs/mockups/` = per-design-session handoff artifacts,
