@@ -295,6 +295,13 @@ platform binaries.
   code, cache or artifact poisoning, and jobs left on the default token
   permissions, including in the workflows that publish. It analyses only the
   workflows, not the Rust, TypeScript or SDK code.
+- The `ci.yml`, `site-docs.yml` and `release-artifacts.yml` workflows now
+  state their token permissions in the file
+  (`permissions: contents: read`) instead of taking whatever the
+  repository's default is. Their jobs only read the repository, so each
+  job's `GITHUB_TOKEN` can read the repository's contents (and the
+  metadata every token can read) and nothing else, and changing the
+  repository setting no longer changes it.
 - `make engine:package` builds every published crate from the tarball
   crates.io would receive (`cargo publish --workspace --dry-run`), and CI
   runs it on every pull request. A crate that reads a file the tarball does

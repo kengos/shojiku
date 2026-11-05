@@ -102,6 +102,12 @@ on:
 # ci.yml's `paths-ignore`, so touching it already starts the full matrix and
 # its own `site` job. Listing it here would only run the same target twice.
 
+# Read-only token, as in ci.yml: every job checks out and runs a `make`
+# target, and the engine cache authenticates with the Actions runtime token,
+# which `permissions:` does not govern.
+permissions:
+  contents: read
+
 jobs:
   site:
     name: site (tsc / vitest / data check)
