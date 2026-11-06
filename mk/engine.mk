@@ -223,6 +223,36 @@ _engine-deny:
 # `publish = false` (engine/mcp) are skipped. A version already on the index
 # is a warning on a dry run, not an error.
 #
+# The siblings come from a local registry (`target/package/tmp-registry`) at
+# the UNCHANGED workspace version. Cargo treats a registry crate as unchanging
+# in two places, and either one makes a crate that uses an API its sibling
+# just gained compile against the sibling's EARLIER source and fail — a gate
+# failure that says nothing about the release:
+#   * the extracted source. Cargo unpacks a registry crate into
+#     `$CARGO_HOME/registry/src/<registry>/` once and never unpacks it again.
+#     The cargo volume is shared by every worktree, so it keeps an earlier
+#     run's extraction. This gate therefore runs with its own CARGO_HOME,
+#     PACKAGE_CARGO_HOME, inside /repo/engine/target. Locally that directory
+#     is the target volume scripts/target-slot.sh mounts there and leases to
+#     one gate run at a time; under CI the slot pool is off and it is the
+#     engine/target directory that actions/cache saves. Before the dry run the
+#     recipe deletes the local registry's `src/`, `index/` and `cache/`
+#     entries in PACKAGE_CARGO_HOME (local-registry directory names start
+#     with `-`; crates.io's start with `index.`). The deletion runs at the
+#     START, so an interrupted run leaves no extraction for the next run to
+#     read. The recipe keeps the crates.io downloads: the first run on a
+#     slot downloads them and later runs reuse them.
+#   * the build. Cargo's fingerprint for a registry crate compares its name,
+#     version, source and features, not its source files, so a build of
+#     `shojiku-formatter 0.3.0` left in engine/target is reused even after
+#     the tarball's files changed. The recipe therefore runs `cargo clean -p`
+#     for every workspace member first (names from `cargo metadata`, where
+#     only a package object has `version` right after `name`); cleaning by
+#     name removes the path builds and the local-registry builds alike, and
+#     keeps the build output of third-party crates. A later gate on the same
+#     slot then recompiles
+#     the workspace crates.
+#
 # `--allow-dirty` is the one flag the release workflow's dry run does not
 # pass. The checkout is mounted with its `.git`, so in a plain clone cargo
 # would refuse uncommitted edits — the normal state when you run a gate
@@ -230,9 +260,25 @@ _engine-deny:
 engine\:package: ## cargo publish --workspace --dry-run: every published crate builds from its own tarball
 	@$(call gate,_engine-package,engine:package)
 
+# The package gate's own CARGO_HOME (see the comment above engine:package).
+PACKAGE_CARGO_HOME := /repo/engine/target/package-cargo-home
+
+_engine-package: CARGO_DOCKER_ARGS = -e CARGO_HOME=$(PACKAGE_CARGO_HOME)
 _engine-package:
 	@echo "== cargo publish --dry-run =="
-	$(CARGO_IN_DOCKER) 'cargo --version; cargo publish --workspace --dry-run --locked --allow-dirty'
+	$(CARGO_IN_DOCKER) '\
+		[ "$$CARGO_HOME" = $(PACKAGE_CARGO_HOME) ] \
+			|| { echo "CARGO_HOME is $$CARGO_HOME, expected $(PACKAGE_CARGO_HOME)" >&2; exit 1; }; \
+		cargo --version; \
+		rm -rf $(PACKAGE_CARGO_HOME)/registry/src/-* \
+			$(PACKAGE_CARGO_HOME)/registry/index/-* \
+			$(PACKAGE_CARGO_HOME)/registry/cache/-*; \
+		members=$$(cargo metadata --no-deps --format-version 1 --locked \
+			| grep -o "\"name\":\"[^\"]*\",\"version\"" \
+			| sed "s/^\"name\":\"\([^\"]*\)\".*/-p \1/"); \
+		[ -n "$$members" ] || { echo "no workspace members found in cargo metadata" >&2; exit 1; }; \
+		cargo clean --locked $$members; \
+		cargo publish --workspace --dry-run --locked --allow-dirty'
 
 ## ---- wasm --------------------------------------------------------------
 
