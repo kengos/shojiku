@@ -12,12 +12,12 @@ use super::Ctx;
 /// Longest URL a link may carry, in bytes. Params are untrusted; the
 /// cap bounds what a hostile value can grow the PDF (and any downstream
 /// echo) by, mirroring the QR content cap.
-pub(super) const MAX_LINK_URL: usize = 2048;
+pub(crate) const MAX_LINK_URL: usize = 2048;
 
 /// Why a resolved URL was rejected. A pure enum so every hostile branch
 /// is unit-testable without a layout pass.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) enum LinkReject {
+pub(crate) enum LinkReject {
     /// Empty (or whitespace-only) after interpolation.
     Empty,
     /// Over [`MAX_LINK_URL`] bytes.
@@ -31,7 +31,7 @@ pub(super) enum LinkReject {
 }
 
 /// Gates one resolved URL: `Ok` carries the trimmed form to emit.
-pub(super) fn check_link_url(url: &str) -> Result<&str, LinkReject> {
+pub(crate) fn check_link_url(url: &str) -> Result<&str, LinkReject> {
     let trimmed = url.trim();
     if trimmed.is_empty() {
         return Err(LinkReject::Empty);

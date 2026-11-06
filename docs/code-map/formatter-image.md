@@ -155,6 +155,17 @@ the manifest wire's key list) lives in `docs/engine/`
   **`FaceBytes`**: the bytes-first mirror — host-injected manifest
   strings + face bytes keyed by manifest `file`, same
   check/confine/dedupe as the filesystem path, sha256 downstream.
+- `fuzz.rs` (+ `fuzz/pattern.rs`, `fuzz/paths.rs`, each with a `tests.rs`;
+  replayed by `tests/fuzz_corpus/`) — doc-hidden harnesses for two fuzz
+  targets ([verify.md](verify.md)). `date_pattern` (`pattern.rs`): a `formats:` registry pattern through `format_value`
+  against ja-JP with an overlay that may rewrite the era and name tables;
+  asserts an era year ≥ 1 and an output length bounded by the pattern.
+  `pack_paths` (`paths.rs`): locale pack + manifest through both bytes-first
+  resolvers, with bytes supplied for every declared `file`; asserts that
+  no face resolves from a `file` that is absolute or has a `..` segment,
+  that the strict and subset resolvers agree, and (through
+  `assert_one_path_segment`, shared with authoring's locale-id harness)
+  that an id `valid_pack_id` accepts is one path segment.
 
 ## engine/image/src (image assets)
 

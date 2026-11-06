@@ -8,6 +8,8 @@
 //! business-specific formats belong in plugins.
 
 mod format;
+#[doc(hidden)]
+pub mod fuzz;
 mod lang;
 
 pub use format::{

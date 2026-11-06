@@ -17,6 +17,8 @@ mod capabilities;
 mod formats;
 #[cfg(feature = "fs")]
 pub mod fs;
+#[doc(hidden)]
+pub mod fuzz;
 mod inspect;
 mod locale;
 mod prepare;

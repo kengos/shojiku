@@ -17,6 +17,8 @@
 mod cache;
 mod ensure;
 mod error;
+#[doc(hidden)]
+pub mod fuzz;
 mod policy;
 mod read;
 mod transport;

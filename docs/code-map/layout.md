@@ -254,6 +254,11 @@ Wire types stay in core; content measurement stays in layout.
   `resolve_link` call sites, which is what makes one function answer for
   plain / rich / vertical / per-span / image and report false for a URL the
   gate dropped.
+- `fuzz.rs` (+ `fuzz/tests.rs`, `tests/fuzz_corpus/`) — doc-hidden
+  `link_url`, the `link_url` fuzz harness: calls `check_link_url` and
+  asserts every accepted URL is the trimmed input, within `MAX_LINK_URL`,
+  free of control characters and on the scheme allowlist. Map of the fuzz
+  crate: [verify.md](verify.md).
 - `engine/meta.rs` — `document:`: `document_metadata` (interpolates each
   field through the shared binding funnel) + `check_meta_text` /
   `check_meta_language` — the same trust boundary as `link.rs`, and the

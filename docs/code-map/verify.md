@@ -132,7 +132,7 @@
 - `engine/fuzz/` — the libFuzzer crate, **outside the engine workspace**
   (`exclude = ["fuzz"]`; nightly + a sanitizer runtime + a C++ compiler for
   libFuzzer itself, and it ships nowhere, so `cargo test`/`llvm-cov`/`deny`
-  should all keep describing what does). ELEVEN targets in two groups.
+  should all keep describing what does). FIFTEEN targets in three groups.
   **sign** — `pdf_document`, `verify_document`, `contents_window`,
   `cms_container`, `trust_anchors` — reads bytes out of a PDF nobody vetted.
   **wire** — `core_template`, `core_params`, `core_definitions`,
@@ -146,22 +146,46 @@
   pack, and `resolve_face_bytes` for the font pack (deliberately, not
   `face_specs`: only the resolver runs the path-confinement check the
   traversal seed is for).
+  **scalar** — `fetch_redirects`, `link_url`, `formatter_pattern`,
+  `formatter_pack_paths` — the single-value checks: a font's fetch URL and
+  every redirect hop, a link URL after interpolation, a date pattern with a
+  hostile era table, the bytes-first pack resolvers with BOTH the locale
+  pack's `uses` and the manifest varied (and bytes supplied for every
+  declared `file`, so only a resolver check can refuse a face), plus the
+  pack-id and locale-id charset checks. Each scalar target is one call into
+  the owning crate's doc-hidden `fuzz` module (`shojiku_fetch::fuzz`,
+  `shojiku_layout::fuzz`, `shojiku_formatter::fuzz`,
+  `shojiku_authoring::fuzz`), which ASSERTS a documented property rather
+  than only surviving the input — no request to a host outside the default
+  allowlist, an accepted link URL obeys the gate's own rule, an era year is
+  never below 1, no face resolves from an absolute `file` or one with a `..`
+  segment, the strict
+  and subset resolvers agree, an accepted id is one path segment — so the
+  replay suites run the same assertions the fuzzer does.
   `src/lib.rs` generates the anchors a verifier needs, once per process —
   an empty anchor set short-circuits before any parser runs, so a target
   without one fuzzes nothing. `examples/seed.rs` writes the seeds that may
   NOT be committed (a signed document embeds a certificate): run by
   `make engine:fuzz` before fuzzing, gitignored, and the reason a mutating fuzzer
   reaches the container parsers at all. Committed seeds are structural only.
-  Driven by `make engine:fuzz` (`FUZZ_GROUP=sign|wire`, `FUZZ_TARGET`,
+  Driven by `make engine:fuzz` (`FUZZ_GROUP=sign|wire|scalar`, `FUZZ_TARGET`,
   `FUZZ_SECS`), deliberately outside `make verify` — the gates run the corpus
   REPLAY instead: `engine/core/tests/fuzz_corpus/` and
-  `engine/formatter/tests/fuzz_corpus/` for the wire group, engine/verify's
-  two suites for the sign group. Every replay suite asserts its corpus is
+  `engine/formatter/tests/fuzz_corpus/` for the wire group,
+  `engine/fetch/tests/fuzz_corpus/`, `engine/layout/tests/fuzz_corpus/` and
+  the formatter suite for the scalar group (plus
+  `engine/authoring/tests/fuzz_corpus/` for `formatter_pack_paths`'s
+  locale-id half, since the formatter cannot depend on authoring),
+  engine/verify's two suites for the sign group. Every replay
+  suite asserts its corpus is
   NON-EMPTY; the six WIRE ones additionally assert that at least one seed
   actually parses (for ruby, which cannot fail, that at least one seed
   SEGMENTS) — without that second half a suite is green over a directory of
-  garbage it never really read. The three sign-group tests predate this and
-  assert seed counts only.
+  garbage it never really read; each scalar one asserts that at least one
+  seed reaches the asserted step (a redirect hop followed, a link URL
+  accepted and one refused, a pattern rendered, a face resolved, a locale
+  id accepted). The three
+  sign-group tests predate this and assert seed counts only.
 
 - `engine/verify/src/testkit.rs` (+ `testkit/keys.rs`, `#[cfg(test)]`) —
   minimal signable documents, `layout()` (reads a signed document's

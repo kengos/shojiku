@@ -9,6 +9,8 @@ mod boxes;
 mod color;
 mod engine;
 mod font;
+#[doc(hidden)]
+pub mod fuzz;
 mod style;
 mod tree;
 mod wrap;
