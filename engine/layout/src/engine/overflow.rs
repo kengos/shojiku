@@ -52,7 +52,7 @@ pub(in crate::engine) const OVERFLOW_EPS: f64 = 0.01;
 
 /// Whether `extent` reaches past `limit` by more than [`OVERFLOW_EPS`].
 /// A fit check is its negation.
-pub(in crate::engine) fn exceeds(extent: f64, limit: f64) -> bool {
+pub(crate) fn exceeds(extent: f64, limit: f64) -> bool {
     extent > limit + OVERFLOW_EPS
 }
 

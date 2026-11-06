@@ -1,4 +1,5 @@
-//! Setup shared by the fuzz targets: the key material a verifier needs.
+//! Setup shared by the fuzz targets: the key material a verifier needs, and
+//! the font chain the `text` group measures with.
 //!
 //! `verify_document` takes trust anchors, and an empty set short-circuits
 //! before any parser runs — so a target that could not build one would fuzz
@@ -15,6 +16,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::OnceLock;
 
+use shojiku_layout::FontFace;
 use shojiku_verify::TrustAnchors;
 
 /// The directory holding this process's generated key material.
@@ -48,5 +50,17 @@ pub fn anchors() -> &'static TrustAnchors {
     static ANCHORS: OnceLock<TrustAnchors> = OnceLock::new();
     ANCHORS.get_or_init(|| {
         TrustAnchors::from_pem(&read("rsa2048.cert.pem")).expect("the certificate loads")
+    })
+}
+
+/// The font chain the `text` targets wrap, shape and clamp over, loaded once
+/// per process from the repository's `packs/fonts`. The documentation of
+/// `shojiku_layout::fuzz::text_chain` lists the faces and why each is there.
+#[must_use]
+pub fn text_chain() -> &'static [FontFace] {
+    static CHAIN: OnceLock<Vec<FontFace>> = OnceLock::new();
+    CHAIN.get_or_init(|| {
+        let fonts = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../packs/fonts");
+        shojiku_layout::fuzz::text_chain(&fonts)
     })
 }

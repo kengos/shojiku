@@ -1,5 +1,8 @@
-//! The link-URL harness the `link_url` fuzz target and the corpus replay
-//! test both run.
+//! The fuzz harnesses of the layout crate: the link-URL gate (here) and
+//! the text measurement the `text` fuzz group drives — line wrapping
+//! (`wrap`), shaping (`shape`) and the overflow policies (`overflow`), over
+//! the font chain `input` loads. Each fuzz target and its corpus replay test
+//! call the same function, so CI runs the assertions the fuzzer does.
 //!
 //! Layout is the trust boundary for a `link:` URL: the renderer writes
 //! whatever URL the tree carries into a PDF `/URI` action. The gate that
@@ -18,6 +21,16 @@ use crate::engine::link::{MAX_LINK_URL, check_link_url};
 
 #[cfg(test)]
 mod tests;
+
+mod input;
+mod overflow;
+mod shape;
+mod wrap;
+
+pub use input::text_chain;
+pub use overflow::{OverflowPaths, overflow};
+pub use shape::{ShapePaths, shape};
+pub use wrap::{WrapPaths, wrap};
 
 /// The schemes a link URL may start with, compared ASCII-case-insensitively.
 const ALLOWED_SCHEMES: [&str; 4] = ["http:", "https:", "mailto:", "tel:"];

@@ -22,7 +22,9 @@ mod vrich;
 pub(in crate::engine) use block::collect_missing;
 pub(super) use block::decoration_specs;
 pub(in crate::engine) use chrome::{BlockGeom, SplitChrome};
-pub(super) use overflow::clamp_line;
+// `clamp_line` serves the list entries in `engine`; all four serve the fuzz
+// harness (`crate::fuzz::overflow`) through `engine.rs`'s re-export.
+pub(crate) use overflow::{MIN_SHRINK_FONT_PT, clamp_line, clamp_with_ellipsis, fit_font_size};
 pub(in crate::engine) use vcol::{
     along_offset, clamp_column_down, column_extent, column_left, vertical_decoration_specs,
 };

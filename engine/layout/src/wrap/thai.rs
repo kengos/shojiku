@@ -33,7 +33,7 @@ pub(super) fn is_thai(c: char) -> bool {
 /// [`is_thai_combining`], which keeps a line from starting with a mark.
 /// Both halves are needed: the hard-break arm walks a word character by
 /// character and can otherwise cut on either side of a cluster.
-pub(super) fn is_thai_leading_vowel(c: char) -> bool {
+pub(crate) fn is_thai_leading_vowel(c: char) -> bool {
     ('\u{0E40}'..='\u{0E44}').contains(&c)
 }
 
@@ -41,7 +41,7 @@ pub(super) fn is_thai_leading_vowel(c: char) -> bool {
 /// before it: the above/below vowels (U+0E31, U+0E34–U+0E3A) and the tone
 /// marks and diacritics (U+0E47–U+0E4E). A line must never begin with one —
 /// it would be drawn detached from the base it modifies.
-pub(super) fn is_thai_combining(c: char) -> bool {
+pub(crate) fn is_thai_combining(c: char) -> bool {
     matches!(c, '\u{0E31}' | '\u{0E34}'..='\u{0E3A}' | '\u{0E47}'..='\u{0E4E}')
 }
 

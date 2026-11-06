@@ -1,0 +1,2 @@
+w=80 lines=3 lh=1.2 h=30
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor

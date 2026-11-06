@@ -21,8 +21,9 @@ mod vertical_tests;
 #[cfg(test)]
 mod zh_tests;
 
-pub(crate) use kinsoku::{no_line_end, no_line_start};
+pub(crate) use kinsoku::{is_comma_full_stop, no_line_end, no_line_start};
 pub use rich::{RichPiece, RichSpan, WrappedLine, wrap_spans, wrap_spans_hung};
+pub(crate) use thai::{is_thai_combining, is_thai_leading_vowel};
 
 use crate::font::FontFace;
 use shojiku_core::{HangingPunctuation, LineBreak};
