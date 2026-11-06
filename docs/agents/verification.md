@@ -120,6 +120,17 @@ sibling dependency resolves to the version already published, so the
 loop goes red on a symbol the unreleased sibling just gained and says
 nothing true about the release.
 
+The siblings are rebuilt from a local registry at the unchanged workspace
+version, and cargo reuses both a registry crate's extracted source and its
+earlier build without comparing them with the tarball's files. Either
+reuse makes the gate compile a crate that uses a new sibling API against
+the sibling's earlier source, and the gate fails. So the gate runs with its
+own CARGO_HOME inside engine/target (locally a target volume leased to one
+gate run; on CI the directory actions/cache saves), deletes the local
+registry's extracted source, index and cache from that CARGO_HOME, and
+cleans every workspace crate's build output before the dry run (the comment above `engine:package` in `mk/engine.mk` says why both
+the extraction reset and the build clean are needed).
+
 ## A published artifact is proven from the registry
 
 Every gate above checks something built from this tree. What a user

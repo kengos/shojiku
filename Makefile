@@ -600,8 +600,14 @@ LEGACY_CACHE_VOLUMES := shojiku-cargo shojiku-rustup
 ENGINE_MOUNTS = -v "$(CURDIR):/repo" \
 	-e CARGO_HOME=/cargo-cache -v "$(CARGO_VOLUME):/cargo-cache"
 
+# CARGO_DOCKER_ARGS: extra `docker run` flags for one recipe, set as a
+# target-specific variable (`_engine-package` sets its own CARGO_HOME with
+# it). Placed after ENGINE_MOUNTS, so an `-e CARGO_HOME=...` here overrides
+# the `-e CARGO_HOME=/cargo-cache` in ENGINE_MOUNTS: docker keeps the last
+# value of a variable given twice.
+CARGO_DOCKER_ARGS ?=
 CARGO_IN_DOCKER = $(GATE_LOCK) $(TARGET_DOCKER) run --rm \
-	$(ENGINE_MOUNTS) -w /repo/engine \
+	$(ENGINE_MOUNTS) $(CARGO_DOCKER_ARGS) -w /repo/engine \
 	$(RUST_IMAGE) sh -euc
 
 .DEFAULT_GOAL := help
