@@ -296,7 +296,7 @@ first sentence of its `//!` header.
 - `src/testkit.rs` 204 — Test-only fixtures: minimal signable documents, and signed ones.
 - `src/testkit/keys.rs` 65 — Test key material, generated fresh for every test process.
 
-### `formatter` (L2) — 20 files / 2402 lines; tests 24 files / 4237 lines
+### `formatter` (L2) — 20 files / 2402 lines; tests 24 files / 4241 lines
 
 - `src/format.rs` 235 — `format(value, type, locale, options) -> string`
 - `src/format/dated.rs` 121 — Resolving a date/datetime pick: which tables a dated field reads, and whether a name is one it can already resolve.
@@ -363,12 +363,12 @@ first sentence of its `//!` header.
 - `src/read.rs` 80 — Reading a response body without trusting its length.
 - `src/transport.rs` 104 — The HTTP seam.
 
-### `layout` (L3) — 134 files / 19546 lines; tests 273 files / 38357 lines
+### `layout` (L3) — 138 files / 20428 lines; tests 277 files / 38933 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
 - `src/color.rs` 32 — `#rrggbb` color parsing.
-- `src/engine.rs` 271 ▲ — Template + params -> positioned pages.
+- `src/engine.rs` 275 ▲ — Template + params -> positioned pages.
 - `src/engine/absolute.rs` 214 — The one absolute-placement dispatch: an item laid out at its authored `box.y` in a band, the absolute body, or a container — plus the one item walk the band and the absolute body share.
 - `src/engine/anchor.rs` 143 — Anchored line endpoints: the deferred record and its page resolution.
 - `src/engine/anchor/band.rs` 59 — The rectangle an anchored `ellipse` circles.
@@ -441,7 +441,7 @@ first sentence of its `//!` header.
 - `src/engine/table/span.rs` 129 — Table spanning: the `headerGroups` group row (cells spanning several columns above the labels) and the `mergeEmptyCells` body transform (a value extends right over the empty cells after it).
 - `src/engine/table/style.rs` 155 — Table style resolution: the authored grid border (with the table's 0.5pt default), the zebra row cascade, and the authored-or-default folds for the non-inherited properties whose table defaults differ from the engine initial values.
 - `src/engine/table/style/conditional.rs` 88 — Per-row conditional style layers: which `row.conditionalStyles` entries a body row's own element selects, and the layers they add on top of the base/zebra row style.
-- `src/engine/text.rs` 198 — Text content and atoms: binding/interpolation resolution and the text-item atom (margins + padding); block building lives in [`block`] (plain) and [`rich`] (spans).
+- `src/engine/text.rs` 200 — Text content and atoms: binding/interpolation resolution and the text-item atom (margins + padding); block building lives in [`block`] (plain) and [`rich`] (spans).
 - `src/engine/text/block.rs` 249 — Wrapped + aligned text-block building: border-box padding, vertical alignment, the box decoration (via `super::super::decoration`), and (via [`glyphs`]) the missing-glyph diagnostic.
 - `src/engine/text/block/glyphs.rs` 70 — Missing-glyph (tofu) diagnostics: the capped distinct-offender scan shared by plain blocks and rich spans.
 - `src/engine/text/block/lines.rs` 115 — Plain-text line placement for [`super`]'s `text_block`: wrapping with the block's settings, then measuring and aligning each wrapped line (including the hanging-punctuation exclusion) into placed [`TextLine`]s.
@@ -468,7 +468,7 @@ first sentence of its `//!` header.
 - `src/engine/translate.rs` 82 — Whole-item translation over the layout tree: shifting positioned items vertically (flow cursor, margins) and horizontally (flex placement), recursing into clip groups.
 - `src/engine/visibility.rs` 218 — Params-conditional item visibility: turns an item's `visible:` binding into one of three placement verdicts, and blanks the atom of a hidden one.
 - `src/font.rs` 235 — Font loading and text measurement.
-- `src/font/face.rs` 261 — A loaded font face: glyph mapping, advance measurement, and outline extraction (y-down, cubics only) for pixel backends.
+- `src/font/face.rs` 269 — A loaded font face: glyph mapping, advance measurement, and outline extraction (y-down, cubics only) for pixel backends.
 - `src/font/face/decoration.rs` 52 — Decoration-line metrics (`textDecoration`): underline and strikeout positions scaled from the face's font tables, with conventional fallbacks and hostile-value clamps.
 - `src/font/face/metrics.rs` 138 — Vertical band metrics (cap height, descent): the baseline-relative extents form marks center on and the `inspect` text-metrics surface exposes, with conventional fallbacks and hostile-value clamps for faces whose OS/2 table is absent or garbage.
 - `src/font/face/pen.rs` 67 — Glyph-outline collector: turns a skrifa outline into the tree's [`PathCmd`]s, flipping y-up font space into y-down layout space and elevating TrueType quadratics to cubics (the tree carries only cubics).
@@ -484,7 +484,11 @@ first sentence of its `//!` header.
 - `src/font/vertical/shaped/combine.rs` 142 — tate-chu-yoko (tate-chū-yoko) combined cells: runs of up to N consecutive ASCII digits (`digits N`) — or a whole run (`all`) — shaped horizontally and drawn upright in ONE 1em cell of the column.
 - `src/font/vertical/shaped/trim.rs` 102 — Vertical half-width punctuation: fullwidth-punctuation trimming over an arranged column — the `textSpacingTrim` mechanism with the axes swapped.
 - `src/font/vertical/uax50.rs` 116 — UAX#50 Vertical_Orientation upright ranges — GENERATED by `scripts/gen-uax50.py` from VerticalOrientation.txt (Unicode 16.0.0); do not edit by hand.
-- `src/fuzz.rs` 68 — The link-URL harness the `link_url` fuzz target and the corpus replay test both run.
+- `src/fuzz.rs` 81 — The fuzz harnesses of the layout crate: the link-URL gate (here) and the text measurement the `text` fuzz group drives — line wrapping (`wrap`), shaping (`shape`) and the overflow policies (`overflow`), over the font chain `input` loads.
+- `src/fuzz/input.rs` 182 — The input shape the three text harnesses share, and the font chain they measure with.
+- `src/fuzz/overflow.rs` 245 — The text-overflow harness the `layout_overflow` fuzz target and the corpus replay test both run.
+- `src/fuzz/shape.rs` 190 — The shaping harness the `layout_shape` fuzz target and the corpus replay test both run.
+- `src/fuzz/wrap.rs` 237 — The line-wrapping harness the `layout_wrap` fuzz target and the corpus replay test both run.
 - `src/lib.rs` 31 — Shojiku layout engine.
 - `src/style.rs` 267 — The style cascade: resolving authored [`Style`]s against inherited context into a fully concrete [`ComputedStyle`].
 - `src/tree.rs` 213 — The layout tree: fully positioned, fully formatted primitives.
@@ -492,7 +496,7 @@ first sentence of its `//!` header.
 - `src/tree/round.rs` 111 — Rounded-corner + dash vocabulary for the tree's stroked primitives, and the one rounded-rectangle path builder both renderers replay.
 - `src/tree/text.rs` 204 — Text-block tree types: wrapped lines, rich runs, decoration; the uniform run view both renderers draw through lives in [`view`].
 - `src/tree/text/view.rs` 112 — The uniform run view ([`RunView`]) both renderers draw through, and its builder [`TextBlock::line_runs`] — split from the tree types ([`super`]) for the line budget.
-- `src/wrap.rs` 139 — Greedy text wrapping with CJK-aware break opportunities and optional kinsoku (CJK line-break prohibition — one set serves Japanese and Chinese; see `wrap/kinsoku.rs`).
+- `src/wrap.rs` 140 — Greedy text wrapping with CJK-aware break opportunities and optional kinsoku (CJK line-break prohibition — one set serves Japanese and Chinese; see `wrap/kinsoku.rs`).
 - `src/wrap/hang.rs` 85 — Hanging punctuation (hanging punctuation) as a wrap post-pass: a line-terminating comma or full stop hangs past the end edge instead of wrapping to the next line, keeping the line count down.
 - `src/wrap/kinsoku.rs` 202 — The kinsoku character-class tables and the per-mode line-start / line-end prohibition predicates — the single home shared by the line wrapper (`wrap::rich`) and the ellipsis clamp (`engine::text::overflow`).
 - `src/wrap/rich.rs` 286 ▲ — The styled-char wrapping engine: tokenizing, greedy line assembly, and kinsoku over `(char, span)` pairs, so rich spans and plain text (a one-span input) break identically.
@@ -603,7 +607,7 @@ first sentence of its `//!` header.
 - `src/sign.rs` 115 — The `sign` command: a rendered PDF in, a signed one out.
 - `src/verify.rs` 58 — The `verify` command: a signed PDF and a trust anchor in, a report out.
 
-### `fuzz` (L6) — 17 files / 411 lines; tests 0 files / 0 lines
+### `fuzz` (L6) — 20 files / 483 lines; tests 0 files / 0 lines
 
 - `examples/seed.rs` 88 — Grows the corpus with the seeds that may not be committed.
 - `fuzz_targets/cms_container.rs` 13 — The CMS `SignedData` container: arbitrary DER through the decoder.
@@ -617,11 +621,14 @@ first sentence of its `//!` header.
 - `fuzz_targets/formatter_langpack.rs` 15 — A locale pack's YAML.
 - `fuzz_targets/formatter_pack_paths.rs` 22 — A locale pack's `fonts.uses` and an injected font-pack manifest, resolved by both bytes-first resolvers.
 - `fuzz_targets/formatter_pattern.rs` 17 — A date/datetime pattern from a template's `formats:` registry, rendered against the ja-JP pack with a hostile overlay of its era and name tables.
+- `fuzz_targets/layout_overflow.rs` 18 — A definite-height text block that overflows: the `shrink` font-size search, the `ellipsis` line clamp and the single-line clamp a `list` entry uses.
+- `fuzz_targets/layout_shape.rs` 20 — A run of params text, shaped over the Latin, Japanese, Thai and Devanagari fallback chain with letter spacing and punctuation trimming.
+- `fuzz_targets/layout_wrap.rs` 20 — A text block's params text, wrapped into lines: any string, split into up to four rich spans, at any width, size, spacing, line-break mode, hanging mode and writing direction the style guards admit.
 - `fuzz_targets/link_url.rs` 16 — A `link:` URL after interpolation: params control it, and layout's gate decides whether it reaches a PDF `/URI` action.
 - `fuzz_targets/pdf_document.rs` 16 — The document reader: arbitrary bytes through the shared PDF parser.
 - `fuzz_targets/trust_anchors.rs` 16 — Trust anchors from caller-supplied PEM.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
-- `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
+- `src/lib.rs` 66 — Setup shared by the fuzz targets: the key material a verifier needs, and the font chain the `text` group measures with.
 
 ### `mcp` (L6) — 27 files / 2784 lines; tests 29 files / 4325 lines
 

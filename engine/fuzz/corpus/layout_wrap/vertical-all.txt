@@ -1,0 +1,2 @@
+w=30 orient=upright combine=all
+AB縦書き

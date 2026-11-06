@@ -75,7 +75,7 @@ fn is_open_quote(c: char) -> bool {
 /// `hanging-punctuation` territory, not a strictness level). Shared with
 /// the hanging-punctuation pass (`wrap::hang`), the single home for this
 /// class.
-pub(super) fn is_comma_full_stop(c: char) -> bool {
+pub(crate) fn is_comma_full_stop(c: char) -> bool {
     matches!(c, '、' | '。' | '，' | '．' | '｡' | '､')
 }
 

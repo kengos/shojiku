@@ -1,0 +1,4 @@
+w=40 lb=anywhere ls=1.5
+  leading spaces
+
+　　ideographic	space

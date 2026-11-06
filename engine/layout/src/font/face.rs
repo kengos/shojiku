@@ -6,6 +6,7 @@ use shojiku_diagnostics::Echo;
 use shojiku_image::PathCmd;
 use skrifa::instance::{LocationRef, Size};
 use skrifa::outline::DrawSettings;
+use skrifa::raw::TableProvider;
 use skrifa::{FontRef, GlyphId, MetadataProvider};
 use std::path::Path;
 use std::sync::Arc;
@@ -144,6 +145,13 @@ impl FontFace {
     pub fn glyph_id(&self, c: char) -> Option<u32> {
         let font = FontRef::from_index(&self.data, 0).ok()?;
         Some(font.charmap().map(c)?.to_u32())
+    }
+
+    /// Number of glyphs the face declares (`maxp`), or `None` when the table
+    /// does not parse. A glyph id at or above it names no outline.
+    pub(crate) fn glyph_count(&self) -> Option<u32> {
+        let font = FontRef::from_index(&self.data, 0).ok()?;
+        Some(u32::from(font.maxp().ok()?.num_glyphs()))
     }
 
     /// Horizontal advance of one char in pt, if the face has a glyph for it.

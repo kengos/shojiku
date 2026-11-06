@@ -132,7 +132,7 @@
 - `engine/fuzz/` — the libFuzzer crate, **outside the engine workspace**
   (`exclude = ["fuzz"]`; nightly + a sanitizer runtime + a C++ compiler for
   libFuzzer itself, and it ships nowhere, so `cargo test`/`llvm-cov`/`deny`
-  should all keep describing what does). FIFTEEN targets in three groups.
+  should all keep describing what does). EIGHTEEN targets in four groups.
   **sign** — `pdf_document`, `verify_document`, `contents_window`,
   `cms_container`, `trust_anchors` — reads bytes out of a PDF nobody vetted.
   **wire** — `core_template`, `core_params`, `core_definitions`,
@@ -162,13 +162,33 @@
   segment, the strict
   and subset resolvers agree, an accepted id is one path segment — so the
   replay suites run the same assertions the fuzzer does.
+  **text** — `layout_wrap`, `layout_shape`, `layout_overflow` — the
+  measurement of params text, built like the scalar targets (each makes one
+  call into `shojiku_layout::fuzz`): wrapping loses or duplicates no
+  character, gives at least one line per paragraph and at most the
+  character count plus the paragraph count, and a line wider than the box
+  overflows only in its last unit that cannot be split (the characters
+  before that unit fit the box; a unit starts at every character except a
+  space, a tab, a Thai vowel written above or below the character before
+  it, a Thai tone mark, and the character after a Thai leading vowel
+  unless that character is also a leading vowel, and the documentation of
+  `assert_width` says why leaving these out is safe); every shaped glyph's
+  source range is a slice of the text on character boundaries and together
+  they cover it (the ToUnicode map), pen positions are the running
+  advance sum, and trimming keeps every glyph and never widens one; the
+  `shrink` size stays between the floor and the authored size, and a
+  clamped line is a prefix that fits with its `…`. Input is text: a
+  `key=value` settings line (held to the `shojiku_core::facts` ranges the
+  style guards admit), then the body, U+001E separating rich spans.
   `src/lib.rs` generates the anchors a verifier needs, once per process —
   an empty anchor set short-circuits before any parser runs, so a target
-  without one fuzzes nothing. `examples/seed.rs` writes the seeds that may
+  without one fuzzes nothing — and loads the text group's font chain once
+  per process from `packs/fonts` (the documentation of
+  `shojiku_layout::fuzz::text_chain` lists the faces and why each is there). `examples/seed.rs` writes the seeds that may
   NOT be committed (a signed document embeds a certificate): run by
   `make engine:fuzz` before fuzzing, gitignored, and the reason a mutating fuzzer
   reaches the container parsers at all. Committed seeds are structural only.
-  Driven by `make engine:fuzz` (`FUZZ_GROUP=sign|wire|scalar`, `FUZZ_TARGET`,
+  Driven by `make engine:fuzz` (`FUZZ_GROUP=sign|wire|scalar|text`, `FUZZ_TARGET`,
   `FUZZ_SECS`), deliberately outside `make verify` — the gates run the corpus
   REPLAY instead: `engine/core/tests/fuzz_corpus/` and
   `engine/formatter/tests/fuzz_corpus/` for the wire group,
@@ -176,6 +196,7 @@
   the formatter suite for the scalar group (plus
   `engine/authoring/tests/fuzz_corpus/` for `formatter_pack_paths`'s
   locale-id half, since the formatter cannot depend on authoring),
+  `engine/layout/tests/fuzz_corpus/` again for the text group,
   engine/verify's two suites for the sign group. Every replay
   suite asserts its corpus is
   NON-EMPTY; the six WIRE ones additionally assert that at least one seed
@@ -184,7 +205,13 @@
   garbage it never really read; each scalar one asserts that at least one
   seed reaches the asserted step (a redirect hop followed, a link URL
   accepted and one refused, a pattern rendered, a face resolved, a locale
-  id accepted). The three
+  id accepted); each text one asserts that some seed runs every checked
+  branch its harness reports (a line wider than the box under the width
+  rule and one within it, a character moved by kinsoku or hanging, a hung
+  line; a segment a chain face covers, a character no face maps, a glyph
+  trimming narrowed; a shrunk size above the floor and one at it, a
+  non-empty clamped prefix, a single-line clamp, a seed needing neither
+  policy). The three
   sign-group tests predate this and assert seed counts only.
 
 - `engine/verify/src/testkit.rs` (+ `testkit/keys.rs`, `#[cfg(test)]`) —

@@ -204,9 +204,10 @@ endif
 #   verify            -> ALL of the above. Green verify == safe to push.
 #   engine:wasm-e2e   -> on-demand browser golden path (Playwright), NOT in verify.
 #   engine:fuzz       -> on-demand libFuzzer over the untrusted-input parsers,
-#                        NOT in verify. Three groups (FUZZ_GROUP=sign|wire|scalar):
-#                        the PDF/CMS readers, the authored-wire doors, and the
-#                        URL/path checks and date patterns. The gates run the
+#                        NOT in verify. Four groups (FUZZ_GROUP=sign|wire|scalar|text):
+#                        the PDF/CMS readers, the authored-wire doors, the
+#                        URL/path checks and date patterns, and the text
+#                        wrapping, shaping and overflow. The gates run the
 #                        corpus REPLAY instead — engine/verify's tests plus the
 #                        `fuzz_corpus` suites of engine/core, engine/formatter,
 #                        engine/fetch, engine/layout and engine/authoring.

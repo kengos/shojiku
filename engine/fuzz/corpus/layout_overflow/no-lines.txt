@@ -1,0 +1,2 @@
+w=60 lines=0
+abcdefghijklmnopqrstuvwxyz
