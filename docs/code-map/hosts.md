@@ -21,6 +21,10 @@ false`), no clap.
   `valid_locale_id` (the ONE charset-guard home) + `load_pack` (id +
   overlay string → builtin(+merge) | standalone | NotFound; never
   touches the FS).
+- `fuzz.rs` (+ `fuzz/tests.rs`, `tests/fuzz_corpus/`) — doc-hidden
+  `locale_id`: an id `valid_locale_id` accepts must be one path segment
+  (the formatter's `assert_one_path_segment`); run by the
+  `formatter_pack_paths` fuzz target ([verify.md](verify.md)).
 - `fs.rs` — the FS pack discovery both FS hosts share:
   `resolve_font_dirs`/`resolve_locale_dir` (flags > env > `./packs/*`),
   `primary_font_dir` (the dir a NEW pack is created in — the same
@@ -357,6 +361,13 @@ so layout/render/sign/verify stay socket-free.
   `dirs` crate, MPL).
 - `error.rs` — `FetchError`/`TransportError` + the clip guard on echoed
   URLs.
+- `fuzz.rs` (+ `fuzz/tests.rs`, `tests/fuzz_corpus/`) — doc-hidden
+  `redirect_chain`, the `fetch_redirects` fuzz harness: `ensure_faces`
+  with a scripted transport (first input line = `url:`, the rest = each
+  hop's `Location`) that ASSERTS every request it receives is an https,
+  userinfo-free, non-IP URL on the default allowlist (decided without
+  calling `FetchPolicy::check`), plus a request-count and error-length
+  bound. Map of the fuzz crate: [verify.md](verify.md).
 
 ## engine/cli — thin wrapper over authoring
 

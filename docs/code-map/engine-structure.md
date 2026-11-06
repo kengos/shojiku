@@ -24,13 +24,13 @@ drop the `shojiku-` prefix; a crate depends only on lower layers.
 | 2 | `image` | core, diagnostics | — |
 | 2 | `layout-box` | core, diagnostics | — |
 | 3 | `fetch` | diagnostics, formatter | core |
-| 3 | `fuzz` (not a workspace member) | core, formatter, signing, verify | — |
 | 3 | `layout` | core, diagnostics, formatter, image, layout-box | — |
 | 4 | `render-pdf` | image, layout | core, formatter |
 | 4 | `render-png` | image, layout | core, formatter |
 | 5 | `authoring` | core, diagnostics, formatter, image, layout, render-png | — |
 | 6 | `capi` | authoring, diagnostics, formatter, image, layout, render-pdf, render-png, signing, verify | core |
 | 6 | `cli` | authoring, core, diagnostics, fetch, formatter, image, layout, render-pdf, render-png, signing, verify | — |
+| 6 | `fuzz` (not a workspace member) | authoring, core, fetch, formatter, layout, signing, verify | — |
 | 6 | `mcp` | authoring, core, diagnostics, formatter, image, layout | — |
 | 6 | `wasm` | authoring, core, diagnostics, formatter, image, layout, render-pdf, render-png | — |
 | 7 | `napi` | capi | signing |
@@ -296,7 +296,7 @@ first sentence of its `//!` header.
 - `src/testkit.rs` 204 — Test-only fixtures: minimal signable documents, and signed ones.
 - `src/testkit/keys.rs` 65 — Test key material, generated fresh for every test process.
 
-### `formatter` (L2) — 17 files / 2068 lines; tests 22 files / 4026 lines
+### `formatter` (L2) — 20 files / 2402 lines; tests 24 files / 4237 lines
 
 - `src/format.rs` 235 — `format(value, type, locale, options) -> string`
 - `src/format/dated.rs` 121 — Resolving a date/datetime pick: which tables a dated field reads, and whether a name is one it can already resolve.
@@ -304,6 +304,9 @@ first sentence of its `//!` header.
 - `src/format/money.rs` 125 — Currency and quantity rendering: the three currency variants (`default` = bare amount, `symbol`, `name`), the CLDR fractions precision chain, and semantic-unit quantities with plural words from the pack.
 - `src/format/number.rs` 70 — Number rendering shared by every numeric type: precision clamping, trailing-zero trimming, and locale-separator grouping.
 - `src/format/text.rs` 77 — The text arm: values that draw as words — plain strings, booleans and image references — plus the `enum` display-label lookup layered over them.
+- `src/fuzz.rs` 28 — The harnesses the `formatter_pattern` and `formatter_pack_paths` fuzz targets and the corpus replay tests both run.
+- `src/fuzz/paths.rs` 167 — The `formatter_pack_paths` harness: a locale pack's `fonts.uses` and an injected manifest through both bytes-first resolvers, and the one-path- segment rule for pack and locale ids.
+- `src/fuzz/pattern.rs` 137 — The `formatter_pattern` harness: a date/datetime pattern rendered by `format_value` against a ja-JP pack with an overlaid era and name table.
 - `src/lang.rs` 192 — Locale packs: builtin (CLDR-generated, compiled in) + the `packs/locale/<id>.yml` per-key overlay, era tables, and font-pack resolution.
 - `src/lang/builtin.rs` 128 — Builtin locale packs (CLDR-generated YAML, compiled in via `include_str!`) and the per-key overlay merge over them.
 - `src/lang/era.rs` 104 — Era tables (wareki): the `eras:` wire types and the date→era lookup.
@@ -314,7 +317,7 @@ first sentence of its `//!` header.
 - `src/lang/packs/confine.rs` 78 — Path confinement for font-pack resolution: what a pack id may look like, and what a manifest's `file` may point at.
 - `src/lang/read.rs` 44 — Reads a pack file from disk under the pack input cap, so the cap holds at the read and not only at the parse that follows it.
 - `src/lang/specs.rs` 101 — Pack value specs: number separators, per-code currency display, and semantic-unit display (plural categories + layout strings).
-- `src/lib.rs` 22 — Locale-aware value formatting.
+- `src/lib.rs` 24 — Locale-aware value formatting.
 
 ### `image` (L2) — 21 files / 2914 lines; tests 20 files / 2618 lines
 
@@ -349,33 +352,18 @@ first sentence of its `//!` header.
 - `src/resolve.rs` 85 — Guarded length/edge resolution: `%` -> absolute pt against a [`Basis`], with the range caps untrusted templates require.
 - `src/resolved.rs` 164 — [`ResolvedBox`]: one item box (`OptBox`) resolved against its parent — margins, padding, and the border-box position/size, with the content-box helpers every item kind shares.
 
-### `fetch` (L3) — 7 files / 711 lines; tests 7 files / 1163 lines
+### `fetch` (L3) — 8 files / 868 lines; tests 9 files / 1285 lines
 
 - `src/cache.rs` 140 — The local font cache: content-addressed blobs keyed by the manifest sha256, so a cached face is self-describing — the file name IS the expectation, and a blob whose bytes stop matching it is simply a miss.
 - `src/ensure.rs` 184 — Making every resolved face present on disk before the font store loads it.
 - `src/error.rs` 80 — Failure modes of the host font-fetch layer.
-- `src/lib.rs` 29 — Host-level font fetching: the layer that turns a *pinned reference* in a pack manifest (`sha256` + an optional `url:` hint) into bytes on disk, before any rendering starts.
+- `src/fuzz.rs` 155 — The redirect-chain harness the `fetch_redirects` fuzz target and the corpus replay test both run.
+- `src/lib.rs` 31 — Host-level font fetching: the layer that turns a *pinned reference* in a pack manifest (`sha256` + an optional `url:` hint) into bytes on disk, before any rendering starts.
 - `src/policy.rs` 94 — Which URLs the host is willing to fetch a pinned face from.
 - `src/read.rs` 80 — Reading a response body without trusting its length.
 - `src/transport.rs` 104 — The HTTP seam.
 
-### `fuzz` (L3) — 13 files / 339 lines; tests 0 files / 0 lines
-
-- `examples/seed.rs` 88 — Grows the corpus with the seeds that may not be committed.
-- `fuzz_targets/cms_container.rs` 13 — The CMS `SignedData` container: arbitrary DER through the decoder.
-- `fuzz_targets/contents_window.rs` 13 — The `/Contents` window decoder: a PDF hexadecimal string back into DER.
-- `fuzz_targets/core_definitions.rs` 15 — `definitions`: the OpenAPI-shaped data dictionary, which carries its own recursive schema walk (depth and node caps) on top of the YAML parse.
-- `fuzz_targets/core_params.rs` 18 — `params`: caller-supplied runtime data, parsed as YAML-or-JSON.
-- `fuzz_targets/core_ruby.rs` 21 — Aozora ruby (`｜base《reading》`): a hand-written scanner over authored text, so the one core door that is not serde.
-- `fuzz_targets/core_template.rs` 23 — The template wire: arbitrary text through the authored-document parser.
-- `fuzz_targets/formatter_fontpack.rs` 34 — A font pack's `manifest.yml`.
-- `fuzz_targets/formatter_langpack.rs` 15 — A locale pack's YAML.
-- `fuzz_targets/pdf_document.rs` 16 — The document reader: arbitrary bytes through the shared PDF parser.
-- `fuzz_targets/trust_anchors.rs` 16 — Trust anchors from caller-supplied PEM.
-- `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
-- `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
-
-### `layout` (L3) — 133 files / 19476 lines; tests 271 files / 38283 lines
+### `layout` (L3) — 134 files / 19546 lines; tests 273 files / 38357 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -496,7 +484,8 @@ first sentence of its `//!` header.
 - `src/font/vertical/shaped/combine.rs` 142 — tate-chu-yoko (tate-chū-yoko) combined cells: runs of up to N consecutive ASCII digits (`digits N`) — or a whole run (`all`) — shaped horizontally and drawn upright in ONE 1em cell of the column.
 - `src/font/vertical/shaped/trim.rs` 102 — Vertical half-width punctuation: fullwidth-punctuation trimming over an arranged column — the `textSpacingTrim` mechanism with the axes swapped.
 - `src/font/vertical/uax50.rs` 116 — UAX#50 Vertical_Orientation upright ranges — GENERATED by `scripts/gen-uax50.py` from VerticalOrientation.txt (Unicode 16.0.0); do not edit by hand.
-- `src/lib.rs` 29 — Shojiku layout engine.
+- `src/fuzz.rs` 68 — The link-URL harness the `link_url` fuzz target and the corpus replay test both run.
+- `src/lib.rs` 31 — Shojiku layout engine.
 - `src/style.rs` 267 — The style cascade: resolving authored [`Style`]s against inherited context into a fully concrete [`ComputedStyle`].
 - `src/tree.rs` 213 — The layout tree: fully positioned, fully formatted primitives.
 - `src/tree/meta.rs` 44 — Resolved document metadata: what the PDF says the document IS.
@@ -529,7 +518,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 43 files / 5225 lines; tests 44 files / 6183 lines
+### `authoring` (L5) — 44 files / 5263 lines; tests 46 files / 6236 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -545,8 +534,9 @@ first sentence of its `//!` header.
 - `src/formats/probe.rs` 74 — Running one pattern probe.
 - `src/formats/variants.rs` 193 — Which spellings each field type offers, and what each one renders.
 - `src/fs.rs` 122 — Filesystem pack discovery — the shared half of locale/font loading for the FS hosts (CLI, MCP server).
+- `src/fuzz.rs` 36 — The locale-id harness the `formatter_pack_paths` fuzz target runs beside the formatter's pack-path harness, and the authoring corpus replay test runs over the same seeds.
 - `src/inspect.rs` 38 — The `inspect` envelope: engine info (version + capabilities) for GUI gating, the layout tree, the path-addressed box sidecar (one box per item, id-carrying or not), and the resolved page margins — the bundle a Designer canvas hit-tests against.
-- `src/lib.rs` 48 — Authoring surface: the shared validate / prepare / preview / inspect / capabilities layer that the CLI, the browser/Workers WASM bindings, and the MCP server all wrap.
+- `src/lib.rs` 50 — Authoring surface: the shared validate / prepare / preview / inspect / capabilities layer that the CLI, the browser/Workers WASM bindings, and the MCP server all wrap.
 - `src/locale.rs` 57 — Locale-id resolution and pack loading from an overlay STRING (not a path).
 - `src/prepare.rs` 114 — The layout pipeline shared by `inspect` / `preview` / `render`: gate validation errors, load (or accept injected) assets, lay out, dedupe diagnostics.
 - `src/preview.rs` 81 — Preview rasterization: every page to PNG bytes (the export/download form) or raw RGBA pixels (the canvas form, skipping the PNG encode).
@@ -612,6 +602,26 @@ first sentence of its `//!` header.
 - `src/report.rs` 159 — The `--report <path>` sidecar: what a lifecycle operation did, as JSON.
 - `src/sign.rs` 115 — The `sign` command: a rendered PDF in, a signed one out.
 - `src/verify.rs` 58 — The `verify` command: a signed PDF and a trust anchor in, a report out.
+
+### `fuzz` (L6) — 17 files / 411 lines; tests 0 files / 0 lines
+
+- `examples/seed.rs` 88 — Grows the corpus with the seeds that may not be committed.
+- `fuzz_targets/cms_container.rs` 13 — The CMS `SignedData` container: arbitrary DER through the decoder.
+- `fuzz_targets/contents_window.rs` 13 — The `/Contents` window decoder: a PDF hexadecimal string back into DER.
+- `fuzz_targets/core_definitions.rs` 15 — `definitions`: the OpenAPI-shaped data dictionary, which carries its own recursive schema walk (depth and node caps) on top of the YAML parse.
+- `fuzz_targets/core_params.rs` 18 — `params`: caller-supplied runtime data, parsed as YAML-or-JSON.
+- `fuzz_targets/core_ruby.rs` 21 — Aozora ruby (`｜base《reading》`): a hand-written scanner over authored text, so the one core door that is not serde.
+- `fuzz_targets/core_template.rs` 23 — The template wire: arbitrary text through the authored-document parser.
+- `fuzz_targets/fetch_redirects.rs` 17 — A font face's `url:` and the `Location` of every redirect hop.
+- `fuzz_targets/formatter_fontpack.rs` 34 — A font pack's `manifest.yml`.
+- `fuzz_targets/formatter_langpack.rs` 15 — A locale pack's YAML.
+- `fuzz_targets/formatter_pack_paths.rs` 22 — A locale pack's `fonts.uses` and an injected font-pack manifest, resolved by both bytes-first resolvers.
+- `fuzz_targets/formatter_pattern.rs` 17 — A date/datetime pattern from a template's `formats:` registry, rendered against the ja-JP pack with a hostile overlay of its era and name tables.
+- `fuzz_targets/link_url.rs` 16 — A `link:` URL after interpolation: params control it, and layout's gate decides whether it reaches a PDF `/URI` action.
+- `fuzz_targets/pdf_document.rs` 16 — The document reader: arbitrary bytes through the shared PDF parser.
+- `fuzz_targets/trust_anchors.rs` 16 — Trust anchors from caller-supplied PEM.
+- `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
+- `src/lib.rs` 52 — Setup shared by the fuzz targets: the key material a verifier needs.
 
 ### `mcp` (L6) — 27 files / 2784 lines; tests 29 files / 4325 lines
 

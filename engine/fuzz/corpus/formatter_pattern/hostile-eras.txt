@@ -1,0 +1,7 @@
+0001-01-01
+G GG y
+eras:
+  - { name: B, start: "1000-01-01" }
+  - { name: A, start: "-542-01-01" }
+  - { name: A, start: "-542-01-01" }
+eraYearOne: first

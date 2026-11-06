@@ -1,5 +1,6 @@
-//! The fuzz corpus for the two pack doors, replayed through the same public
-//! entry points the fuzz targets call.
+//! The fuzz corpora for the formatter doors (the two pack manifests, the
+//! date-pattern renderer and the bytes-first pack resolvers), replayed
+//! through the same public entry points and harnesses the fuzz targets call.
 //!
 //! Same contract as the core suite: nothing in CI builds `engine/fuzz`, so
 //! this is what keeps corpus and targets honest between on-demand runs, and
@@ -63,4 +64,35 @@ fn every_font_pack_seed_parses_or_is_refused() {
         }
     }
     assert!(parsed >= 1, "no font-pack seed parses");
+}
+
+#[test]
+fn every_date_pattern_seed_renders_within_its_bounds() {
+    let seeds = corpus("formatter_pattern");
+    assert!(
+        seeds.len() >= 7,
+        "the committed date-pattern seeds are missing"
+    );
+    let rendered = seeds
+        .iter()
+        .filter(|text| shojiku_formatter::fuzz::date_pattern(text) >= 1)
+        .count();
+    // Positive control: a zero means every seed stopped before the renderer.
+    assert!(rendered >= 1, "no date-pattern seed renders");
+}
+
+#[test]
+fn every_pack_path_seed_resolves_only_confined_faces() {
+    let seeds = corpus("formatter_pack_paths");
+    assert!(
+        seeds.len() >= 7,
+        "the committed pack-path seeds are missing"
+    );
+    let resolved = seeds
+        .iter()
+        .filter(|text| shojiku_formatter::fuzz::pack_paths(text) >= 1)
+        .count();
+    // Positive control: at least one seed resolves a face, so the
+    // confinement assertion runs over a returned face.
+    assert!(resolved >= 1, "no pack-path seed resolves a face");
 }

@@ -23,7 +23,7 @@ mod flow;
 mod fragments;
 mod grid;
 mod intrinsic;
-mod link;
+pub(crate) mod link;
 mod list;
 mod marks;
 mod meta;

@@ -1,0 +1,2 @@
+https://github.com/a.ttf
+https://[::1]/a.ttf

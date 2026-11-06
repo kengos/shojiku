@@ -20,8 +20,11 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
+shojiku-authoring = { path = "../authoring" }
 shojiku-core = { path = "../core" }
+shojiku-fetch = { path = "../fetch" }
 shojiku-formatter = { path = "../formatter" }
+shojiku-layout = { path = "../layout" }
 shojiku-signing = { path = "../signing" }
 shojiku-verify = { path = "../verify" }
 
@@ -121,6 +124,37 @@ bench = false
 [[bin]]
 name = "formatter_fontpack"
 path = "fuzz_targets/formatter_fontpack.rs"
+test = false
+doc = false
+bench = false
+
+# The scalar doors: URL and path checks, and the date-pattern renderer. Each
+# target is one call into the owning crate's hidden `fuzz` module, which is
+# where the asserted properties live so the corpus replay tests run them too.
+[[bin]]
+name = "fetch_redirects"
+path = "fuzz_targets/fetch_redirects.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "link_url"
+path = "fuzz_targets/link_url.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "formatter_pattern"
+path = "fuzz_targets/formatter_pattern.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "formatter_pack_paths"
+path = "fuzz_targets/formatter_pack_paths.rs"
 test = false
 doc = false
 bench = false
