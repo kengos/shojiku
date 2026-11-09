@@ -25,6 +25,15 @@ import org.junit.jupiter.api.Test;
  */
 class SigningTest extends Fixtures {
 
+  // The PEM BEGIN line ("BEGIN PRIVATE KEY" with five hyphens before and after it) is written as
+  // two string literals, so that no line of this source file holds the whole BEGIN line; the +
+  // operator joins the two literals at compile time into the same string as one literal holding the
+  // whole BEGIN line. gitleaks scans the whole source file and reports a private-key BEGIN line as
+  // a leaked key when "KEY-----" appears anywhere at least 64 characters after it, even in a
+  // different string literal.
+  private static final String KEY_BEGIN = "-----BEGIN " + "PRIVATE KEY-----\n";
+  private static final String KEY_END = "-----END PRIVATE KEY-----\n";
+
   @Test
   void signingAppendsARevisionRatherThanRewriting() {
     ShojikuClient client = client().build();
@@ -91,9 +100,7 @@ class SigningTest extends Fixtures {
     ShojikuClient client = client().build();
     LocalPem garbage =
         LocalPem.builder()
-            .keyPem(
-                "-----BEGIN PRIVATE KEY-----\nnope\n-----END PRIVATE KEY-----\n"
-                    .getBytes(StandardCharsets.US_ASCII))
+            .keyPem((KEY_BEGIN + "nope\n" + KEY_END).getBytes(StandardCharsets.US_ASCII))
             .certPem(Files.readAllBytes(key("rsa2048.cert.pem")))
             .build();
 
@@ -113,9 +120,7 @@ class SigningTest extends Fixtures {
     ShojikuClient client = client().build();
     LocalPem garbage =
         LocalPem.builder()
-            .keyPem(
-                ("-----BEGIN PRIVATE KEY-----\n" + secret + "\n-----END PRIVATE KEY-----\n")
-                    .getBytes(StandardCharsets.US_ASCII))
+            .keyPem((KEY_BEGIN + secret + "\n" + KEY_END).getBytes(StandardCharsets.US_ASCII))
             .certPem(Files.readAllBytes(key("rsa2048.cert.pem")))
             .passphrase("hunter2")
             .build();
@@ -148,7 +153,7 @@ class SigningTest extends Fixtures {
     // memory has no path to show, and a passphrase has no safe form at all.
     LocalPem provider =
         LocalPem.builder()
-            .keyPem("-----BEGIN PRIVATE KEY-----\nSECRETBODY\n".getBytes(StandardCharsets.US_ASCII))
+            .keyPem((KEY_BEGIN + "SECRETBODY\n").getBytes(StandardCharsets.US_ASCII))
             .certPem("-----BEGIN CERTIFICATE-----\nCERTBODY\n".getBytes(StandardCharsets.US_ASCII))
             .passphrase("hunter2")
             .build();

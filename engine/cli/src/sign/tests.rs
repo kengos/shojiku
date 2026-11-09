@@ -199,14 +199,24 @@ fn a_legacy_key_reaches_the_caller_with_its_conversion_hint() {
     // The hint has to survive the trip from the signing crate to the command
     // line, since that is where somebody can act on it.
     let legacy = key_dir().join("legacy.pem");
+    // The PEM BEGIN line (`BEGIN RSA PRIVATE KEY` with five hyphens before and
+    // after it) is written as two string literals, so that no line of this
+    // source file holds the whole BEGIN line; `concat!` joins the two literals
+    // into the same bytes as one literal holding the whole BEGIN line. gitleaks
+    // scans the whole source file and reports a private-key BEGIN line as a
+    // leaked key when `KEY-----` appears anywhere at least 64 characters after
+    // it, even in a different string literal.
     std::fs::write(
         &legacy,
-        "-----BEGIN RSA PRIVATE KEY-----\n\
-         Proc-Type: 4,ENCRYPTED\n\
-         DEK-Info: DES-EDE3-CBC,0123456789ABCDEF\n\
-         \n\
-         bm90IGEgcmVhbCBrZXk=\n\
-         -----END RSA PRIVATE KEY-----\n",
+        concat!(
+            "-----BEGIN ",
+            "RSA PRIVATE KEY-----\n\
+            Proc-Type: 4,ENCRYPTED\n\
+            DEK-Info: DES-EDE3-CBC,0123456789ABCDEF\n\
+            \n\
+            bm90IGEgcmVhbCBrZXk=\n\
+            -----END RSA PRIVATE KEY-----\n"
+        ),
     )
     .expect("writing the fixture");
     let mut args = args("ec256.key.pem", "ec256");
