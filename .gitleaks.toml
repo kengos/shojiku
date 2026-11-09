@@ -1,0 +1,45 @@
+# gitleaks configuration for this repository: gitleaks's built-in rule set,
+# with allowlists for the false positives that the tracked tree produces.
+# Two scans pass this file to gitleaks with `--config`: the git pre-commit
+# hook `.githooks/pre-commit`, which `make secrets:install` installs and which
+# scans the staged content of each commit, and `make secrets:scan`, which
+# scans the whole history. The hook reads the copy committed in HEAD (in
+# origin/main when HEAD has no `.gitleaks.toml`), so a change to this file
+# applies to the commits after the one that changes it.
+#
+# Each allowlist applies to one rule and matches the shape of the reported
+# secret value (a regular expression, never the value itself), never a file
+# path, so that a real credential written in a test file is still reported.
+# gitleaks's default configuration, which `useDefault` keeps, does skip some
+# paths by name: lock files (package-lock.json, yarn.lock, go.sum),
+# node_modules, images such as .svg, and files named gitleaks.toml or
+# .gitleaks.toml. The commit hook scans a staged copy of this file under
+# another name, so a value written here is still scanned by the hook (the
+# history scan of `make secrets:scan` skips this file).
+#
+# `make secrets:scan` checks that a generated value for each rule an
+# allowlist names is still reported, and that one example of each
+# allowlisted shape is not.
+#
+# A test fixture that looks like a key is built at run time instead of being
+# allowlisted (the PEM BEGIN line split into two literals, for example): an
+# allowlist that matches a multi-line value also suppresses a real key that
+# the same match extends over.
+# Findings in commits made before this file existed are listed by fingerprint
+# in `.gitleaksignore`, which only `make secrets:scan` reads.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Signing tests pass key and certificate FILE NAMES (key: \"rsa2048.enc.pem\"); the value is a file name, not key material."
+targetRules = ["generic-api-key"]
+regexTarget = "secret"
+regexes = ['''^[A-Za-z0-9_-]{1,40}(\.[A-Za-z0-9_-]{1,10}){0,2}\.pem$''']
+
+[[allowlists]]
+description = "Designer tests and locale catalogs assign slash-separated words, such as the document path invoices/monthly or a list of property names, to fields whose names contain the word key."
+targetRules = ["generic-api-key"]
+regexTarget = "secret"
+regexes = ['''^[A-Za-z]{1,24}(/[A-Za-z]{1,24}){1,5}$''']
+

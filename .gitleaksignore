@@ -1,0 +1,18 @@
+# gitleaks findings in commits made before the commit hook existed, listed by
+# fingerprint (<commit>:<file>:<rule>:<line>). `make secrets:scan` passes this
+# file to gitleaks over the whole history; the commit hook does not read it.
+# A fingerprint names one commit, so it never covers a later commit.
+#
+# Every entry below is a test fixture PEM block whose body is a placeholder,
+# not key material: `nope`, or the base64 of "not a real key". In the Java and
+# C# tests the reported value continues into the next test's placeholder
+# block. The fixtures were later rewritten to build the BEGIN line from two
+# string literals, which gitleaks does not report.
+1dfbe58a6036004ace9f2485679ad1d96ff36b1d:engine/cli/src/sign/tests.rs:private-key:228
+1dfbe58a6036004ace9f2485679ad1d96ff36b1d:engine/signing/src/key/tests/refuse.rs:private-key:10
+1dfbe58a6036004ace9f2485679ad1d96ff36b1d:sdk/dotnet/Shojiku.Tests/SigningTests.cs:private-key:104
+1dfbe58a6036004ace9f2485679ad1d96ff36b1d:sdk/java/src/test/java/jp/kengos/shojiku/SigningTest.java:private-key:95
+670085c8b262bf2e263ff434112f6bdb8b2481f6:sdk/dotnet/Shojiku.Tests/SigningTests.cs:private-key:104
+670085c8b262bf2e263ff434112f6bdb8b2481f6:sdk/java/src/test/java/jp/kengos/shojiku/SigningTest.java:private-key:95
+bce61d62533a9a202b2f2b18c9a38a9de074047e:engine/cli/src/sign/tests.rs:private-key:227
+bce61d62533a9a202b2f2b18c9a38a9de074047e:engine/signing/src/key/tests/refuse.rs:private-key:10

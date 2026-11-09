@@ -1,0 +1,10 @@
+#!/bin/sh
+# shojiku-secret-scan-hook (scripts/install-commit-hooks.sh recognises an
+# installed copy of this file by this line)
+#
+# git pre-merge-commit hook: git runs this hook, not pre-commit, before it
+# records a merge commit that has no conflict, so this hook runs the same
+# gitleaks scan (see pre-commit) over the merge result. A conflicted merge is
+# finished by `git commit`, which runs pre-commit. `make secrets:install`
+# installs both files into the same hooks directory.
+exec "$(dirname -- "$0")/pre-commit" "$@"

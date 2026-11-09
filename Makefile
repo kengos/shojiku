@@ -16,8 +16,11 @@
 #     make engine:package       each published crate builds from its own tarball
 #     make make:check           the gate surface itself — a misnamed target, or
 #                               any tracked file naming a command that is gone
-#     make hooks:verify         the tracked .claude/hooks still decide — and
-#                               still let the legitimate spelling through
+#     make hooks:verify         the tracked .claude/hooks and .githooks still
+#                               decide — and still let the legitimate
+#                               spelling through
+#     make secrets:scan         gitleaks over the whole history (Docker, no
+#                               network; no CI job runs it)
 #     make skills:verify        the skill eval cases still parse, and every
 #                               product skill still has a case or a reason
 #
@@ -45,6 +48,10 @@
 #                               (engine then: git add engine/Cargo.lock)
 #     make <scope>:update       same scopes, but BUMP within the manifest's
 #                               ranges — the verb that clears an advisory
+#
+#   Setup (writes into this clone's git hooks directory, proves nothing)
+#     make secrets:install      turn on the gitleaks commit hook
+#                               (.githooks/pre-commit) and pull its image
 #
 #   Housekeeping (removes things, proves nothing)
 #     make docker:clean:all     stopped gate containers, the free target slot
@@ -629,6 +636,7 @@ include mk/site.mk
 include mk/sdk.mk
 include mk/docker.mk
 include mk/hooks.mk
+include mk/secrets.mk
 include mk/skills.mk
 include mk/proof.mk
 

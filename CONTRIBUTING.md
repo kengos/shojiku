@@ -387,8 +387,9 @@ takes `version-check-exempt: <reason>`, the same shape as
 - [.claude/hooks/](.claude/hooks/) — hooks Claude Code runs against its own
   tool calls in this checkout: they refuse a gate piped into `tail` (a
   pipeline reports the last command's status, so it exits 0 over a failure),
-  a `cargo` run on a host with no toolchain, and a push at the protected
-  `main`, and they ask before a merge. They affect an AI session only;
+  a `cargo` run on a host with no toolchain, a push at the protected
+  `main`, and a commit that skips the secret-scanning commit hook, and they
+  ask before a merge. The hooks affect an AI session only;
   nothing here changes what a human contributor may run. `make hooks:verify`
   is the gate over them, and it also runs `make hooks:codes` — the same rule
   from the other end. The hooks stop a work-item code being WRITTEN and fire
@@ -399,3 +400,21 @@ takes `version-check-exempt: <reason>`, the same shape as
   in a tracked file points at nothing — describe the substance instead. **Review a change to them as code**: they execute on
   every tool call in the checkout they sit in, so they will run on your machine
   once you check the branch out.
+- [.githooks/](.githooks/) — a git pre-commit hook that runs gitleaks (in
+  Docker, with no network) over the staged content of each commit and refuses
+  the commit when it finds a secret or cannot scan. Turn the hook on once per clone
+  with `make secrets:install`, which copies `.githooks/` as committed in HEAD
+  (or in origin/main when HEAD has no `.githooks/`) into the clone's shared
+  hooks directory (`.git/hooks` of the main checkout)
+  and pulls the pinned image; the hook then scans every `git commit` and
+  every merge commit in the clone, a person's and a Claude Code session's alike, in every worktree and on every
+  branch. Run `make secrets:install` again after a commit that changes
+  `.githooks/`. `git commit --no-verify`
+  records a commit without the scan. A test fixture that looks like a key is
+  built at run time (two string literals) rather than added to the
+  `.gitleaks.toml` allowlists. `make secrets:scan` runs gitleaks over the whole
+  history; no CI job runs it, so run it by hand. **Review a change to
+  `.githooks/` as code**: `make secrets:install` installs the copy in the
+  branch you have checked out, and git then runs it with your privileges and
+  your Docker daemon on every commit and merge, so do not run the install on a
+  branch you have not reviewed (an outside pull request, for example).

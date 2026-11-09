@@ -1,5 +1,6 @@
 #!/bin/sh
-# Self-test for the tracked Claude Code hooks (.claude/hooks/*.sh).
+# Self-test for the tracked Claude Code hooks (.claude/hooks/*.sh) and the
+# secret-scanning git commit hook (.githooks/pre-commit).
 #
 # The hooks are the deterministic half of this repository's development rules:
 # rules that were written into the skills as prose, broken anyway, and moved
@@ -7,12 +8,19 @@
 # deciding therefore removes a control without reddening anything — which is
 # the exact failure this gate exists to catch.
 #
-# Every case feeds a synthetic hook event on stdin and asserts the decision.
+# Every Claude Code hook case feeds a synthetic hook event on stdin and
+# asserts the decision; every commit hook case runs a real `git commit` or
+# `git merge` in a temporary repository and asserts whether the commit was
+# recorded.
 # The table carries BOTH halves: commands that must be caught, and the
 # legitimate spellings beside them that must NOT be. A deny rule with no
 # negative case is a blindfold waiting to happen.
 #
-# Pure read-only POSIX sh; jq is the only dependency (the hooks need it too).
+# POSIX sh; jq, git and iconv are the only dependencies (the hooks need jq and
+# git too). Every git command reads no global or system configuration
+# (GIT_CONFIG_GLOBAL=/dev/null), so a developer's own hooksPath or aliases do
+# not change a case.
+# The commit hook cases write only under a temporary directory.
 
 set -eu
 
@@ -45,6 +53,34 @@ fi
 pass=0
 fail=0
 denies=0
+
+# The Bash guard refuses a commit, merge or pull unless the project's shared
+# hooks directory holds the secret-scanning hooks exactly as `.githooks/`
+# holds them in HEAD or origin/main, and no core.hooksPath setting makes git
+# read hooks from another directory. The cases run against a temporary project repository with a committed
+# `.githooks/` and its hooks installed by scripts/install-commit-hooks.sh (the
+# script `make secrets:install` runs); the cases at the end of the guard's
+# hook section each change one part of the project's hook installation (the
+# installed copies or core.hooksPath).
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+project="$tmp/project"
+git_tmp() { git -c user.name=t \
+	-c user.email=t@example.invalid -c commit.gpgsign=false "$@"; }
+git_tmp init -q "$project"
+mkdir "$project/.githooks"
+for f in pre-commit pre-merge-commit; do
+	printf '#!/bin/sh\n# shojiku-secret-scan-hook (scripts/install-commit-hooks.sh recognises an\nexit 0\n' \
+		> "$project/.githooks/$f"
+done
+git_tmp -C "$project" add .githooks
+git_tmp -C "$project" commit -q -m hooks
+install_hooks() { "$root/scripts/install-commit-hooks.sh" "$1" "$2" >/dev/null; }
+install_hooks "$project/.githooks" "$project"
+export CLAUDE_PROJECT_DIR="$project"
+# The guard counts a statement assignment to an upper-case variable when the
+# variable is set in the environment the guard runs with; the cases below
+# assume MSG is not set there.
+unset MSG
 
 # outcome <hook> <event-json> -> deny | ask | note | silent
 outcome() {
@@ -567,6 +603,306 @@ case_edit 'sample identifiers either'   silent "$f"
 f="$tmp/docs/clean.md"
 printf 'Implements the character grid.\n' > "$f"
 case_edit 'prose without codes'         silent "$f"
+
+# ---- Bash guard: the secret-scanning commit hook -----------------------
+case_bash 'commit --no-verify'           deny   'git commit --no-verify -m x'
+case_bash 'commit --no-veri (a prefix)'  deny   'git commit --no-veri -m x'
+case_bash 'pull --no-verify'             deny   'git pull --no-verify origin main'
+case_bash 'hooksPath by --config-env'    deny   'HP=/dev/null git --config-env=core.hooksPath=HP commit -m x'
+case_bash 'hooksPath, --config-env word' deny   'HP=/dev/null git --config-env core.hooksPath=HP commit -m x'
+case_bash 'alias by -c'                  deny   "git -c alias.c='commit --no-verify' c -m x"
+case_bash 'alias written by git config'  deny   "git config alias.ci 'commit --no-verify'"
+case_bash 'include by -c'                deny   'git -c include.path=/tmp/h.cfg commit -m x'
+case_bash 'signing off by --config-env'  deny   'V=false git --config-env=commit.gpgsign=V commit -m x'
+case_bash 'hooksPath, config --add'      deny   'git config --add core.hooksPath .githooks'
+case_bash 'commit -n'                    deny   'git commit -n -m x'
+case_bash 'commit -n in a group'         deny   'git commit -anm x'
+case_bash 'merge --no-verify'            deny   'git merge --no-verify feature'
+case_bash 'hooksPath by -c'              deny   'git -c core.hooksPath=/dev/null commit -m x'
+case_bash 'hooksPath by the environment' deny   'GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null GIT_CONFIG_COUNT=1 git commit -m x'
+case_bash 'hooksPath set by git config'  deny   'git config core.hooksPath /tmp/none'
+case_bash 'hooksPath unset'              deny   'git config --unset core.hooksPath'
+case_bash 'hooksPath, config set'        deny   'git config set core.hooksPath x'
+case_bash 'docker stub for the hook'     deny   'SHOJIKU_GITLEAKS_DOCKER=true git commit -m x'
+case_bash 'n inside a -m group'          silent 'git commit -mnote'
+case_bash 'n inside -uno'                silent 'git commit -uno -m x'
+case_bash '--no-verbose is not the flag' silent 'git commit --no-verbose -m x'
+case_bash 'hooksPath set to .githooks'   deny   'git config core.hooksPath .githooks'
+case_bash 'PATH before a commit'         deny   'PATH=/tmp/fake:$PATH git commit -m x'
+case_bash 'HOME exported, then commit'   deny   'export HOME=/tmp/h && git commit -m x'
+case_bash 'DOCKER_HOST before a merge'   deny   'DOCKER_HOST=tcp://x:2375 git merge feature'
+case_bash 'author date allowed'          silent 'GIT_AUTHOR_DATE=2026-01-01T00:00:00 git commit -m x'
+case_bash 'locale allowed'               silent 'LC_ALL=C git commit -m x'
+case_bash 'PATH without a commit'        silent 'PATH=/tmp/x:$PATH ls'
+case_bash 'commit -C elsewhere'          silent 'git -C ~/elsewhere commit -m x'
+case_bash 'config -f, reading hooksPath' silent 'git config -f x.cfg core.hooksPath'
+case_bash 'variable before merge --abort' silent 'FOO=1 git merge --abort'
+git_tmp -C "$project" config alias.ci 'commit --no-verify'
+git_tmp -C "$project" config alias.co commit
+git_tmp -C "$project" config alias.sci '!git commit -n'
+case_bash 'alias expanding to --no-verify' deny  'git ci -m x'
+case_bash 'alias to commit, then -n'     deny   'git co -n -m x'
+case_bash 'shell alias with -n'          deny   'git sci'
+case_bash 'alias to commit, clean'       silent 'git co -m x'
+git_tmp -C "$project" config alias.c2 ci
+git_tmp -C "$project" config alias.last '!git log -n 1'
+git_tmp -C "$project" config alias.commit 'commit --no-verify'
+case_bash 'alias of an alias'            deny   'git c2 -m x'
+case_bash 'shell alias -n without commit' silent 'git last'
+case_bash 'alias named like a built-in'  silent 'git commit -m x'
+case_bash 'lower-case shell variable'    silent 'msg=$(cat m.txt) && git commit -m "$msg"'
+case_bash 'exec-path before a commit'    deny   'git --exec-path=/tmp/x commit -m x'
+case_bash 'variable before another tool' silent 'V=1 make gui:verify && git commit -m x'
+case_bash 'assignments inside a message'  silent 'git commit -m "$(cat <<'"'"'EOF'"'"'
+Fix the release script
+
+export HOME=/tmp/x
+PATH=/tmp/fake git commit
+EOF
+)"'
+case_bash 'GPG_TTY before a commit'      silent 'GPG_TTY=$(tty) git commit -m x'
+case_bash 'PATH as its own statement'    deny   'PATH=/tmp/x:$PATH; git commit -m x'
+case_bash 'lower-case statement'         silent 'msg=x; git commit -m "$msg"'
+case_bash 'upper-case shell variable'    silent 'MSG=$(cat m.txt) && git commit -m "$MSG"'
+case_bash 'GIT_TRACE before a commit'    silent 'GIT_TRACE=1 git commit -m x'
+case_bash 'environment variable, statement' deny 'CLAUDE_PROJECT_DIR=/x; git commit -m x'
+case_bash 'assignment inside $( )'       silent 'git commit -m "$(PATH=/x; echo hi)"'
+case_bash 'variable before git, then $( )' deny 'GIT_FOO=1 msg=$(true) git commit -m x'
+case_bash 'HOME as its own statement'    deny   'HOME=/tmp/h; git commit -m x'
+case_bash 'env PATH= before a commit'    deny   'env PATH=/tmp/x git commit -m x'
+case_bash 'exec-path, only printing'     silent 'git --exec-path'
+case_bash 'Commit in mixed case'         deny   'git Commit --no-verify -m x'
+case_bash 'IFS in a read loop'           silent 'while IFS= read -r l; do :; done < f; git commit -m x'
+case_bash 'merge editor variable'        silent 'GIT_MERGE_AUTOEDIT=no git merge feature'
+git_tmp -C "$project" config --remove-section alias
+case_bash 'reading an alias'             silent 'git config alias.ci'
+case_bash 'n inside a -m value'          silent 'git commit -m -n'
+case_bash 'n in a --message value'       silent 'git commit --message -n'
+case_bash 'merge -n is --no-stat'        silent 'git merge -n feature'
+case_bash 'reading hooksPath'            silent 'git config core.hooksPath'
+case_bash 'reading hooksPath, --get'     silent 'git config --get core.hooksPath'
+case_bash 'prose naming --no-verify'     silent 'echo "never git commit --no-verify"'
+git_tmp -C "$project" config core.hooksPath .githooks
+case_bash 'commit, hooksPath set'        deny   'git commit -m x'
+case_bash 'merge, hooksPath set'         deny   'git merge origin/main'
+case_bash 'pull, hooksPath set'          deny   'git pull'
+case_bash 'merge --abort, hooksPath set' silent 'git merge --abort'
+case_bash 'status, hooksPath set'        silent 'git status'
+install_hooks "$project/.githooks" "$project"
+case_bash 'commit, hooks installed'      silent 'git commit -m x'
+echo '# edited' >> "$project/.git/hooks/pre-commit"
+case_bash 'commit, installed copy edited' deny  'git commit -m x'
+install_hooks "$project/.githooks" "$project"
+rm "$project/.git/hooks/pre-merge-commit"
+case_bash 'merge, a hook not installed'  deny   'git merge origin/main'
+install_hooks "$project/.githooks" "$project"
+chmod -x "$project/.git/hooks/pre-commit"
+case_bash 'commit, hook not executable'  deny   'git commit -m x'
+install_hooks "$project/.githooks" "$project"
+case_bash 'commit, reinstalled'          silent 'git commit -m x'
+# The shared hooks directory serves worktrees on branches of different ages:
+# a copy equal to origin/main passes while HEAD holds a newer version.
+git_tmp -C "$project" update-ref refs/remotes/origin/main HEAD
+echo '# newer' >> "$project/.githooks/pre-commit"
+git_tmp -C "$project" commit -q -am 'newer hook'
+case_bash 'installed copy = origin/main' silent 'git commit -m x'
+git_tmp -C "$project" update-ref -d refs/remotes/origin/main
+case_bash 'installed copy older than HEAD' deny 'git commit -m x'
+install_hooks "$project/.githooks" "$project"
+
+# ---- Commit hook: .githooks/pre-commit refuses a staged secret ----------
+# `make secrets:scan` runs the real gitleaks and checks that it still reports
+# generated secrets despite the allowlists. This section runs real `git
+# commit`s in a temporary repository whose shared hooks directory holds this
+# checkout's .githooks, installed by scripts/install-commit-hooks.sh as `make
+# secrets:install` installs them, with a stub in place of `docker`, so it runs
+# without Docker. The stub reports a finding for each copied file that
+# holds a GitHub-token-shaped value (the hook's generated check token
+# included), except a line holding the marker `gitleaks:allow` when the hook
+# omits `--ignore-gitleaks-allow` (gitleaks itself skips such a line). When
+# the hook omits `--network none`, `--pull never`, the read-only `/scan` mount,
+# `--max-archive-depth=8` or `--config`, or passes the staged `.gitleaks.toml`
+# (a case below stages one that holds `WIDENED`), the stub writes no JSON
+# report, so the hook refuses every commit and the `committed` cases fail. A commit with no HEAD has no committed `.gitleaks.toml`, so the hook
+# passes no `--config`; STUB_NO_HEAD=1 tells the stub to expect that.
+stub="$tmp/docker-stub"
+cat > "$stub" <<'STUB'
+#!/bin/sh
+mode=${STUB_DOCKER:-up}
+case "$1" in
+info) [ "$mode" != down ]; exit ;;
+image) [ "$mode" != nopull ]; exit ;;
+esac
+# The docker options must come before the image name; the gitleaks options
+# after it.
+before=" ${*%%zricethezav/gitleaks*} "
+after=" ${*#*zricethezav/gitleaks}"
+for need in ' --network none ' ' --pull never ' ':/scan:ro '; do
+	case "$before" in *"$need"*) ;; *) echo "stub: $need missing before the image" >&2; exit 1 ;; esac
+done
+case "$after" in *' --max-archive-depth=8 '*) ;; *) echo 'stub: --max-archive-depth=8 missing after the image' >&2; exit 1 ;; esac
+marker=gitleaks:allow
+case "$after" in *' --ignore-gitleaks-allow '*) marker='no marker is honoured' ;; esac
+if [ "${STUB_NO_HEAD:-}" != 1 ]; then
+	case "$after" in *' --config /gitleaks.toml '*) ;; *) echo 'stub: --config missing after the image' >&2; exit 1 ;; esac
+fi
+[ "$mode" = broken ] && { echo 'stub: gitleaks crashed' >&2; exit 1; }
+[ "$mode" = empty ] && { echo '[]'; exit 0; }
+scan=$(printf '%s\n' "$@" | sed -n 's#^\(.*\):/scan:ro$#\1#p')
+config=$(printf '%s\n' "$@" | sed -n 's#^\(.*\):/gitleaks.toml:ro$#\1#p')
+[ -n "$config" ] && grep -q WIDENED "$config" && { echo 'stub: the staged config was used' >&2; exit 1; }
+cd "$scan" || exit 1
+# gitleaks's default configuration skips files named gitleaks.toml or
+# .gitleaks.toml; the stub skips them too.
+find . -name gitleaks.toml -o -name .gitleaks.toml | while IFS= read -r f; do mv "$f" "$f.skipped"; done
+# Every staged copy sits in a numbered directory of its own.
+ls staged | grep -qv '^[0-9][0-9]*$' && { echo 'stub: staged/ holds a name that is not a number' >&2; exit 1; }
+grep -rE --exclude='*.skipped' 'ghp_[A-Za-z0-9]{36}' . | grep -vF "$marker" | cut -d: -f1 | sort -u | sed 's#^\./#/scan/#' |
+	jq -R '{RuleID: "github-pat", File: ., StartLine: 1}' | jq -s .
+exit 1
+STUB
+chmod +x "$stub"
+
+repo="$tmp/commit-repo"
+token="ghp_$(printf '%036d' 0 | tr 0 A)"
+export SHOJIKU_GITLEAKS_DOCKER="$stub"
+export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@example.invalid
+export GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@example.invalid
+git init -q -b main "$repo"
+install_hooks "$root/.githooks" "$repo"
+git -C "$repo" config commit.gpgsign false
+
+# case_commit <label> <committed|refused|unscanned> <command run in the repository>
+# refused: the hook reported a secret; unscanned: the hook refused because it
+# could not scan; committed: the commit was recorded.
+case_commit() {
+	before=$(git -C "$repo" rev-parse -q --verify HEAD || echo none)
+	if (cd "$repo" && sh -c "$3") >/dev/null 2>"$tmp/commit.err"; then status=0; else status=1; fi
+	after=$(git -C "$repo" rev-parse -q --verify HEAD || echo none)
+	if [ "$status" = 0 ] && [ "$before" != "$after" ]; then got=committed
+	elif [ "$status" != 0 ] && [ "$before" = "$after" ] && grep -q 'gitleaks reported a secret' "$tmp/commit.err"; then got=refused
+	elif [ "$status" != 0 ] && [ "$before" = "$after" ] && grep -q 'could not be scanned' "$tmp/commit.err"; then got=unscanned
+	else got="exit $status, HEAD moved: $([ "$before" != "$after" ] && echo yes || echo no)"
+	fi
+	check "$1" "$2" "$got"
+}
+secret() { printf 'token = "%s"\n' "$token" > "$repo/$1"; }
+
+secret first.txt
+case_commit 'first commit, no HEAD'           refused   'git add -A && STUB_NO_HEAD=1 git commit -q -m x'
+rm "$repo/first.txt"
+printf '[extend]\nuseDefault = true\n' > "$repo/.gitleaks.toml"
+echo clean > "$repo/tracked.txt"
+echo gone > "$repo/deleted.txt"
+case_commit 'first commit, clean'             committed 'git add -A && STUB_NO_HEAD=1 git commit -q -m init'
+
+secret conf.rb
+case_commit 'new file, add + commit'          refused   'git add -A && git commit -q -m x'
+git -C "$repo" reset -q
+case_commit 'unstaged secret, other file'     committed 'echo more >> tracked.txt && git commit -q -m x tracked.txt'
+rm "$repo/conf.rb"
+
+printf 'token = "%s"\n' "$token" >> "$repo/tracked.txt"
+case_commit 'tracked file, commit -a'         refused   'git commit -q -am x'
+case_commit 'tracked file, commit <path>'     refused   'git commit -q -m x tracked.txt'
+case_commit 'tracked file, amend'             refused   'git add tracked.txt && git commit -q --amend -m x'
+git -C "$repo" checkout -q HEAD -- tracked.txt
+
+secret conf.rb
+git -C "$repo" add conf.rb
+echo clean > "$repo/conf.rb"
+case_commit 'staged secret, clean worktree'   refused   'git commit -q -m x'
+git -C "$repo" rm -q -f --cached conf.rb
+rm "$repo/conf.rb"
+
+printf 'token = "%s" # gitleaks:allow\n' "$token" > "$repo/marked.txt"
+case_commit 'gitleaks:allow in the commit'    refused   'git add -A && git commit -q -m x'
+git -C "$repo" rm -q -f --cached marked.txt
+rm "$repo/marked.txt"
+
+# The hook copies the staged blob as stored; a .gitattributes conversion
+# applied on checkout (here UTF-16, so `git add` stores the UTF-8 text and a
+# checkout writes UTF-16) does not change what gitleaks reads.
+printf 'enc.txt working-tree-encoding=UTF-16LE\n' > "$repo/.gitattributes"
+git -C "$repo" add .gitattributes
+git -C "$repo" commit -q --no-verify -m attributes
+printf 'token = "%s"\n' "$token" | iconv -f UTF-8 -t UTF-16LE > "$repo/enc.txt"
+case_commit 'working-tree-encoding file'      refused   'git add enc.txt && git commit -q -m x'
+git -C "$repo" rm -q -f --cached enc.txt
+rm "$repo/enc.txt"
+git -C "$repo" rm -q .gitattributes
+git -C "$repo" commit -q --no-verify -m 'no attributes'
+
+secret later.txt
+case_commit 'intent-to-add entry skipped'     committed 'git add -N later.txt && echo more >> tracked.txt && git commit -q -m x tracked.txt'
+git -C "$repo" rm -q -f --cached later.txt
+rm "$repo/later.txt"
+
+# Two staged paths that differ only in letter case are one file on a
+# case-insensitive file system (macOS); the hook copies each into its own
+# directory, so the secret in the first is scanned too.
+secret_blob=$(printf 'token = "%s"\n' "$token" | git -C "$repo" hash-object -w --stdin)
+clean_blob=$(echo clean | git -C "$repo" hash-object -w --stdin)
+git -C "$repo" update-index --add --cacheinfo "100644,$secret_blob,Case.txt"
+git -C "$repo" update-index --add --cacheinfo "100644,$clean_blob,case.txt"
+case_commit 'paths differing only in case'    refused   'git commit -q -m x'
+git -C "$repo" rm -q -f --cached Case.txt case.txt
+
+# A staged path holding a newline is refused rather than read wrongly; a
+# submodule entry (mode 160000) is skipped.
+git -C "$repo" update-index --add --cacheinfo "100644,$clean_blob,$(printf 'a\nb')"
+case_commit 'path with a newline'             unscanned 'git commit -q -m x'
+git -C "$repo" rm -q -f --cached "$(printf 'a\nb')"
+git -C "$repo" update-index --add --cacheinfo "160000,$(git -C "$repo" rev-parse HEAD),sub"
+case_commit 'submodule entry skipped'         committed 'echo more >> tracked.txt && git add tracked.txt && git commit -q -m x'
+git -C "$repo" rm -q --cached sub
+git -C "$repo" commit -q -m 'no submodule'
+
+secret 設定.txt
+case_commit 'non-ASCII file name'             refused   'git add -A && git commit -q -m x'
+rm "$repo/設定.txt"
+
+# gitleaks skips a file named .gitleaks.toml; the hook scans a second copy of
+# a staged one under another name.
+printf '# token = "%s"\n' "$token" >> "$repo/.gitleaks.toml"
+case_commit 'secret in .gitleaks.toml'        refused   'git commit -q -am x'
+git -C "$repo" checkout -q HEAD -- .gitleaks.toml
+
+# The stub fails, and the commit is refused, if the hook passes the staged
+# .gitleaks.toml instead of the one committed in HEAD.
+printf '\n[[allowlists]]\nregexes = ["WIDENED"]\n' >> "$repo/.gitleaks.toml"
+case_commit 'staged config is not the config' committed 'git commit -q -am x'
+git -C "$repo" reset -q --hard HEAD~1
+
+case_commit 'deletion only, Docker down'      committed 'STUB_DOCKER=down git rm -q deleted.txt && STUB_DOCKER=down git commit -q -m x'
+echo safe > "$repo/safe.txt"
+git -C "$repo" add safe.txt
+case_commit 'Docker not running'              unscanned   'STUB_DOCKER=down git commit -q -m x'
+case_commit 'image not pulled'                unscanned   'STUB_DOCKER=nopull git commit -q -m x'
+case_commit 'gitleaks failed'                 unscanned   'STUB_DOCKER=broken git commit -q -m x'
+case_commit 'check token not reported'        unscanned   'STUB_DOCKER=empty git commit -q -m x'
+case_commit 'clean staged file'               committed 'git commit -q -m x'
+
+# A branch with no .gitleaks.toml in HEAD (here an orphan branch, which has no
+# HEAD at all) is scanned with the one in origin/main; the stub refuses a scan
+# without `--config`.
+git -C "$repo" update-ref refs/remotes/origin/main HEAD
+git -C "$repo" checkout -q --orphan old
+case_commit 'config from origin/main'         committed 'git commit -q -m x'
+git -C "$repo" checkout -q -f main
+git -C "$repo" branch -q -D old
+git -C "$repo" update-ref -d refs/remotes/origin/main
+
+git -C "$repo" checkout -q -b feature
+secret feature.txt
+git -C "$repo" add feature.txt
+git -C "$repo" commit -q --no-verify -m 'unscanned secret'
+git -C "$repo" checkout -q main
+case_commit 'merge commit, pre-merge-commit'  refused   'git merge -q --no-ff --no-edit feature'
+git -C "$repo" merge -q --abort 2>/dev/null || git -C "$repo" reset -q --hard
+case_commit 'merge commit, clean'             committed 'git checkout -q -b clean && echo c > c.txt && git add c.txt && git commit -q -m c && git checkout -q main && git merge -q --no-ff --no-edit clean'
+unset SHOJIKU_GITLEAKS_DOCKER
+unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL
 
 # ---- The detector still detects ----------------------------------------
 if [ "$denies" -lt 8 ]; then

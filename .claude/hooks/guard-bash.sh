@@ -104,7 +104,7 @@ GITSCAN='
 	function begin_scan(s,   p, k, t) {
 		n = 0; cur = 0; tok = ""; have = 0; at_start = 1; in_git = 0; opener = 0; decl = 0
 		q = ""; pending = ""; hd_on = 0; heredoc_word = 0; depth = 0; word_q = 0
-		sign_env_off = 0; sign_key = 0; sign_val = 0; cn = 0; curcmd = ""; mkn = 0; mk = 0; ck = 0; pipe_from = 0
+		sign_env_off = 0; sign_key = 0; sign_val = 0; hook_env = 0; env_export = 0; env_prefix = 0; env_known = 0; cn = 0; curcmd = ""; mkn = 0; mk = 0; ck = 0; pipe_from = 0
 		split("sh bash zsh dash ksh", p, " ")
 		for (k in p) SHELLS[p[k]] = 1
 		split("sudo env command exec time nohup nice then do else { ! if while until", p, " ")
@@ -159,6 +159,17 @@ GITSCAN='
 			if (lw ~ /^git_config_parameters=.*commit\.gpgsign'"'"'?='"'"'?(false|0|no|off)([^a-z0-9]|$)/) sign_env_off = 1
 			if (lw ~ /^git_config_key_[0-9]+=commit\.gpgsign$/) sign_key = 1
 			if (lw ~ /^git_config_value_[0-9]+=(false|0|no|off)$/) sign_val = 1
+			if (lw ~ /^git_config_parameters=.*(core\.hookspath|alias\.|include(if)?\.)/ \
+				|| lw ~ /^git_config_key_[0-9]+=(core\.hookspath$|alias\.|include(if)?\.)/ \
+				|| lw ~ /^shojiku_gitleaks_docker=/) hook_env = 1
+			if (w !~ /^[a-z_][a-z0-9_]*=/ && lw !~ /^(git_(author|committer)_(name|email|date)|git_editor|editor|visual|lang|lc_[a-z]+|tz|pager|git_pager|git_ssh_command|git_terminal_prompt|git_merge_autoedit|git_trace[a-z0-9_]*|ifs|gpg_tty|ssh_auth_sock|term|no_color)=/) {
+				if (decl) env_export = 1
+				else {
+					env_prefix = 1
+					nm = substr(w, 1, index(w, "=") - 1)
+					if ((nm in ENVIRON) || nm ~ /^(PATH|HOME|TMPDIR|GIT_.*|DOCKER_.*|XDG_.*|SHOJIKU_.*)$/) env_known = 1
+				}
+			}
 		}
 		if (heredoc_word) { pending = w; hd_on = !(curcmd in SHELLS); heredoc_word = 0; return }
 		if (!lead_quoted && w ~ /^<</ && w !~ /^<<</ && !(depth > 0 && st_arith[depth])) {
@@ -177,7 +188,8 @@ GITSCAN='
 			in_git = (w == "git")
 			mk = (w ~ /^g?make$/) ? ++mkn : 0
 			if (mk) { margs[mk] = ""; mpiped[mk] = 0 }
-			if (in_git) { cur = ++n; gopts[cur] = ""; subc[cur] = ""; args[cur] = ""; phase = "global"; takes_value = 0 }
+			if (in_git) { cur = ++n; gopts[cur] = ""; subc[cur] = ""; args[cur] = ""; phase = "global"; takes_value = 0; envo[cur] = env_prefix }
+			env_prefix = 0; env_known = 0
 			return
 		}
 		if (ck) {
@@ -188,7 +200,7 @@ GITSCAN='
 		if (!in_git) return
 		if (phase == "global") {
 			if (takes_value) { gopts[cur] = gopts[cur] " " w; takes_value = 0; return }
-			if (w == "-c" || w == "-C" || w == "--git-dir" || w == "--work-tree" || w == "--namespace") {
+			if (w == "-c" || w == "-C" || w == "--git-dir" || w == "--work-tree" || w == "--namespace" || w == "--config-env") {
 				gopts[cur] = gopts[cur] " " w; takes_value = 1; return
 			}
 			if (w ~ /^-/) { gopts[cur] = gopts[cur] " " w; return }
@@ -196,7 +208,7 @@ GITSCAN='
 		}
 		args[cur] = args[cur] "\037" w
 	}
-	function command_end() { word_end(); at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = ""; mk = 0; ck = 0; pipe_from = 0 }
+	function command_end() { word_end(); if (env_prefix && env_known) env_export = 1; env_known = 0; at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = ""; mk = 0; ck = 0; pipe_from = 0; env_prefix = 0 }
 	function add(c, quoted) {
 		if (!have) lead_quoted = quoted
 		if (quoted) word_q = 1
@@ -212,7 +224,11 @@ GITSCAN='
 		st_have[depth] = have; st_tok[depth] = tok; st_lq[depth] = lead_quoted
 		st_wq[depth] = word_q; st_decl[depth] = decl
 		st_bt[depth] = by_backtick; st_word[depth] = in_word; st_cmd[depth] = curcmd; st_mk[depth] = mk; st_ck[depth] = ck
+		# A nested level runs in a subshell: an assignment inside it changes
+		# no environment of the command around it.
+		st_envp[depth] = env_prefix; st_envk[depth] = env_known; st_enve[depth] = env_export
 		have = 0; tok = ""; word_q = 0; at_start = 1; in_git = 0; opener = 0; decl = 0; curcmd = ""; mk = 0; ck = 0
+		env_prefix = 0; env_known = 0
 	}
 	# Leave it: the outer command resumes, and a substitution inside a word
 	# stands in that word as one placeholder character.
@@ -223,6 +239,7 @@ GITSCAN='
 		have = st_have[depth]; tok = st_tok[depth]; lead_quoted = st_lq[depth]
 		word_q = st_wq[depth]; decl = st_decl[depth]; q = st_q[depth]
 		in_word = st_word[depth]; curcmd = st_cmd[depth]; mk = st_mk[depth]; ck = st_ck[depth]
+		env_prefix = st_envp[depth]; env_known = st_envk[depth]; env_export = st_enve[depth]
 		depth--
 		if (in_word) add("_", 0)
 	}
@@ -288,25 +305,141 @@ GITSCAN='
 	}
 '
 
-# One scan answers the git rules: prints the verdict (`force` / `direct` for a
-# push, `reset` for `git reset --soft <remote-tracking ref>`, else `-`) and whether signing is turned off (`1` or `0`).
+# One scan answers the git rules. It prints four fields: the verdict (`force` /
+# `direct` for a push, `reset` for `git reset --soft <remote-tracking ref>`,
+# else `-`), then three fields that are each `1` or `0`: whether signing is
+# turned off, whether the commit hooks are skipped or made to run from another
+# directory, and whether the command runs commit, merge or pull.
 #
 # Push: the DESTINATION of a refspec decides — `main`, `+main`, `X:main`,
 # `refs/heads/main` — so pushing main somewhere else is not a push to main, and
 # `--mirror` or `--all` push main among everything else.
 # Signing: a `-c` global option, the environment spelling, or the flag given to
 # a command that takes it (not `git grep -- --no-gpg-sign`).
+# Hooks: `--no-verify` (or a prefix git accepts for it, down to `--no-veri`)
+# given to commit, merge or pull; `-n` in a short-option group of commit
+# (scanning the group stops at an option whose value follows it, so the `n` of
+# `-mnote` or `-uno` is not the flag); a configuration that makes git read
+# hooks from another directory, or defines a command name that runs commit —
+# core.hooksPath, an alias, an include — given by `-c`, `--config-env` or the
+# environment, or written by `git config`; `--exec-path=<dir>`, which git puts
+# first on the PATH the hook runs with; an assignment to SHOJIKU_GITLEAKS_DOCKER, the variable naming
+# the command the pre-commit hook runs instead of `docker`; and an assignment
+# to a variable whose name has an upper-case letter, outside a short list
+# (author and committer identity and date, editor, pager, locale, time zone,
+# terminal, GIT_SSH_COMMAND, GIT_TERMINAL_PROMPT, GIT_MERGE_AUTOEDIT,
+# GIT_TRACE*, IFS, GPG_TTY, SSH_AUTH_SOCK, NO_COLOR), in three places:
+#   - before a git commit, merge or pull (`PATH=… git commit`);
+#   - after export, declare, typeset, readonly or local, anywhere in a command
+#     that runs commit, merge or pull (`export HOME=…`);
+#   - as a statement of its own in such a command (`PATH=…; git commit`), when
+#     the variable is set in the guard's own environment (inherited from
+#     Claude Code) or is named PATH, HOME, TMPDIR, GIT_*, DOCKER_*, XDG_* or
+#     SHOJIKU_*.
+# PATH, HOME, GIT_EXEC_PATH and DOCKER_HOST, for example, can each replace what
+# the hook runs. An assignment before another program (`V=1 make …`), an
+# upper-case variable that is assigned in none of the three places
+# (`MSG=$(cat m.txt)`) and
+# a lower-case shell variable are not counted. `commits` is 1 when the command runs
+# commit, merge or pull (other than `--abort`, `--quit` or `--help`).
+# A subcommand that is an alias in the project's git configuration (GIT_ALIASES,
+# `git config --get-regexp ^alias.`, which includes the user's global aliases)
+# is replaced by the alias's first word, with the alias's other words placed
+# before the command's own arguments, repeatedly (up to five levels), as git
+# expands an alias of an alias. An alias named like one of the built-in
+# commands listed in BUILTIN (a subset of git's built-in commands) is not
+# expanded; git ignores an alias named like any built-in command. A shell alias (`!…`)
+# counts as a commit when its text names commit, merge or pull, and as
+# skipping the hooks when its text holds `--no-veri`, or names commit and holds
+# an `-n` option group; a shell alias that runs another alias is not expanded
+# or checked.
+# Subcommands are compared in lower case.
+# Not decided from the text: a flag held in a variable (`git commit $FLAGS`), a
+# command inside `sh -c '…'`, `eval` or `xargs`, a git invocation after a
+# prefix option that takes a value (`env -u X git …`, `sudo -u user git …`),
+# and `git commit-tree`.
 git_verdicts() {
-	printf '%s' "$cmd" | awk "$GITSCAN"'
+	printf '%s' "$cmd" | GIT_ALIASES="$git_aliases" awk "$GITSCAN"'
 		BEGIN { RS = "\001" }
 		{ all = all (NR > 1 ? "\001" : "") $0 }
 		END {
 			scan(all)
+			split("add am branch checkout cherry-pick clone commit config diff fetch log merge mv pull push rebase reset restore revert rm show stash status switch tag worktree", bl, " ")
+			for (i in bl) BUILTIN[bl[i]] = 1
+			na = split(ENVIRON["GIT_ALIASES"], al, "\037")
+			for (i = 1; i <= na; i++) {
+				sp = index(al[i], " ")
+				if (sp == 0 || substr(al[i], 1, 6) != "alias.") continue
+				ALIAS[tolower(substr(al[i], 7, sp - 7))] = substr(al[i], sp + 1)
+			}
 			verdict = "-"
 			sign = (sign_env_off || (sign_key && sign_val)) && n > 0
+			skip = hook_env; commits = 0
 			for (k = 1; k <= n; k++) {
 				m = split(substr(args[k], 2), a, "\037")
-				if (tolower(gopts[k] " ") ~ /(^| )-c commit\.gpgsign=(false|0|no|off) /) sign = 1
+				g = tolower(gopts[k] " ")
+				if (g ~ /(^| )-c commit\.gpgsign=(false|0|no|off) / || g ~ /(^| )--config-env[= ]commit\.gpgsign=/) sign = 1
+				if (g ~ /(^| )(-c |--config-env[= ])(core\.hookspath[= ]|alias\.|include(if)?\.)/) skip = 1
+				if (g ~ /(^| )--exec-path=/) skip = 1
+				subc[k] = tolower(subc[k])
+				shell_alias = 0
+				for (depth_a = 0; depth_a < 5 && !(subc[k] in BUILTIN) && (tolower(subc[k]) in ALIAS); depth_a++) {
+					v = ALIAS[tolower(subc[k])]
+					if (v ~ /^!/) {
+						if (v ~ /(^|[^a-z-])(commit|merge|pull)([^a-z-]|$)/) commits = 1
+						if (v ~ /--no-veri/) skip = 1
+						if (v ~ /(^|[^a-z-])commit([^a-z-]|$)/ && v ~ /(^|[ \t])-[A-Za-z]*n([ \t]|$)/) skip = 1
+						shell_alias = 1
+						break
+					}
+					nw = split(v, w, " ")
+					for (j = m; j >= 1; j--) a[j + nw - 1] = a[j]
+					for (j = 2; j <= nw; j++) a[j - 1] = w[j]
+					m = m + nw - 1
+					subc[k] = tolower(w[1])
+				}
+				if (shell_alias) {
+					if (envo[k] && v ~ /(^|[^a-z-])(commit|merge|pull)([^a-z-]|$)/) skip = 1
+					continue
+				}
+				if (subc[k] == "commit" || subc[k] == "merge" || subc[k] == "pull") {
+					stops = 0
+					value_next = 0
+					for (j = 1; j <= m; j++) {
+						t = a[j]
+						if (value_next) { value_next = 0; continue }
+						if (t == "--") break
+						if (t ~ /^--no-veri(fy?)?$/) skip = 1
+						if (t ~ /^--(abort|quit|help)$/ || t == "-h") stops = 1
+						if (subc[k] != "commit") continue
+						if (t ~ /^--(message|file|reuse-message|reedit-message|template|author|date|fixup|squash|trailer|cleanup)$/) { value_next = 1; continue }
+						if (t !~ /^-[^-]/) continue
+						for (c = 2; c <= length(t); c++) {
+							x = substr(t, c, 1)
+							if (x == "n") { skip = 1; break }
+							if (index("mFcCt", x)) { if (c == length(t)) value_next = 1; break }
+							if (index("uS", x)) break
+						}
+					}
+					if (!stops) { commits = 1; if (envo[k]) skip = 1 }
+				}
+				if (subc[k] == "config") {
+					key = 0; read_only = 0; writes = 0; positional = 0; value_next = 0
+					for (j = 1; j <= m; j++) {
+						t = tolower(a[j])
+						if (value_next) { value_next = 0; continue }
+						if (t ~ /^(-f|--file|--blob)$/) { value_next = 1; continue }
+						if (t == "core.hookspath" || t ~ /^(alias|include|includeif)\./) key = 1
+						if (t ~ /^--(get|get-all|get-regexp|list)$/ || t == "-l") read_only = 1
+						else if (t ~ /^--(unset|unset-all|replace-all|add|rename-section|remove-section)$/) writes = 1
+						else if (t !~ /^-/) {
+							positional++
+							if (positional == 1 && (t == "set" || t == "unset")) writes = 1
+							if (positional == 1 && (t == "get" || t == "list")) read_only = 1
+						}
+					}
+					if (key && !read_only && (writes || positional >= 2)) skip = 1
+				}
 				if (subc[k] ~ /^(commit|merge|rebase|cherry-pick|revert|pull|am)$/) {
 					for (j = 1; j <= m; j++) {
 						if (a[j] == "--") break
@@ -341,7 +474,8 @@ git_verdicts() {
 				if (to_main && force) verdict = "force"
 				else if (to_main && verdict == "-") verdict = "direct"
 			}
-			print verdict " " (sign ? 1 : 0)
+			if (env_export && commits) skip = 1
+			print verdict " " (sign ? 1 : 0) " " (skip ? 1 : 0) " " commits
 		}'
 }
 # Is NAME invoked as a COMMAND, or merely NAMED inside an argument? Answered
@@ -536,18 +670,27 @@ esac
 
 case $cmd in
 *git*)
+	project=${CLAUDE_PROJECT_DIR:-$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)}
+	git_aliases=$(git -C "$project" config --get-regexp '^alias\.' 2>/dev/null | tr '\n' '\037')
 	git_verdict=$(git_verdicts) || git_verdict=''
 	case $git_verdict in
-	'- 0' | '- 1' | 'force 0' | 'force 1' | 'direct 0' | 'direct 1' | 'reset 0' | 'reset 1') ;;
+	[-a-z]*' '[01]' '[01]' '[01]) ;;
 	*)
-		decide deny 'The Bash guard could not read this command to check it for a push to main or
-disabled commit signing — its scan did not produce an answer, which it treats as
+		decide deny 'The Bash guard could not read this command to check it for a push to main,
+disabled commit signing or skipped commit hooks — its scan did not produce an answer, which it treats as
 a refusal rather than as safe. Split the command into smaller calls.'
 		;;
 	esac
 	;;
-*) git_verdict='- 0' ;;
+*) git_verdict='- 0 0 0' ;;
 esac
+# shellcheck disable=SC2086 # four space-separated fields, checked by the case on $git_verdict
+set -- $git_verdict
+[ $# -eq 4 ] || decide deny 'The Bash guard could not read this command to check it for a push to main,
+disabled commit signing or skipped commit hooks — its scan printed an answer of
+the wrong shape, which it treats as a refusal rather than as safe. Split the
+command into smaller calls.'
+git_push=$1 git_sign=$2 git_hooks=$3 git_commits=$4
 
 case $cmd in
 *'|'*)
@@ -625,10 +768,78 @@ fi
 # once `git` was required at a command position but the flag was still looked
 # for anywhere, again on prose that merely sat beside a git call. It reads the
 # git invocation's own options and arguments now (`GITSCAN`).
-if [ "${git_verdict#* }" = 1 ]; then
+if [ "$git_sign" = 1 ]; then
 	decide deny 'The branch ruleset requires signed commits. A commit made with signing
 off — `-c commit.gpgSign=false`, `=0`, or `--no-gpg-sign` — pushes fine and is
 then BLOCKED at merge. Fix the signing setup instead of disabling it.'
+fi
+
+# The pre-commit hook (.githooks/pre-commit) scans every commit for secrets
+# with gitleaks, and it is the only scan that runs before a commit exists. A
+# session that skips the hook, or points git at other hooks, commits unscanned
+# content, and a secret in a pushed commit has to be revoked, not just removed.
+# Only the user decides to commit without the scan; the user can run `git
+# commit --no-verify` in their own terminal.
+if [ "$git_hooks" = 1 ]; then
+	decide deny 'The commit hooks run the gitleaks secret scan, so a session does not skip the hooks or
+have git run hooks from another directory: no `--no-verify` or `-n` on commit, no `--no-verify` on merge or pull,
+no `-c core.hooksPath=`, no `--exec-path=`, no `git config` change to core.hooksPath, no
+SHOJIKU_GITLEAKS_DOCKER, no alias or include given by `-c`, `--config-env`
+or the environment or written by `git config`, and no assignment to a
+variable whose name has an upper-case letter (PATH, HOME, DOCKER_HOST, ...),
+other than author/committer identity and date, editor, pager, locale, TZ,
+TERM, GIT_SSH_COMMAND, GIT_TERMINAL_PROMPT, GIT_MERGE_AUTOEDIT, GIT_TRACE*,
+IFS, GPG_TTY, SSH_AUTH_SOCK and NO_COLOR: not before the git commit, merge or
+pull, not exported in the same command, and not as a statement of its own when
+the variable is set in the Claude Code environment or is named PATH, HOME,
+TMPDIR, GIT_*, DOCKER_*, XDG_* or SHOJIKU_*. If the pre-commit hook refused a
+commit, fix what it names, or tell the user what it said; committing without
+the scan is their decision.'
+fi
+
+# The scan runs only where the clone's shared hooks directory (`git rev-parse
+# --git-common-dir`/hooks) holds the installed hooks and no core.hooksPath
+# setting makes git read hooks from another directory; every worktree and every branch of
+# the clone then runs them. The check reads the clone of $CLAUDE_PROJECT_DIR,
+# not the directory the command commits in, so it parses no `-C` or `cd`; a
+# commit in another repository is not checked here. Each installed copy must
+# equal the file in `.githooks/` as committed in HEAD or in origin/main of
+# $CLAUDE_PROJECT_DIR (the shared directory serves worktrees on branches of
+# different ages, so either version passes): a copy that equals neither is out
+# of date, or was edited without a commit. A repository whose HEAD and
+# origin/main both lack `.githooks/pre-commit` is not checked.
+if [ "$git_commits" = 1 ]; then
+	common=$(git -C "$project" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+	refs=''
+	for ref in HEAD origin/main; do
+		git -C "$project" cat-file -e "$ref:.githooks/pre-commit" 2>/dev/null && refs="$refs $ref"
+	done
+	refs_text=$(printf '%s' "$refs" | sed 's/^ //; s/ / or /')
+	if [ -n "$refs" ] && [ -z "$common" ]; then
+		decide deny "The shared hooks directory of $project could not be located (git rev-parse
+--path-format=absolute --git-common-dir failed; it needs git 2.31 or newer), so
+the guard cannot check that the secret-scanning hooks are installed."
+	fi
+	if [ -n "$refs" ]; then
+		if hooks_path=$(git -C "$project" config --get core.hooksPath 2>/dev/null); then
+			decide deny "core.hooksPath is set to $hooks_path, so git does not run the secret-scanning
+hooks installed in $common/hooks. Run \`make secrets:install\`: it removes a
+local .githooks value; a value set elsewhere has to be removed by the user."
+		fi
+		for f in pre-commit pre-merge-commit; do
+			same=no
+			for ref in $refs; do
+				git -C "$project" show "$ref:.githooks/$f" 2>/dev/null | cmp -s - "$common/hooks/$f" && same=yes
+			done
+			if [ ! -x "$common/hooks/$f" ] || [ "$same" = no ]; then
+				decide deny "$common/hooks/$f is missing, not executable, or differs from
+.githooks/$f as committed in $refs_text, so the commit might not be scanned for
+secrets. Run \`make secrets:install\` in $project (it installs the hooks as
+committed in HEAD, or in origin/main when HEAD has no .githooks/), then
+commit again."
+			fi
+		done
+	fi
 fi
 
 # A standing user rule that the harness default actively fights, which is
@@ -648,7 +859,7 @@ fi
 # ordinary prose fired both of these — documenting the rule, or grepping the
 # docs for it, was refused; anchoring only the `git` verb then still refused a
 # command that pushed nothing but named `push`, `-f` and `main` somewhere else.
-case ${git_verdict% *} in
+case $git_push in
 force)
 	decide deny 'main takes no force pushes (repository ruleset). History there accumulates
 through PRs. Force-push your own feature branch instead.'
