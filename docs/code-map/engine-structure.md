@@ -150,7 +150,7 @@ first sentence of its `//!` header.
 - `src/lib.rs` 221 — Structured diagnostics shared across the Shojiku engine.
 - `src/render.rs` 48 — Single-pass message-template substitution.
 
-### `signing` (L0) — 25 files / 2816 lines; tests 27 files / 4018 lines
+### `signing` (L0) — 25 files / 2816 lines; tests 27 files / 4029 lines
 
 - `src/bounded.rs` 51 — The error-echo decision, in the one form a future variant cannot miss.
 - `src/cms.rs` 167 — Assembling the CMS `SignedData` that a PDF signature dictionary carries.
@@ -589,7 +589,7 @@ first sentence of its `//!` header.
 - `src/status.rs` 171 — Status codes, the panic shield, and the failure type every operation funnels into.
 - `src/status/wire.rs` 93 — How a [`Failure`] renders for the caller, and the JSON encoder the whole crate shares.
 
-### `cli` (L6) — 15 files / 2109 lines; tests 33 files / 5089 lines
+### `cli` (L6) — 15 files / 2109 lines; tests 33 files / 5099 lines
 
 - `src/args.rs` 204 — The flags each command takes, as clap types.
 - `src/args/font.rs` 108 — Flags for the `font` command — creating a user font pack on disk.

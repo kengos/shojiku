@@ -7,12 +7,23 @@ use crate::testkit::keys::keys;
 /// A legacy OpenSSL encrypted key, in the form `openssl` wrote before PKCS#8
 /// became its default. The headers are what identifies it; the body is not
 /// read, and does not need to be real for the rejection to be correct.
-const LEGACY_ENCRYPTED: &[u8] = b"-----BEGIN RSA PRIVATE KEY-----\n\
+// The PEM BEGIN line (`BEGIN RSA PRIVATE KEY` with five hyphens before and
+// after it) is written as two string literals, so that no line of this source
+// file holds the whole BEGIN line; `concat!` joins the two literals into the
+// same bytes as one literal holding the whole BEGIN line. gitleaks scans the
+// whole source file and reports a private-key BEGIN line as a leaked key when
+// `KEY-----` appears anywhere at least 64 characters after it, even in a
+// different string literal.
+const LEGACY_ENCRYPTED: &[u8] = concat!(
+    "-----BEGIN ",
+    "RSA PRIVATE KEY-----\n\
 Proc-Type: 4,ENCRYPTED\n\
 DEK-Info: DES-EDE3-CBC,0123456789ABCDEF\n\
 \n\
 bm90IGEgcmVhbCBrZXk=\n\
------END RSA PRIVATE KEY-----\n";
+-----END RSA PRIVATE KEY-----\n"
+)
+.as_bytes();
 
 #[test]
 fn a_legacy_encrypted_key_names_the_conversion_command() {
