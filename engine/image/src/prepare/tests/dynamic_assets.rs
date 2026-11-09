@@ -163,3 +163,28 @@ fn items_without_any_source_are_skipped() {
     assert!(store.is_empty());
     assert!(diags.is_empty());
 }
+
+#[test]
+fn a_params_gif_whose_first_frame_differs_from_the_screen_is_skipped_with_an_invalid_image_data_warning()
+ {
+    let tpl = template_with_image("        id: logo\n        data: { key: logo }");
+    let gif = crate::raster::test_support::gif_with_frame((1, 1), (0, 0, 100, 100));
+    let uri = format!("data:image/gif;base64,{}", STANDARD.encode(gif));
+    let (store, diags) =
+        prepare_assets(&tpl, &json!({ "logo": uri }), &AssetPolicy::default(), None);
+    assert!(store.is_empty());
+    assert!(!diags.has_errors());
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "invalid_image_data" && d.message.contains("differs from the")),
+        "diags: {diags:?}"
+    );
+    // The same picture with its frame filling the screen loads.
+    let gif = crate::raster::test_support::gif_with_frame((100, 100), (0, 0, 100, 100));
+    let uri = format!("data:image/gif;base64,{}", STANDARD.encode(gif));
+    let (store, diags) =
+        prepare_assets(&tpl, &json!({ "logo": uri }), &AssetPolicy::default(), None);
+    assert!(diags.is_empty(), "diags: {diags:?}");
+    assert_eq!(store.len(), 1);
+}

@@ -22,6 +22,7 @@ mod flex;
 mod flow;
 mod fragments;
 mod grid;
+mod image_fit;
 mod intrinsic;
 pub(crate) mod link;
 mod list;

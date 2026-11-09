@@ -58,7 +58,11 @@ fn gradient_transform_composes_with_ctm() {
             </svg>"##,
     );
     let g = linear(&tree.paths[0]);
-    assert_eq!(g.transform, [1.0, 0.0, 0.0, 1.0, 5.0, 3.0]);
+    // The translate(5 3) is moved into the user-space points (`rebase`):
+    // the start (0, 0) and end (10, 0) still map to (5, 3) and (15, 3).
+    assert_eq!(g.transform, [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]);
+    assert!(close(g.x1, 5.0) && close(g.y1, 3.0));
+    assert!(close(g.x2, 15.0) && close(g.y2, 3.0));
 }
 
 #[test]

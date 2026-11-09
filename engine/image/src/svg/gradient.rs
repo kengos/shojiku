@@ -8,6 +8,7 @@
 use std::collections::{HashMap, HashSet};
 
 use super::Warnings;
+use super::bound::{Bound, GRADIENT_DROPPED};
 use super::paint::{
     GradientStop, LinearGradient, RadialGradient, SpreadMode, SvgPaint, normalize_stops,
 };
@@ -89,19 +90,42 @@ pub(super) fn resolve(
     ctm: &Affine,
     bbox: Option<(f64, f64, f64, f64)>,
     view: (f64, f64),
+    bound: Bound,
     warnings: &mut Warnings,
 ) -> Option<SvgPaint> {
     let eff = effective(map, id, warnings)?;
     let (transform, dims) = space(&eff, ctm, bbox, view, warnings)?;
     let stops = normalize_stops(eff.stops)?;
-    Some(build(
-        &eff.kind,
-        eff.units,
-        transform.to_row(),
-        eff.spread,
-        stops,
-        dims,
-    ))
+    let row = transform.to_row();
+    let limit = bound.gradient_limit();
+    let assemble = |frame| {
+        build(
+            &eff.kind,
+            eff.units,
+            frame,
+            eff.spread,
+            stops.clone(),
+            dims,
+            limit,
+        )
+    };
+    // The rebased geometry first; when a small linear part makes the
+    // rebased points large, the geometry as authored may still fit.
+    let paint = assemble(rebase(eff.units, row)).or_else(|| assemble((row, (0.0, 0.0))));
+    if paint.is_none() {
+        warnings.push(GRADIENT_DROPPED);
+    }
+    paint
+}
+
+/// Whether the local->viewBox affine and every local point and radius of
+/// a gradient are finite and at most `limit` from zero
+/// ([`Bound::gradient_limit`]).
+fn within(points: &[f64], transform: &[f64; 6], limit: f64) -> bool {
+    points
+        .iter()
+        .chain(transform)
+        .all(|&v| v.is_finite() && v.abs() <= limit)
 }
 
 /// A gradient with `href`-inherited stops folded in.
@@ -177,43 +201,79 @@ fn space(
     }
 }
 
-/// Assembles the final [`SvgPaint`] from folded geometry + normalized stops.
+/// Assembles the final [`SvgPaint`] from folded geometry + normalized
+/// stops; `None` when that geometry is not [`within`] `limit`. `frame` is
+/// the local -> viewBox affine and the shift added to every local point
+/// (see [`rebase`]).
 fn build(
     kind: &Kind,
     units: Units,
-    transform: [f64; 6],
+    frame: ([f64; 6], (f64, f64)),
     spread: SpreadMode,
     stops: Vec<GradientStop>,
     dims: (f64, f64),
-) -> SvgPaint {
-    let local =
-        |c: Option<Coord>, default: Coord, dim: f64| coord_local(c.unwrap_or(default), units, dim);
+    limit: f64,
+) -> Option<SvgPaint> {
+    let (transform, (qx, qy)) = frame;
+    let local = |c: Option<Coord>, default: Coord, dim: f64, shift: f64| {
+        coord_local(c.unwrap_or(default), units, dim) + shift
+    };
+    let lx = |c, default| local(c, default, dims.0, qx);
+    let ly = |c, default| local(c, default, dims.1, qy);
     match *kind {
-        Kind::Linear { x1, y1, x2, y2 } => SvgPaint::Linear(LinearGradient {
-            x1: local(x1, Coord::Pct(0.0), dims.0),
-            y1: local(y1, Coord::Pct(0.0), dims.1),
-            x2: local(x2, Coord::Pct(1.0), dims.0),
-            y2: local(y2, Coord::Pct(0.0), dims.1),
-            transform,
-            spread,
-            stops,
-        }),
+        Kind::Linear { x1, y1, x2, y2 } => {
+            let g = LinearGradient {
+                x1: lx(x1, Coord::Pct(0.0)),
+                y1: ly(y1, Coord::Pct(0.0)),
+                x2: lx(x2, Coord::Pct(1.0)),
+                y2: ly(y2, Coord::Pct(0.0)),
+                transform,
+                spread,
+                stops,
+            };
+            within(&[g.x1, g.y1, g.x2, g.y2], &g.transform, limit).then_some(SvgPaint::Linear(g))
+        }
         Kind::Radial { cx, cy, r, fx, fy } => {
-            let cxl = local(cx, Coord::Pct(0.5), dims.0);
-            let cyl = local(cy, Coord::Pct(0.5), dims.1);
-            SvgPaint::Radial(RadialGradient {
+            let cxl = lx(cx, Coord::Pct(0.5));
+            let cyl = ly(cy, Coord::Pct(0.5));
+            let g = RadialGradient {
                 cx: cxl,
                 cy: cyl,
-                cr: local(r, Coord::Pct(0.5), dims.0),
-                fx: fx.map_or(cxl, |c| coord_local(c, units, dims.0)),
-                fy: fy.map_or(cyl, |c| coord_local(c, units, dims.1)),
+                cr: local(r, Coord::Pct(0.5), dims.0, 0.0),
+                fx: fx.map_or(cxl, |c| lx(Some(c), c)),
+                fy: fy.map_or(cyl, |c| ly(Some(c), c)),
                 fr: 0.0,
                 transform,
                 spread,
                 stops,
-            })
+            };
+            within(&[g.cx, g.cy, g.cr, g.fx, g.fy, g.fr], &g.transform, limit)
+                .then_some(SvgPaint::Radial(g))
         }
     }
+}
+
+/// Moves the translation of a `userSpaceOnUse` gradient's local -> viewBox
+/// affine into its local points, computed in `f64`: for the affine
+/// `[a c e; b d f]` with linear part `L`, the shift is `q = L⁻¹·(e, f)`, and
+/// `L·(p + q) = L·p + (e, f)`, so every point maps where it did. Returns
+/// the affine without its translation and `q`.
+///
+/// The translation of a `userSpaceOnUse` affine carries the viewBox origin
+/// (subtracted by the parser) and any group translation, and so do the
+/// gradient's own user-unit points; checked separately, both can exceed
+/// the gradient limit while the gradient lies inside the viewBox. An
+/// `objectBoundingBox` affine is built from already-translated path
+/// coordinates, and a singular linear part has no inverse: both are kept
+/// as they are.
+fn rebase(units: Units, t: [f64; 6]) -> ([f64; 6], (f64, f64)) {
+    let [a, b, c, d, e, f] = t;
+    let det = a * d - b * c;
+    if units == Units::Bbox || !(det.is_finite() && det != 0.0) {
+        return (t, (0.0, 0.0));
+    }
+    let q = ((d * e - c * f) / det, (a * f - b * e) / det);
+    ([a, b, c, d, 0.0, 0.0], q)
 }
 
 /// Resolves a coordinate to a local value: fractions under `objectBounding-

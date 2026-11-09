@@ -64,12 +64,22 @@ fn invalid_path_data_truncates_with_warning() {
 }
 
 #[test]
-fn non_finite_coordinates_truncate_with_warning() {
-    // svgtypes rejects literal `inf`, but relative segments can still
-    // overflow to infinity by accumulation.
-    let tree = parse(r#"<svg viewBox="0 0 10 10"><path d="M 1e308 1 l 1e308 0 L 3 3"/></svg>"#);
-    assert!(tree.warnings.iter().any(|w| w.contains("non-finite")));
-    assert_eq!(tree.paths[0].cmds.len(), 2);
+fn a_relative_arc_ending_at_infinity_is_not_drawn() {
+    // svgtypes rejects literal `inf`, but a relative segment can still move
+    // the current point to infinity. Scaled down, `M 1e308 0` is 1000,
+    // inside the range; the relative arc then ends at infinity, kurbo
+    // resolves a NaN centre for it, and `arc_to_cubics` refuses the path as
+    // non-finite instead of dropping the arc and drawing the `L 0 0`.
+    let tree = parse(
+        r#"<svg viewBox="0 0 10 10"><path transform="scale(1e-305)"
+             d="M 1e308 0 a 1 1 0 0 1 1e308 0 L 0 0"/></svg>"#,
+    );
+    assert!(tree.paths.is_empty(), "{:?}", tree.paths);
+    assert!(
+        tree.warnings
+            .iter()
+            .any(|w| w == super::super::bound::NON_FINITE)
+    );
 }
 
 #[test]

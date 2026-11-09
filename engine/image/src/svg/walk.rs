@@ -5,6 +5,7 @@ use crate::error::ImageError;
 use crate::geom::PathCmd;
 use svgtypes::PointsParser;
 
+use super::bound::{Bound, STROKE_DROPPED};
 use super::gradient::{self, GradientMap};
 use super::paint::SvgPaint;
 use super::path::{PathSink, parse_path_data};
@@ -18,6 +19,8 @@ pub(super) struct ParseCtx<'l> {
     pub(super) gradients: GradientMap,
     /// ViewBox `(width, height)`, for `%` coordinates under userSpaceOnUse.
     pub(super) view: (f64, f64),
+    /// The range every emitted coordinate and stroke width is held to.
+    pub(super) bound: Bound,
 }
 
 impl ParseCtx<'_> {
@@ -52,8 +55,8 @@ impl ParseCtx<'_> {
                 "g" => self.walk_children(&node, &ctm, &style, depth + 1, out)?,
                 "path" => {
                     if let Some(d) = node.attribute("d") {
-                        let cmds = parse_path_data(d, &ctm, &mut self.warnings);
-                        self.push_path(cmds, &style, &ctm, out);
+                        let sink = parse_path_data(d, &ctm, self.bound, &mut self.warnings);
+                        self.push_sink(sink, &style, &ctm, out);
                     }
                 }
                 "rect" => {
@@ -73,7 +76,7 @@ impl ParseCtx<'_> {
                     let y1 = attr_num(&node, "y1", 0.0, &mut self.warnings);
                     let x2 = attr_num(&node, "x2", 0.0, &mut self.warnings);
                     let y2 = attr_num(&node, "y2", 0.0, &mut self.warnings);
-                    let mut sink = PathSink::new(&ctm);
+                    let mut sink = PathSink::new(&ctm, self.bound);
                     sink.move_to((x1, y1));
                     sink.line_to((x2, y2));
                     // Lines are stroke-only by definition.
@@ -82,7 +85,7 @@ impl ParseCtx<'_> {
                         stroke: style.stroke,
                         stroke_width: style.stroke_width,
                     };
-                    self.push_path(sink.cmds, &line_style, &ctm, out);
+                    self.push_sink(sink, &line_style, &ctm, out);
                 }
                 "polyline" | "polygon" => {
                     let points: Vec<(f64, f64)> = node
@@ -90,7 +93,7 @@ impl ParseCtx<'_> {
                         .map(|raw| PointsParser::from(raw).collect())
                         .unwrap_or_default();
                     if let Some((&first, rest)) = points.split_first() {
-                        let mut sink = PathSink::new(&ctm);
+                        let mut sink = PathSink::new(&ctm, self.bound);
                         sink.move_to(first);
                         for &point in rest {
                             sink.line_to(point);
@@ -98,7 +101,7 @@ impl ParseCtx<'_> {
                         if node.tag_name().name() == "polygon" {
                             sink.close();
                         }
-                        self.push_path(sink.cmds, &style, &ctm, out);
+                        self.push_sink(sink, &style, &ctm, out);
                     }
                 }
                 // Definition elements are consumed by gradient collection,
@@ -130,13 +133,13 @@ impl ParseCtx<'_> {
         if node.has_attribute("rx") || node.has_attribute("ry") {
             self.warnings.push("rounded rect corners are drawn square");
         }
-        let mut sink = PathSink::new(ctm);
+        let mut sink = PathSink::new(ctm, self.bound);
         sink.move_to((x, y));
         sink.line_to((x + w, y));
         sink.line_to((x + w, y + h));
         sink.line_to((x, y + h));
         sink.close();
-        self.push_path(sink.cmds, style, ctm, out);
+        self.push_sink(sink, style, ctm, out);
     }
 
     fn ellipse_shape(
@@ -156,13 +159,24 @@ impl ParseCtx<'_> {
         // Standard 4-arc cubic approximation of an ellipse.
         const KAPPA: f64 = 0.552_284_749_830_793_4;
         let (kx, ky) = (rx * KAPPA, ry * KAPPA);
-        let mut sink = PathSink::new(ctm);
+        let mut sink = PathSink::new(ctm, self.bound);
         sink.move_to((cx + rx, cy));
         sink.curve_to((cx + rx, cy + ky), (cx + kx, cy + ry), (cx, cy + ry));
         sink.curve_to((cx - kx, cy + ry), (cx - rx, cy + ky), (cx - rx, cy));
         sink.curve_to((cx - rx, cy - ky), (cx - kx, cy - ry), (cx, cy - ry));
         sink.curve_to((cx + kx, cy - ry), (cx + rx, cy - ky), (cx + rx, cy));
         sink.close();
+        self.push_sink(sink, style, ctm, out);
+    }
+
+    /// [`push_path`](Self::push_path) for a shape built through a
+    /// [`PathSink`]: a path whose sink refused a point is not drawn, and
+    /// warns with the refusal's message.
+    fn push_sink(&mut self, sink: PathSink, style: &Style, ctm: &Affine, out: &mut Vec<SvgPath>) {
+        if let Some(refusal) = sink.refused {
+            self.warnings.push(refusal.warning());
+            return;
+        }
         self.push_path(sink.cmds, style, ctm, out);
     }
 
@@ -179,14 +193,27 @@ impl ParseCtx<'_> {
             return;
         }
         let fill = self.resolve_fill(style.fill.as_ref(), &cmds, ctm);
-        if fill.is_none() && style.stroke.is_none() {
+        // A stroke wider than the bound's stroke limit is not drawn; the
+        // fill does not depend on the width and is kept.
+        let mut stroke = style.stroke;
+        if stroke.is_some() && style.stroke_width > self.bound.stroke_limit() {
+            self.warnings.push(STROKE_DROPPED);
+            stroke = None;
+        }
+        if fill.is_none() && stroke.is_none() {
             return;
         }
         out.push(SvgPath {
             cmds,
             fill,
-            stroke: style.stroke,
-            stroke_width: style.stroke_width,
+            stroke,
+            // A path without a stroke carries no width, so every emitted
+            // width is within the stroke limit.
+            stroke_width: if stroke.is_some() {
+                style.stroke_width
+            } else {
+                0.0
+            },
         });
     }
 
@@ -208,6 +235,7 @@ impl ParseCtx<'_> {
                     ctm,
                     bbox,
                     self.view,
+                    self.bound,
                     &mut self.warnings,
                 )
             }

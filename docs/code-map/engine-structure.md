@@ -319,9 +319,9 @@ first sentence of its `//!` header.
 - `src/lang/specs.rs` 101 — Pack value specs: number separators, per-code currency display, and semantic-unit display (plural categories + layout strings).
 - `src/lib.rs` 24 — Locale-aware value formatting.
 
-### `image` (L2) — 21 files / 2914 lines; tests 20 files / 2618 lines
+### `image` (L2) — 22 files / 3292 lines; tests 22 files / 3106 lines
 
-- `src/decode.rs` 158 — Raster pixel decoding to straight-alpha RGBA8.
+- `src/decode.rs` 165 — Raster pixel decoding to straight-alpha RGBA8.
 - `src/error.rs` 55 — Error type for asset classification, resolution, and decoding.
 - `src/geom.rs` 18 — Backend-neutral vector-path primitive shared by SVG assets, font glyph outlines, and both renderers (the drawing currency of the layout tree).
 - `src/lib.rs` 34 — `shojiku-image` — image assets for the render pipeline.
@@ -330,18 +330,19 @@ first sentence of its `//!` header.
 - `src/prepare/bundled.rs` 107 — Bundled-asset byte loading from either a filesystem directory (the CLI / MCP hosts) or host-injected bytes (the WASM host).
 - `src/prepare/cells.rs` 207 — Scoped per-element cell asset preparation: `type: image` table columns and `image` items inside a per-element cell — a `repeat`/`repeat_flow` cell or a table column's `cell:` — each load one asset per bound array element (`dyn:<array>[<i>].<key>`), all sharing one load-fanout cap.
 - `src/prepare/cells/walk.rs` 105 — Finding the per-element cells: which tables carry `type: image` columns, and which `data:`-bound `image` items sit inside a cell — a `repeat`/`repeat_flow` cell or a table column's `cell:`.
-- `src/prepare/load.rs` 245 — Asset loading: static (template `src:`) and dynamic (params-bound) sources, path confinement, and byte->asset classification.
-- `src/raster.rs` 66 — Raster format sniffing and header-only dimension checks.
-- `src/raster/test_support.rs` 64 — Test-only fixture builders shared by the raster tests.
+- `src/prepare/load.rs` 248 — Asset loading: static (template `src:`) and dynamic (params-bound) sources, path confinement, and byte->asset classification.
+- `src/raster.rs` 94 — Raster format sniffing and header-only dimension checks.
+- `src/raster/test_support.rs` 86 — Test-only fixture builders shared by the raster tests.
 - `src/source.rs` 89 — Classification and decoding of raw image source strings.
 - `src/store.rs` 110 — Loaded, validated image assets addressable by id.
-- `src/svg.rs` 150 — SVG subset parsing: markup -> flattened solid-color path list.
-- `src/svg/gradient.rs` 227 — `<linearGradient>` / `<radialGradient>` support: collect gradient definitions from the document, then resolve a `url(#id)` fill against a path's bounding box into a backend-neutral [`SvgPaint`].
+- `src/svg.rs` 169 — SVG subset parsing: markup -> flattened solid-color path list.
+- `src/svg/bound.rs` 142 — The coordinate range of a parsed SVG: the limits on the viewBox, and the range every emitted path coordinate, stroke width and gradient number is held to.
+- `src/svg/gradient.rs` 287 ▲ — `<linearGradient>` / `<radialGradient>` support: collect gradient definitions from the document, then resolve a `url(#id)` fill against a path's bounding box into a backend-neutral [`SvgPaint`].
 - `src/svg/gradient/parse.rs` 133 — Parsing of a single gradient element and its `<stop>` children into the owned [`GradientDef`] intermediate (no document lifetime kept).
 - `src/svg/paint.rs` 124 — SVG paint: a resolved solid color or gradient.
-- `src/svg/path.rs` 214 — Path-data parsing (`d=`) into transformed cubic commands: smooth shorthands, quadratic elevation, and arc flattening.
+- `src/svg/path.rs` 283 ▲ — Path-data parsing (`d=`) into transformed cubic commands: smooth shorthands, quadratic elevation, and arc flattening.
 - `src/svg/style.rs` 253 — SVG presentation state: affine transforms, inheritable style attributes, and their parsers.
-- `src/svg/walk.rs` 240 — The element walk: group/shape traversal with node and depth caps, emitting solid-color paths.
+- `src/svg/walk.rs` 268 — The element walk: group/shape traversal with node and depth caps, emitting solid-color paths.
 
 ### `layout-box` (L2) — 6 files / 682 lines; tests 6 files / 694 lines
 
@@ -363,12 +364,12 @@ first sentence of its `//!` header.
 - `src/read.rs` 80 — Reading a response body without trusting its length.
 - `src/transport.rs` 104 — The HTTP seam.
 
-### `layout` (L3) — 138 files / 20428 lines; tests 277 files / 38933 lines
+### `layout` (L3) — 139 files / 20468 lines; tests 278 files / 39051 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
 - `src/color.rs` 32 — `#rrggbb` color parsing.
-- `src/engine.rs` 275 ▲ — Template + params -> positioned pages.
+- `src/engine.rs` 276 ▲ — Template + params -> positioned pages.
 - `src/engine/absolute.rs` 214 — The one absolute-placement dispatch: an item laid out at its authored `box.y` in a band, the absolute body, or a container — plus the one item walk the band and the absolute body share.
 - `src/engine/anchor.rs` 143 — Anchored line endpoints: the deferred record and its page resolution.
 - `src/engine/anchor/band.rs` 59 — The rectangle an anchored `ellipse` circles.
@@ -376,7 +377,7 @@ first sentence of its `//!` header.
 - `src/engine/anchor/index.rs` 90 — The target index the drain resolves against: every anchorable placement, by page and id, built ONCE for the whole drain.
 - `src/engine/anchor/resolve.rs` 246 — The drain: every deferred item, resolved against the finished pages.
 - `src/engine/assemble.rs` 149 — The layout entry point: seeds the cascade root and the page basis, walks the body, then assembles each page as header + body + footer in sheet coordinates.
-- `src/engine/atoms.rs` 285 ▲ — Leaf item atoms: rect, image (contain/cover/stretch/none fit against the prepared asset store; cover/none clipped to the box, and every SVG clipped to it whatever the fit), and line.
+- `src/engine/atoms.rs` 267 — Leaf item atoms: rect, image (contain/cover/stretch/none fit against the prepared asset store; cover/none clipped to the box, and every SVG clipped to it whatever the fit), and line.
 - `src/engine/band.rs` 76 — Header/footer bands: which pages a band repeats on, its items placed per page through the shared absolute walk, and `page_number` substitution ({page}/{pages}).
 - `src/engine/cell.rs` 193 — The slot-filling, data-scoped cell: the ONE home for the container a `repeat` places per array element and a table column's `cell:` places per row.
 - `src/engine/char_grid.rs` 242 — `type: char_grid` — genkoyoshi/kanji workbooks/application-form fixed character cells: the engine assigns one char per cell (school kinsoku hang-back included), draws the cell grid as stroked rects, and lays ruby (furigana) along each base run.
@@ -410,6 +411,7 @@ first sentence of its `//!` header.
 - `src/engine/grid/cells.rs` 189 — Cell assignment and `auto` column measurement.
 - `src/engine/grid/span.rs` 107 — Grid span placement: the occupancy map that assigns each grid child its `(column, row)` cell honoring `columnSpan`/`rowSpan`.
 - `src/engine/grid/tracks.rs` 254 — `TrackSpec` resolution: the wire form (count or track list) to per-track pt sizes, with the hostile-input caps — track counts and list lengths clamp to `MAX_GRID_TRACKS` with a diagnostic, negative tracks clamp to 0, and `rows: N` needs a definite height to split.
+- `src/engine/image_fit.rs` 57 — Image `fit` math: the drawn size of an asset in its content box, held to the layout length cap.
 - `src/engine/intrinsic.rs` 109 — Max-content (intrinsic) width measurement — the ONE machine two consumers read: the flex row planner's `flexBasis: content` sizing and the grid's `auto` COLUMN tracks.
 - `src/engine/intrinsic/leaf.rs` 127 — Per-kind max-content width: the text leaf and the container recursion.
 - `src/engine/link.rs` 155 — Hyperlink resolution: interpolates `link.url` against the current data scope, then gates the resolved value before it enters the tree — layout is the trust boundary; renderers emit whatever the tree carries without judgment.
@@ -504,7 +506,7 @@ first sentence of its `//!` header.
 - `src/wrap/rich/width.rs` 79 — Per-char and per-token advances along the wrapping axis — the measurement half of the styled-char engine, tate-chu-yoko-aware.
 - `src/wrap/thai.rs` 74 — Thai word segmentation for line breaking.
 
-### `render-pdf` (L4) — 6 files / 967 lines; tests 16 files / 1809 lines
+### `render-pdf` (L4) — 6 files / 967 lines; tests 16 files / 1847 lines
 
 - `src/annot.rs` 107 — Link annotations: walks a laid-out page and emits one krilla link annotation per linked run/line rect (text) or draw box (image).
 - `src/draw.rs` 274 ▲ — krilla draw calls: layout items, images (raster + SVG playback), glyph mapping, and geometry/paint conversions at the f32 boundary.
@@ -513,12 +515,12 @@ first sentence of its `//!` header.
 - `src/text.rs` 166 — Text drawing for the PDF backend: the fallback-chain glyph runs and the krilla glyph mapping.
 - `src/text/vertical.rs` 203 — Vertical text drawing for the PDF backend.
 
-### `render-png` (L4) — 6 files / 1116 lines; tests 14 files / 2241 lines
+### `render-png` (L4) — 6 files / 1166 lines; tests 15 files / 2393 lines
 
 - `src/lib.rs` 275 ▲ — PNG preview rendering: rasterizes a [`LayoutDocument`] with tiny-skia.
 - `src/paint.rs` 250 — The tiny-skia painter: per-page drawing of text glyph outlines, rects, lines, clip groups, and (via `paint/image.rs`) images at a uniform px/pt scale.
 - `src/paint/gradient.rs` 88 — SVG paint -> tiny-skia `Paint` conversion: solid colors and linear/radial gradient shaders.
-- `src/paint/image.rs` 152 — Image drawing for the PNG painter: raster embed (decoded RGBA) and SVG vector playback, both under the active clip mask.
+- `src/paint/image.rs` 202 — Image drawing for the PNG painter: raster embed (decoded RGBA) and SVG vector playback, both under the active clip mask.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 

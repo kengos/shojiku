@@ -269,3 +269,52 @@ sections:
     let (_doc, diags) = run(template, json!({}));
     assert!(diags.iter().any(|d| d.code == "missing_asset"));
 }
+
+#[test]
+fn an_image_drawn_past_the_length_cap_falls_back_to_contain() {
+    use shojiku_image::{Asset, AssetKind, AssetStore, RasterFormat};
+    // A 2,000,000 x 1 px raster under `fit: none` would be drawn 2,000,000
+    // pt wide, past the 1,000,000 pt cap.
+    let mut store = AssetStore::empty();
+    store.insert(Asset {
+        id: "src:wide.png".to_string(),
+        kind: AssetKind::Raster {
+            format: RasterFormat::Png,
+            bytes: std::sync::Arc::new(vec![0]),
+            width_px: 2_000_000,
+            height_px: 1,
+        },
+    });
+    let (doc, diags) = run_with_assets(
+        r#"
+page: { margin: 0 }
+sections:
+  body:
+    type: absolute
+    items:
+      - type: image
+        id: banner
+        box: { x: 0, y: 0, w: 100, h: 100 }
+        fit: none
+        src: wide.png
+"#,
+        json!({}),
+        Some(&store),
+    );
+    let warning = diags
+        .iter()
+        .find(|d| d.code == "length_out_of_range")
+        .unwrap_or_else(|| panic!("no length_out_of_range: {diags:?}"));
+    assert!(
+        warning
+            .path
+            .as_deref()
+            .is_some_and(|p| p.contains("items[0]")),
+        "the warning names the image item: {warning:?}"
+    );
+    // The contain size: 100 x 0.00005 pt, centred in the box; a raster
+    // within its box is not clipped.
+    let img = image_shapes(&doc.pages[0])[0];
+    assert_eq!(img.w, 100.0);
+    assert!(img.h < 1.0);
+}

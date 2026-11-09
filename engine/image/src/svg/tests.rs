@@ -3,6 +3,7 @@
 mod gradient_guards;
 mod gradients;
 mod paths;
+mod range;
 mod shapes;
 
 use super::*;

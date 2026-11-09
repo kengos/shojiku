@@ -234,7 +234,59 @@ platform binaries.
   the engine refuses for its shape. A value too large to represent
   (`"1e400mm"`) still matches the pattern and is refused by the engine.
 
+- **An SVG's viewBox must be between 0.001 and 1,000,000 units on each
+  side**, with its origin within ±1,000,000,000; an SVG outside that is
+  refused like any image the engine cannot read (`invalid_image_asset` for
+  a template `src:`, `invalid_image_data` for a params value). The limits
+  keep the scale from the viewBox to the image box, and every coordinate
+  derived from it, far inside single precision; an extreme viewBox could
+  overflow the scale or round it to zero.
+
+- **A `fit: none` or `fit: cover` image is drawn at most 1,000,000 pt wide
+  or tall.** Past that — an SVG with a very large viewBox under `none`, or
+  a long thin image under `cover` — the image is drawn at its `contain`
+  size with a `length_out_of_range` warning.
+
+- **A GIF whose first frame is not exactly its logical screen is refused.**
+  The engine draws only a GIF's first frame, at the logical screen's size,
+  so such a GIF was embedded in the PDF with fewer or more pixels than its
+  declared size, and stretched in the PNG preview. It is now refused like
+  an image the engine cannot read: `invalid_image_asset` for a
+  template `src:`, `invalid_image_data` (a warning, the image is skipped)
+  for a params value. A GIF whose first frame is its whole screen, which
+  is what encoders normally write, loads as before.
+
 ### Security
+
+- **An SVG with very large or infinite coordinates no longer crashes the
+  renderers.** Both backends draw in single precision: two shapes far
+  apart made the PDF backend panic when it combined their bounds, a curve
+  far outside the image made the PNG preview's rasterizer panic (in debug
+  builds; release output was undefined), and an infinite or NaN coordinate
+  made either backend drop the shape silently. After the transforms apply,
+  a coordinate may now lie at most 1000 viewBox widths (x) or heights (y)
+  from the viewBox origin. A shape with a coordinate farther out, or with
+  an infinite or NaN one, is not drawn; a stroke wider than 1000 times the
+  viewBox's smaller side is not drawn (the shape's fill still is); and a
+  gradient whose coordinates, radius or transform entries exceed twice the
+  range is not used. Each warns `svg_unsupported`. The image is clipped to
+  its viewBox, so a shape lying wholly that far out was invisible anyway;
+  only a shape that crosses the viewBox and also reaches past the range
+  has a visible part left undrawn. The PNG preview also skips, without a
+  diagnostic, a shape reaching more than 16,777,216 px from the page's
+  corner, which
+  with this range happens only for an image drawn more than about 16,800
+  px wide or tall (about 5,600 px with a stroke as wide as the stroke limit
+  allows).
+
+- **An SVG arc can no longer exhaust memory.** One elliptical arc in path
+  data was flattened into a number of curves that grows with its radius,
+  so a short SVG in params with a very large radius could ask for billions
+  of curves. Each arc is now flattened into at most eleven curves, accurate
+  to 0.1 units or a millionth of the radius, whichever is larger; an arc
+  whose radius (after enlarging it to reach its endpoint, as SVG requires)
+  is at most 100,000 units of the path's own coordinates draws exactly as
+  before.
 
 - **YAML aliases are bounded: the aliases of one document replay at most
   100,000 events, at every YAML door.** The old limit grew with the

@@ -221,3 +221,23 @@ sections:
         "a truncated echo must say so: {detail:?}"
     );
 }
+
+#[test]
+fn a_bundled_gif_whose_first_frame_differs_from_the_screen_is_refused_with_an_invalid_image_asset_error()
+ {
+    let dir = temp_dir("gif-frame");
+    std::fs::write(
+        dir.join("frame.gif"),
+        crate::raster::test_support::gif_with_frame((100, 100), (0, 0, 1, 1)),
+    )
+    .expect("write");
+    let tpl = template_with_image("        src: frame.gif");
+    let (store, diags) = prepare_assets(&tpl, &json!({}), &AssetPolicy::default(), Some(&dir));
+    assert!(store.is_empty());
+    assert!(
+        diags.iter().any(|d| d.code == "invalid_image_asset"
+            && d.severity == shojiku_diagnostics::Severity::Error
+            && d.message.contains("differs from the")),
+        "diags: {diags:?}"
+    );
+}

@@ -1283,6 +1283,24 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   remote-rejected), `AssetPolicy` (open vs bundled-only + caps), path
   confinement, raster decode (png/zune-jpeg/gif/image-webp). SVG is a
   **subset parser** (roxmltree + svgtypes + kurbo).
+- **Bounded output for hostile input**: an SVG arc flattens to at most
+  eleven cubics (the tolerance scales with the radius kurbo resolves, so
+  neither a huge radius nor a tiny one stretched over a huge chord can
+  multiply the path); the viewBox is limited to 0.001–1,000,000 units
+  per side (origin within ±1,000,000,000) and every emitted coordinate to
+  1000 viewBox sizes per axis (a shape with a coordinate farther out or a
+  non-finite one is not drawn, a wider stroke is not drawn, a gradient
+  whose numbers exceed twice the range is not used, each with
+  `svg_unsupported`; nothing is moved or reduced, so what is drawn is
+  drawn as authored), which with layout's 1,000,000 pt cap on a
+  drawn image (`fit: none`/`cover` past it fall back to `contain` with
+  `length_out_of_range`) keeps every number the renderers compute in
+  `f32` finite; the PNG backend also skips a path reaching past 2^24 px
+  from the canvas origin, well below the ~8e8 px at which tiny-skia's
+  scan converter was measured to panic; and a
+  GIF loads only when its first frame is
+  its logical screen — the size both backends draw at — so the PDF never
+  embeds pixels that disagree with the image's declared size.
 - **`fit`** (CSS `object-fit`): `contain`/`stretch`/`cover`/`none`;
   the overflowing modes clip to the content box via the clip node.
   Capability key `image.fit.cover_none`.

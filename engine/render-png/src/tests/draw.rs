@@ -229,3 +229,84 @@ sections:
         assert!(page.starts_with(b"\x89PNG"));
     }
 }
+
+#[test]
+fn an_svg_with_nan_and_infinite_coordinates_and_a_gradient_past_the_limit_draws_only_the_stroke() {
+    // A rect whose coordinates become NaN, a rect reaching to 1e308 (past
+    // the range, and infinite at its far side), and a gradient scaled 1e5
+    // times (finite in f32, so the backend would paint it, but past the
+    // 2e4 gradient limit): the parser leaves out each, so
+    // the PNG backend draws only the black stroke of the third rect.
+    let out = render(
+        r##"
+page: { margin: 0 }
+sections:
+  body:
+    type: absolute
+    items:
+      - type: image
+        box: { x: 10, y: 10, w: 40, h: 40 }
+        src: "<svg viewBox='0 0 10 10'><defs><linearGradient id='g' gradientTransform='scale(1e5)'><stop offset='0' stop-color='#000'/><stop offset='1' stop-color='#fff'/></linearGradient></defs><g transform='scale(1e300) scale(1e300)'><rect width='1' height='1'/></g><rect x='1e308' width='1e308' height='1'/><rect width='10' height='10' fill='url(#g)' stroke='#000000'/></svg>"
+"##,
+        json!({}),
+    );
+    assert_eq!(out.len(), 1);
+    let (w, _h, rgba) = decode(&out[0]);
+    // The box spans 20..100 px; the stroke's inner half covers 20..24 px.
+    let stroke = pixel(&rgba, w, 21, 60);
+    assert!(stroke[0] < 80, "expected the black stroke: {stroke:?}");
+    let inside = pixel(&rgba, w, 60, 60);
+    assert!(
+        inside[0] > 200,
+        "expected no fill inside the rect: {inside:?}"
+    );
+}
+
+#[test]
+fn an_svg_path_reaching_past_the_device_range_is_not_drawn() {
+    // A rect from -100 to 900 viewBox widths, inside the parser's range: in
+    // a 40 pt box it reaches about 7e4 px and is drawn; in a 1,000,000 pt
+    // box (one viewBox unit per pt) it reaches about 1.8e9 px, past
+    // `MAX_DEVICE_PX`, and the PNG backend skips it.
+    let svg = |view: &str, side: &str| {
+        format!(
+            "<svg viewBox='0 0 {view} {view}'><rect x='-{side}' y='-{side}' width='{side}0' height='{side}0' fill='#000000'/></svg>"
+        )
+    };
+    let page = |w: &str, src: &str| {
+        render(
+            &format!(
+                "page: {{ margin: 0 }}\nsections:\n  body:\n    type: absolute\n    items:\n      - type: image\n        box: {{ x: 0, y: 0, w: {w}, h: {w} }}\n        fit: stretch\n        src: \"{src}\"\n"
+            ),
+            json!({}),
+        )
+    };
+    let (w, _h, rgba) = decode(&page("40", &svg("10", "1000"))[0]);
+    assert!(pixel(&rgba, w, 40, 40)[0] < 80, "the small box is filled");
+    let (w, _h, rgba) = decode(&page("1000000", &svg("1000000", "100000000"))[0]);
+    assert!(pixel(&rgba, w, 40, 40)[0] > 200, "the huge box is skipped");
+}
+
+#[test]
+fn an_arc_with_a_huge_radius_draws_without_panicking() {
+    // These arcs panicked tiny-skia's scan converter (a debug assertion).
+    // The parser now leaves each out (it reaches past 1000 viewBox sizes),
+    // and `within_device_range` alone would also skip it; the page renders
+    // without a panic.
+    for (d, style) in [
+        ("M0 0 A1e12 1e12 0 1 1 1 0", "stroke='#000000'"),
+        ("M0 0 A1e24 1e24 0 1 1 1e11 0", "fill='#000000'"),
+        (
+            "M0 0 A1e36 1e36 0 1 1 1e23 0",
+            "fill='none' stroke='#000000' stroke-width='0'",
+        ),
+    ] {
+        let pages = render(
+            &format!(
+                "page: {{ margin: 0 }}\nsections:\n  body:\n    type: absolute\n    items:\n      - type: image\n        box: {{ x: 10, y: 10, w: 40, h: 40 }}\n        src: \"<svg viewBox='0 0 10 10'><path d='{d}' {style}/></svg>\"\n"
+            ),
+            json!({}),
+        );
+        assert_eq!(pages.len(), 1, "{d}");
+    }
+}

@@ -89,4 +89,12 @@ the other. Clip groups are depth-capped and fail closed in both.
 - `paint/gradient.rs` — **`svg_paint`**: `SvgPaint` → tiny-skia `Paint`,
   solid + linear/radial gradient shaders.
 - `paint/image.rs` — raster embed (via `shojiku_image::decode_raster`)
-  and SVG replayed as paths.
+  and SVG replayed as paths. **`within_device_range`** skips (silently —
+  a renderer has no diagnostic channel) a path whose device bounds,
+  widened for the stroke, reach past `MAX_DEVICE_PX` (2^24) from the
+  canvas origin: tiny-skia's scan converter panics on far-away curves
+  (measured from about 8e8 px). The SVG parser's range keeps every
+  ordinary image far inside it; only an image drawn more than about
+  16,800 px wide or tall (about 5,600 px with a stroke at the parser's
+  stroke limit), less its offset on the page, can reach it, which is where
+  PNG may differ from PDF.

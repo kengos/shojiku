@@ -8,7 +8,10 @@
 //! crates are already in the workspace tree via krilla's raster-images, so
 //! decoding lives here unconditionally rather than behind a feature.
 //! Dimensions were already capped by `AssetPolicy` before an asset reached
-//! the store, so a decode here allocates at most `max_pixels * 4` bytes.
+//! the store, so a decode here allocates at most `max_pixels * 4` bytes —
+//! for a GIF because loading admits only a first frame that is exactly the
+//! capped logical screen (`check_gif_first_frame`), and decoding refuses a
+//! frame reaching outside it.
 
 use crate::error::ImageError;
 use crate::raster::RasterFormat;
@@ -71,7 +74,7 @@ fn expand_to_rgba(samples: &[u8], channels: usize) -> Result<Vec<u8>, ImageError
 /// the message ends up composed into a single diagnostic arg
 /// (`"inline image: {err}"`), so leaving the codec the whole arg budget would
 /// push the surrounding explanation out of the message.
-fn codec_err<E: std::fmt::Display>(error: E) -> ImageError {
+pub(crate) fn codec_err<E: std::fmt::Display>(error: E) -> ImageError {
     ImageError::Bad(shojiku_diagnostics::sanitize_marked(
         &error.to_string(),
         shojiku_diagnostics::MAX_INLINE_ECHO,
@@ -124,6 +127,10 @@ fn decode_jpeg(bytes: &[u8]) -> Result<RgbaImage, ImageError> {
 fn decode_gif(bytes: &[u8]) -> Result<RgbaImage, ImageError> {
     let mut options = gif::DecodeOptions::new();
     options.set_color_output(gif::ColorOutput::RGBA);
+    // With frame consistency checking on, a frame that extends beyond the
+    // logical screen is a decode error, so the decoded buffer is never
+    // larger than the screen size that `checked_dimensions` limited.
+    options.check_frame_consistency(true);
     let mut decoder = options.read_info(bytes).map_err(codec_err)?;
     let frame = decoder
         .read_next_frame()

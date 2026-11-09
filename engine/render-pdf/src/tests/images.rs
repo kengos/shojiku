@@ -184,3 +184,41 @@ fn degenerate_image_shapes_are_skipped() {
     let bytes = render_pdf(&doc, fonts, &assets).expect("render");
     assert!(bytes.starts_with(b"%PDF-"));
 }
+
+#[test]
+fn an_svg_with_nan_and_infinite_coordinates_and_a_gradient_past_the_limit_renders() {
+    // A rect whose coordinates become NaN, a rect reaching to 1e308 (past
+    // the range, and infinite at its far side), and a gradient scaled 1e39
+    // times (past the gradient limit): the parser leaves out each, and
+    // the PDF backend renders the document from the stroke that remains.
+    // A smoke test: krilla also skipped these shapes before the parser's
+    // range existed, so it checks only that the document renders.
+    let out = render_template(
+        r##"
+page: { margin: 0 }
+sections:
+  body:
+    type: absolute
+    items:
+      - type: image
+        box: { x: 10, y: 10, w: 40, h: 40 }
+        src: "<svg viewBox='0 0 10 10'><defs><linearGradient id='g' gradientTransform='scale(1e39)'><stop offset='0' stop-color='#000'/><stop offset='1' stop-color='#fff'/></linearGradient></defs><g transform='scale(1e300) scale(1e300)'><rect width='1' height='1'/></g><rect x='1e308' width='1e308' height='1'/><rect width='10' height='10' fill='url(#g)' stroke='#000000'/></svg>"
+"##,
+        json!({}),
+    );
+    assert!(out.starts_with(b"%PDF-"));
+}
+
+#[test]
+fn paths_at_the_edges_of_the_range_and_beyond_it_render() {
+    // krilla unions every path's bounds and panicked when the union was
+    // wider than f32 (two paths at -3e38 and +3e38). The parser now leaves
+    // out every path past 1000 viewBox sizes (the arc of radius 1e36 and
+    // both far paths), and two paths at the opposite edges of the range
+    // (+-1e4 in a 10-unit viewBox) still go through krilla's union.
+    let bytes = render_template(
+        "page: { margin: 0 }\nsections:\n  body:\n    type: absolute\n    items:\n      - type: image\n        box: { x: 10, y: 10, w: 40, h: 40 }\n        src: \"<svg viewBox='0 0 10 10'><path d='M0 0 A1e36 1e36 0 1 1 1e23 0'/><path d='M-3e38 0 L-3e38 1' stroke='#000'/><path d='M3e38 0 L3e38 1' stroke='#000'/><path d='M-1e4 0 L-1e4 1' stroke='#000'/><path d='M1e4 0 L1e4 1' stroke='#000'/></svg>\"\n",
+        json!({}),
+    );
+    assert!(bytes.starts_with(b"%PDF-"));
+}

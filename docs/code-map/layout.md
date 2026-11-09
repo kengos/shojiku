@@ -195,8 +195,12 @@ Wire types stay in core; content measurement stays in layout.
   `push_decoration`; an anchored line returns an EMPTY atom and defers to
   `engine/anchor.rs`); margins fold into every atom via
   `with_vertical_margin`, so flow/absolute/container placement space them
-  identically. `fit_size` is the shared `object-fit` math (also used by
-  `engine/table/content.rs`'s image cells); BOTH sites wrap the shape in
+  identically. `engine/image_fit.rs`'s `fitted_size` is the shared
+  `object-fit` math (also used by `engine/table/content.rs`'s image
+  cells), with a drawn side over `MAX_RESOLVED_PT` replaced by the
+  `contain` size and reported `length_out_of_range` — `none`/`cover` are
+  the fits a content box does not bound, and the renderers scale every
+  path and pixel by the drawn size; BOTH sites wrap the shape in
   a `Clip` when the fitted rect overflows the content box **or**
   `Asset::clips_to_viewport()` — i.e. always for an SVG, whose paths may
   sit outside the `viewBox` the fit math measured.

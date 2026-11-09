@@ -16,6 +16,7 @@ use crate::geom::PathCmd;
 use std::str::FromStr;
 use svgtypes::{Length, LengthUnit, ViewBox};
 
+mod bound;
 mod gradient;
 mod paint;
 mod path;
@@ -28,6 +29,7 @@ pub use paint::{
     GradientStop, GradientTransform, LinearGradient, RadialGradient, SpreadMode, SvgPaint,
 };
 
+use bound::{Bound, check_viewbox};
 use style::{Affine, PaintRef, Style};
 use walk::ParseCtx;
 
@@ -50,6 +52,14 @@ impl Default for SvgLimits {
 }
 
 /// A styled, flattened path.
+///
+/// [`parse_svg`] emits only paths the renderers can draw in `f32`: every
+/// coordinate is finite and at most 1000 viewBox widths (x) or heights (y)
+/// from the viewBox origin, the stroke width is at most 1000 times the
+/// smaller viewBox side, and every gradient number is at most 2000 times
+/// the larger viewBox side. The renderers rely on these limits: a path built by
+/// hand outside them can make the PDF backend panic or the PNG backend
+/// skip it.
 #[derive(Debug, Clone)]
 pub struct SvgPath {
     /// Drawing commands in viewBox coordinates.
@@ -58,16 +68,16 @@ pub struct SvgPath {
     pub fill: Option<SvgPaint>,
     /// Solid stroke color (0..=1 RGB), if any.
     pub stroke: Option<(f32, f32, f32)>,
-    /// Stroke width in viewBox units.
+    /// Stroke width in viewBox units; 0 when `stroke` is `None`.
     pub stroke_width: f64,
 }
 
 /// A parsed SVG document reduced to solid-color paths.
 #[derive(Debug, Clone)]
 pub struct SvgTree {
-    /// ViewBox width (always > 0).
+    /// ViewBox width, from 0.001 to 1,000,000.
     pub width: f64,
-    /// ViewBox height (always > 0).
+    /// ViewBox height, from 0.001 to 1,000,000.
     pub height: f64,
     /// Paths in document order.
     pub paths: Vec<SvgPath>,
@@ -94,6 +104,7 @@ pub fn parse_svg(text: &str, limits: &SvgLimits) -> Result<SvgTree, ImageError> 
         limits,
         gradients,
         view: (width, height),
+        bound: Bound::new((width, height)),
     };
     let mut paths = Vec::new();
     let base = Affine::translate(-min_x, -min_y);
@@ -111,16 +122,24 @@ pub fn parse_svg(text: &str, limits: &SvgLimits) -> Result<SvgTree, ImageError> 
     })
 }
 
-/// Resolves the document coordinate space: viewBox, else width/height.
+/// Resolves the document coordinate space: viewBox, else width/height,
+/// refused outside the limits [`check_viewbox`] states.
 fn svg_size(root: &roxmltree::Node) -> Result<(f64, f64, f64, f64), ImageError> {
-    if let Some(raw) = root.attribute("viewBox") {
+    let size = match root.attribute("viewBox") {
         // svgtypes rejects non-finite numbers and w/h <= 0 itself.
-        let vb = ViewBox::from_str(raw).map_err(|e| ImageError::Svg(format!("viewBox: {e}")))?;
-        return Ok((vb.x, vb.y, vb.w, vb.h));
-    }
-    let w = parse_dimension(root.attribute("width"))?;
-    let h = parse_dimension(root.attribute("height"))?;
-    Ok((0.0, 0.0, w, h))
+        Some(raw) => {
+            let vb =
+                ViewBox::from_str(raw).map_err(|e| ImageError::Svg(format!("viewBox: {e}")))?;
+            (vb.x, vb.y, vb.w, vb.h)
+        }
+        None => {
+            let w = parse_dimension(root.attribute("width"))?;
+            let h = parse_dimension(root.attribute("height"))?;
+            (0.0, 0.0, w, h)
+        }
+    };
+    check_viewbox(size.0, size.1, size.2, size.3)?;
+    Ok(size)
 }
 
 /// Parses a width/height attribute; only unitless/px lengths make sense
