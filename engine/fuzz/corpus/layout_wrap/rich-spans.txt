@@ -1,0 +1,2 @@
+w=80 size=8,16,24 lb=loose
+smallMEDIUM text大きい文字ですlasttail

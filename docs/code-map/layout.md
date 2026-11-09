@@ -254,10 +254,20 @@ Wire types stay in core; content measurement stays in layout.
   `resolve_link` call sites, which is what makes one function answer for
   plain / rich / vertical / per-span / image and report false for a URL the
   gate dropped.
-- `fuzz.rs` (+ `fuzz/tests.rs`, `tests/fuzz_corpus/`) — doc-hidden
-  `link_url`, the `link_url` fuzz harness: calls `check_link_url` and
+- `fuzz.rs` (+ `fuzz/tests.rs`, `tests/fuzz_corpus/`) — the doc-hidden
+  fuzz harnesses. `link_url`: calls `check_link_url` and
   asserts every accepted URL is the trimmed input, within `MAX_LINK_URL`,
-  free of control characters and on the scheme allowlist. Map of the fuzz
+  free of control characters and on the scheme allowlist. The `text`
+  group, one file each: `fuzz/wrap.rs` (`wrap_spans_hung`),
+  `fuzz/shape.rs` (`shape_run`), `fuzz/overflow.rs` (`fit_font_size`,
+  `clamp_with_ellipsis`, `clamp_line` — `pub(crate)` for this and
+  re-exported from `engine.rs` with `MIN_SHRINK_FONT_PT` and `exceeds`),
+  each returns a `*Paths` that records which checked branches the input ran,
+  and the replay asserts that some seed runs each one; `fuzz/input.rs` parses the `key=value`
+  settings line and owns `text_chain`, the one list of chain faces (BIZ UD
+  Gothic, not the default UDP: trimming never narrows the proportional face's
+  brackets, which are already half an em wide).
+  `FontFace::glyph_count` exists for the shape harness. Map of the fuzz
   crate: [verify.md](verify.md).
 - `engine/meta.rs` — `document:`: `document_metadata` (interpolates each
   field through the shared binding funnel) + `check_meta_text` /

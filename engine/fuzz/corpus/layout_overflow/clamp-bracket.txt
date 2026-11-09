@@ -1,0 +1,2 @@
+w=50 size=10 lines=1 lb=anywhere
+あいう「え」おかきく

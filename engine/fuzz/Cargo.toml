@@ -129,8 +129,9 @@ doc = false
 bench = false
 
 # The scalar doors: URL and path checks, and the date-pattern renderer. Each
-# target is one call into the owning crate's hidden `fuzz` module, which is
-# where the asserted properties live so the corpus replay tests run them too.
+# target is one call into the owning crate's hidden `fuzz` module, where the
+# asserted properties are checked, so the corpus replay tests run the same
+# checks.
 [[bin]]
 name = "fetch_redirects"
 path = "fuzz_targets/fetch_redirects.rs"
@@ -155,6 +156,31 @@ bench = false
 [[bin]]
 name = "formatter_pack_paths"
 path = "fuzz_targets/formatter_pack_paths.rs"
+test = false
+doc = false
+bench = false
+
+# The text targets: line wrapping, shaping and the overflow policies over the
+# chain `shojiku_fuzz::text_chain` loads. Each target is one call into
+# `shojiku_layout::fuzz`, where the asserted properties are checked, so the
+# corpus replay tests run the same checks.
+[[bin]]
+name = "layout_wrap"
+path = "fuzz_targets/layout_wrap.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "layout_shape"
+path = "fuzz_targets/layout_shape.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "layout_overflow"
+path = "fuzz_targets/layout_overflow.rs"
 test = false
 doc = false
 bench = false

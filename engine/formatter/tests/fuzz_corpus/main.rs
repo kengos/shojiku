@@ -63,7 +63,11 @@ fn every_font_pack_seed_parses_or_is_refused() {
             let _ = manifest.face_specs("fuzz", std::path::Path::new("/nonexistent"));
         }
     }
-    assert!(parsed >= 1, "no font-pack seed parses");
+    // Every seed except `malformed.yml` is a well-formed manifest. A seed
+    // that no longer parses never calls `face_specs`, so the hostile `file`
+    // path in it is never resolved; this assertion fails when one of the four
+    // well-formed seeds no longer parses.
+    assert!(parsed >= 4, "a well-formed font-pack seed no longer parses");
 }
 
 #[test]
