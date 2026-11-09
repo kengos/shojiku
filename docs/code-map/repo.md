@@ -339,7 +339,19 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   test·build·tsc·vitest·playwright, gh run view --log / watch, claude -p)
   piped into tail/head/grep/less/awk NR/sed -n — redirect to a file and read
   it; `| tee file` is allowed, a filter after it is not — `make -n`, a host `cargo`, a
-  commit with signing disabled or an attribution trailer, a push at `main`, a
+  commit with signing disabled or an attribution trailer, a commit, merge or
+  pull that skips or redirects the commit hooks (`--no-verify` or a prefix of
+  it, commit `-n`, core.hooksPath, an alias or an include set by `-c`,
+  `--config-env`, the environment or `git config`, an assignment to
+  SHOJIKU_GITLEAKS_DOCKER, or to a variable whose name has an upper-case
+  letter and is not in a short list, when the assignment is written before the
+  git invocation, exported in the same command, or written as a statement of
+  its own while the variable is set in the Claude Code environment or is named
+  PATH, HOME, TMPDIR, GIT_*, DOCKER_*, XDG_* or SHOJIKU_* — PATH, HOME and
+  DOCKER_HOST, for example, can each replace what the hook runs), a
+  commit, merge or pull while the project clone's shared hooks directory does
+  not hold `.githooks/` exactly as committed in HEAD or origin/main (or while core.hooksPath
+  is set), a push at `main`, a
   `git reset --soft` onto a remote-tracking ref (no local squash: GitHub's
   squash merge makes the one commit);
   ASKS on `gh pr merge`; notes a bare `make` in a worktree, a `pgrep` watcher,
@@ -462,6 +474,50 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   branch is checked out, with that reviewer's privileges. `make hooks:verify`
   checks that the deny table still behaves; it has nothing to say about what a
   hook script does.
+- **`.githooks/` + `.gitleaks.toml` + `.gitleaksignore`** — the secret scan.
+  `.githooks/pre-commit` is a git hook, not a Claude Code hook: `make
+  secrets:install` (`scripts/install-commit-hooks.sh`) copies it and
+  `pre-merge-commit`, as committed in HEAD (or origin/main), into the clone's shared hooks
+  directory (`git rev-parse --git-common-dir`/hooks), so it runs for every
+  `git commit` and merge commit in every worktree and on every branch of the clone, whoever commits.
+  The install refuses when core.hooksPath is set (git would then not read that
+  directory; a local `.githooks` value from an earlier install is removed) or
+  when that directory holds another pre-commit. The hook writes the staged blob
+  (`git cat-file`, so no .gitattributes conversion applies) of every file that
+  differs from HEAD (the index git is about to record, so `commit -a` and
+  `commit <path>` are covered) into a temporary
+  directory (created inside the git directory, which a Docker VM that shares
+  only `$HOME` can still mount) beside a generated check token that gitleaks
+  must report, runs (with `--ignore-gitleaks-allow` and
+  `--max-archive-depth=8`, so neither the inline `gitleaks:allow` marker nor an
+  archive hides a value)
+  gitleaks over them in a
+  `--network none`, `--pull never` container with a read-only mount and the
+  `.gitleaks.toml` committed in HEAD (origin/main's when HEAD has none), and refuses the commit on a finding
+  (rule, file and line; values redacted) or when it cannot scan (jq missing,
+  Docker stopped, the image not pulled, gitleaks failing, the check token not
+  reported). `pre-merge-commit` runs the same script for a merge commit. git
+  does not run either for cherry-pick, rebase, revert, am or commit-tree. Its `IMAGE=` line is
+  the only gitleaks image pin; `mk/secrets.mk` reads that line with sed.
+  `guard-bash.sh` is what keeps a session from skipping the pre-commit hook
+  (see the hooks entry above); it also refuses a commit, merge or pull while
+  an installed copy is missing or differs from `.githooks/` in both HEAD and origin/main of
+  `$CLAUDE_PROJECT_DIR` (out of date, or edited without a commit), reading only
+  the project clone's state, never the command's target directory. `.gitleaks.toml` is gitleaks's default rule set plus
+  `generic-api-key` allowlists matched on the reported VALUE, never a path; a
+  fixture that looks like a key is built at run time instead of allowlisted.
+  `.gitleaksignore` lists, by fingerprint, the findings in commits made before
+  the hook existed; only `make secrets:scan` reads it. `make secrets:scan`
+  (run by hand; no CI job runs it) first checks that a generated value for
+  each of four rules is reported and one example of each allowlisted shape is
+  not, then scans the whole history (the git common directory, mounted at a
+  fixed container path so a worktree gives the same result). `make
+  hooks:verify` runs real commits through the hook, installed by the same
+  script the install uses, against a `docker` stub
+  that writes no report unless the hook passes `--network none`, `--pull
+  never`, a read-only `/scan` mount, `--max-archive-depth=8` and `--config`,
+  and refuses a passed configuration that holds the word `WIDENED` (a case
+  stages one, so passing the staged `.gitleaks.toml` fails).
 - **Top-level `skills/`** — the product-facing AI skills, kept OUT of
   `docs/` so `npx skills add <owner>/shojiku` discovers them (flat
   `skills/<name>/SKILL.md`, `name`+`description` frontmatter — these are
@@ -491,8 +547,8 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   rule's WORDING is present: a model that has loaded a skill quotes it back, so
   a grep-shaped grader passes for free.
 - `mk/` — Makefile includes, ONE FILE PER SCOPE: `engine.mk`, `gui.mk`,
-  `site.mk`, `sdk.mk`, `docker.mk`, `hooks.mk`, `skills.mk`, `investigate.mk`, `proof.mk`
-  (nine — `ls mk/` is the check). Each holds both halves of
+  `site.mk`, `sdk.mk`, `docker.mk`, `hooks.mk`, `secrets.mk`, `skills.mk`, `investigate.mk`, `proof.mk`
+  (ten — `ls mk/` is the check). Each holds both halves of
   its GATES — the public `<scope>:<job>` wrapper and the private
   `_<scope>-<job>` target carrying the recipe; a NON-gate target (the two
   model-calling ones in `skills.mk`, the `docker:clean:*` housekeeping in

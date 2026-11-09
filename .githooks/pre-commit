@@ -1,0 +1,173 @@
+#!/bin/sh
+# shojiku-secret-scan-hook (scripts/install-commit-hooks.sh recognises an
+# installed copy of this file by this line)
+#
+# git pre-commit hook: scans the staged content of the commit with gitleaks,
+# and refuses the commit when gitleaks reports a secret or when the scan
+# cannot run.
+#
+# `make secrets:install` copies this file and pre-merge-commit, as committed
+# in HEAD (or in origin/main when HEAD has no `.githooks/`), into the clone's
+# shared hooks directory (`git rev-parse
+# --git-common-dir`/hooks), so every worktree and every branch of the clone
+# runs the installed copy, including a branch that predates `.githooks/`. git
+# runs the installed pre-commit hook for `git commit` in every form (`-a`,
+# `<path>`, `--amend`) and, through pre-merge-commit, for a merge commit. git does not run it for
+# `cherry-pick`, `rebase`, `revert`, `am` or `commit-tree`, which can record
+# commits that the hook never scanned; `make secrets:scan` scans the whole
+# history.
+#
+# The scanned content is the index git is about to record (git sets
+# GIT_INDEX_FILE for `commit -a` and `commit <path>`, and every git command
+# below reads that index): the staged blob of every file that differs from
+# HEAD, deleted files and submodules excluded (`git diff --cached` does not
+# list an intent-to-add entry, which the commit does not record). The hook
+# writes each blob as stored, with `git cat-file blob`, so no .gitattributes
+# conversion (working-tree-encoding, a smudge filter, eol) changes what
+# gitleaks reads. Each blob goes into a numbered directory of its own
+# (staged/<n>/<path>), so two staged paths that the host file system treats as
+# one name (`Config.rb` and `config.rb` on macOS) do not overwrite each other;
+# inside the numbered directory the path is the committed path, so gitleaks's default
+# configuration still skips the paths it skips by name (lock files,
+# node_modules, images). That default configuration also skips any file named
+# gitleaks.toml or .gitleaks.toml, so a staged gitleaks configuration file is
+# also written a second time under the name `.shojiku-staged-gitleaks-config`,
+# which gitleaks scans. gitleaks runs in a container with no network, over a read-only mount
+# of a temporary directory; the repository itself is not mounted.
+#
+# The configuration is `.gitleaks.toml` as committed in HEAD, or in
+# origin/main when HEAD has no `.gitleaks.toml`; the staged copy is not used,
+# so a commit cannot widen the allowlists used in the scan of that same commit.
+# gitleaks reads files inside archives (zip, tar and others) down to eight
+# levels (`--max-archive-depth=8`).
+# gitleaks runs with `--ignore-gitleaks-allow`, so its inline marker
+# `gitleaks:allow` does not hide a value from the scan of the commit that
+# holds it, inside an archive included.
+#
+# A refused commit can be made anyway with `git commit --no-verify`. Only the
+# user decides to commit without the scan: the Claude Code Bash guard refuses
+# `--no-verify` from a session.
+#
+# SHOJIKU_GITLEAKS_DOCKER replaces the `docker` executable; the hook self-test
+# (scripts/check-hooks.sh) sets it to a stub so the suite runs without Docker.
+# `mk/secrets.mk` reads the image reference from the IMAGE= line below with
+# sed; keep that line in the form IMAGE='<reference>'.
+
+IMAGE='zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f'
+DOCKER=${SHOJIKU_GITLEAKS_DOCKER:-docker}
+
+refuse() { # refuse <reason>
+	printf 'gitleaks: %s\n' "$1" >&2
+	exit 1
+}
+unscanned() { # unscanned <reason>
+	refuse "the commit was refused because it could not be scanned for secrets: $1.
+Fix the cause and commit again. To record the commit without the scan, the user (not a Claude Code session) runs git commit --no-verify."
+}
+
+# The temporary directory is created inside the git directory rather than
+# under $TMPDIR: a Docker VM such as Colima shares only $HOME with the host by
+# default, and would mount an empty directory from $TMPDIR.
+gitdir=$(git rev-parse --absolute-git-dir) || unscanned "git rev-parse failed"
+work=$(mktemp -d "$gitdir/gitleaks-scan.XXXXXX") || unscanned "mktemp failed"
+trap 'rm -rf "$work"' EXIT
+trap 'exit 1' INT TERM HUP
+mkdir "$work/scan" "$work/scan/staged" || unscanned "mkdir failed"
+
+has_head=no
+git rev-parse --verify -q HEAD >/dev/null && has_head=yes
+
+# One line per staged blob: "<mode> <object id>", then the path on the next
+# line. `git diff --raw` prints ":<old mode> <new mode> <old id> <new id>
+# <status>" before each path. With no HEAD yet, the index is compared with the
+# empty tree. The listing goes to a file first, so a failing git command
+# refuses the commit instead of producing an empty list.
+base=HEAD
+[ "$has_head" = yes ] || base=$(git hash-object -t tree /dev/null) ||
+	unscanned "computing the empty tree failed"
+git diff -z --cached --raw --no-abbrev --no-renames --no-ext-diff --diff-filter=d "$base" >"$work/raw" ||
+	unscanned "listing the staged files failed"
+[ "$(LC_ALL=C tr -cd '\n' <"$work/raw" | wc -c)" -eq 0 ] ||
+	unscanned "a staged path contains a newline, which this hook does not read"
+LC_ALL=C tr '\0' '\n' <"$work/raw" | LC_ALL=C awk 'NR % 2 == 1 { print $2 " " $4; next } { print }' >"$work/staged.list" ||
+	unscanned "listing the staged files failed"
+
+# Write each blob; skip a submodule (mode 160000, the id names a commit). The
+# hook has already refused a commit whose staged path holds a newline (the
+# newline check before this loop), because this loop reads staged.list one
+# line per entry.
+blobs=0
+while IFS= read -r meta && IFS= read -r path; do
+	mode=${meta%% *} oid=${meta#* }
+	case $mode in [0-7][0-7][0-7][0-7][0-7][0-7]) ;; *) unscanned "reading the staged file list failed" ;; esac
+	case $oid in *[!0-9a-f]* | '') unscanned "reading the staged file list failed" ;; esac
+	[ "$mode" = 160000 ] && continue
+	blobs=$((blobs + 1))
+	dest="$work/scan/staged/$blobs/$path"
+	mkdir -p "$(dirname -- "$dest")" && git cat-file blob "$oid" >"$dest" ||
+		unscanned "copying the staged content of $path failed"
+	case $path in
+	gitleaks.toml | .gitleaks.toml | */gitleaks.toml | */.gitleaks.toml)
+		config_copy="$(dirname -- "$dest")/.shojiku-staged-gitleaks-config"
+		cp -- "$dest" "$config_copy" || unscanned "copying the staged content of $path failed"
+		;;
+	esac
+done <"$work/staged.list"
+# A commit that only deletes files, or records no change, has nothing to scan.
+[ "$blobs" -gt 0 ] || exit 0
+
+command -v jq >/dev/null 2>&1 || unscanned "jq is not on PATH"
+command -v "$DOCKER" >/dev/null 2>&1 ||
+	unscanned "$DOCKER is not on PATH (a GUI git client may run hooks with a shorter PATH than a shell)"
+"$DOCKER" info >/dev/null 2>&1 || unscanned "Docker is not running"
+"$DOCKER" image inspect "$IMAGE" >/dev/null 2>&1 ||
+	unscanned "the gitleaks image is not pulled; run make secrets:install"
+
+# The check token: a generated GitHub-token-shaped value in check-token.txt
+# that gitleaks must report. A scan that does not report it did not read the
+# copied files, for example because Docker could not mount the temporary
+# directory and gitleaks scanned an empty one. The random bytes are read with
+# a fixed length, because git runs hooks with SIGPIPE ignored: a `tr` reading
+# /dev/urandom without end is not stopped when the `head` after it exits.
+check_token="ghp_$(head -c 4096 /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | head -c 36)"
+printf 'token = "%s"\n' "$check_token" >"$work/scan/check-token.txt"
+
+# The configuration comes from HEAD; when HEAD has no `.gitleaks.toml`, from
+# origin/main (origin/main tracks the protected main branch, whose changes are
+# reviewed in pull requests); with neither, gitleaks's default configuration
+# applies.
+config_ref=''
+for ref in HEAD origin/main; do
+	if git cat-file -e "$ref:.gitleaks.toml" 2>/dev/null; then config_ref=$ref; break; fi
+done
+set -- run --rm --pull never --network none -v "$work/scan:/scan:ro"
+if [ -n "$config_ref" ]; then
+	git show "$config_ref:.gitleaks.toml" >"$work/gitleaks.toml" ||
+		unscanned "reading .gitleaks.toml from $config_ref failed"
+	set -- "$@" -v "$work/gitleaks.toml:/gitleaks.toml:ro" "$IMAGE" dir /scan --config /gitleaks.toml
+else
+	set -- "$@" "$IMAGE" dir /scan
+fi
+"$DOCKER" "$@" --max-archive-depth=8 --ignore-gitleaks-allow --redact --no-banner --no-color \
+	--report-format json --report-path - >"$work/report.json" 2>"$work/gitleaks.log"
+
+# gitleaks exits 1 both for a finding (the check token guarantees one) and for
+# its own failure, so the hook decides from the JSON report, not from the exit
+# code.
+jq -e 'type == "array"' "$work/report.json" >/dev/null 2>&1 ||
+	unscanned "gitleaks failed: $(tail -n 3 "$work/gitleaks.log" | tr '\n' ' ')"
+jq -e 'any(.[]; .File == "/scan/check-token.txt")' "$work/report.json" >/dev/null ||
+	unscanned "gitleaks did not report the generated check token, so it did not read the copied files"
+
+findings=$(jq -r '.[] | select(.File != "/scan/check-token.txt")
+	| (.File | sub("^/scan/staged/[0-9]+/"; "") | sub("^\\./"; "")
+		| sub("\\.shojiku-staged-gitleaks-config$"; "(the staged gitleaks configuration file in this directory)")) as $f
+	| "- \(.RuleID): \($f), line \(.StartLine)"' "$work/report.json")
+[ -n "$findings" ] || exit 0
+
+refuse "gitleaks reported a secret in the staged content, so the commit was refused. Values are redacted.
+
+$findings
+
+Remove the secret value from the file and stage the cleaned file (git add).
+If the value is a deliberate test fixture, either build it at run time so the source holds no complete secret, or add an allowlist entry to .gitleaks.toml under that one rule: a regular expression that matches the shape of the value (not the value itself, and never a path). The hook reads .gitleaks.toml from HEAD, so commit the .gitleaks.toml change on its own first."
