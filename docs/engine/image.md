@@ -70,11 +70,38 @@ not double-blend at their seams). Out-of-range or non-finite values warn
 ## Formats
 
 - **Raster**: PNG, JPEG, GIF, WebP — sniffed by magic bytes, header
-  dimensions validated, size-capped by the asset policy.
+  dimensions validated, size-capped by the asset policy. A GIF is drawn
+  from its first frame, so that frame must fill the GIF's logical screen
+  (same size, placed at the top-left corner); a GIF whose first frame is
+  smaller, larger or offset is refused (`invalid_image_asset`
+  for a template `src:`, `invalid_image_data` for a params value).
 - **SVG**: a deliberate subset parser (paths, basic shapes, groups,
   affine transforms, presentation attributes; node/depth caps). Text
   inside SVG is not rendered. Unsupported constructs warn
   `svg_unsupported`.
+  - **The viewBox** (or `width`/`height`) must be between 0.001 and
+    1,000,000 units on each side, with its origin within ±1,000,000,000;
+    otherwise the SVG is refused (`invalid_image_asset` for a template
+    `src:`, `invalid_image_data` for a params value).
+  - **The coordinate range**: after the transforms apply, a coordinate
+    may lie at most 1000 viewBox widths (x) or heights (y) from the
+    viewBox origin. A shape with a coordinate farther out, or with an
+    infinite or NaN one, is not drawn. A stroke wider than 1000 times the
+    viewBox's smaller side is not drawn (the shape's fill still is), and a
+    gradient whose coordinates, radius or transform entries exceed twice
+    the range is not used. Each warns `svg_unsupported`. The image is
+    clipped to its viewBox, so a shape lying wholly that far out was
+    invisible anyway; only a shape that crosses the viewBox and also
+    reaches past the range has a visible part left undrawn — a shape
+    just past the viewBox's edge is drawn and clipped as usual.
+  - **PNG previews** skip a shape that reaches more than 16,777,216 px
+    from the page's corner, without a diagnostic; with the coordinate
+    range above, that happens only for an image drawn more than about
+    16,800 px wide or tall (about 5,600 px with a stroke as wide as the
+    stroke limit allows).
+  - **Arcs** (`A`/`a` in path data) are flattened to at most eleven curve
+    segments each, accurate to 0.1 units or a millionth of the radius,
+    whichever is larger.
   - **Gradients**: `<linearGradient>` / `<radialGradient>` fills are
     supported — `<stop>` colors/opacity (including via `style="…"`), both
     `gradientUnits` (`userSpaceOnUse` and the `objectBoundingBox` default),
@@ -131,7 +158,8 @@ The host asset policy gates dynamic cell images by the image item's `id`.
 | `invalid_image_data` / `invalid_image_asset` | undecodable or unresolvable sources, including a params value that is not a string |
 | `remote_asset_unsupported` | remote URL source; rejected |
 | `dynamic_image_denied` | params-bound image blocked by the asset policy |
-| `svg_unsupported` | SVG constructs outside the subset |
+| `svg_unsupported` | SVG constructs outside the subset, and coordinates, stroke widths or gradients past the coordinate range |
+| `length_out_of_range` | a `fit: none` or `cover` image would be drawn wider or taller than 1,000,000 pt; it is drawn at the `contain` size instead |
 | `cell_image_assets_capped` | per-element cell images (table columns + repeat cells) exceed the shared load cap; the rest are skipped |
 | `invalid_opacity` | out-of-range / non-finite `opacity`; draws opaque |
 

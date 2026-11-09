@@ -62,3 +62,25 @@ fn adler32(data: &[u8]) -> u32 {
     }
     (b << 16) | a
 }
+
+/// Builds a one-frame GIF whose logical screen is `screen` (width,
+/// height) and whose first frame is `frame` (left, top, width, height).
+pub fn gif_with_frame(screen: (u16, u16), frame: (u16, u16, u16, u16)) -> Vec<u8> {
+    let mut out = Vec::new();
+    {
+        let palette = [0, 0, 0, 255, 255, 255];
+        let mut encoder =
+            gif::Encoder::new(&mut out, screen.0, screen.1, &palette).expect("gif encoder");
+        let pixels = vec![1u8; usize::from(frame.2) * usize::from(frame.3)];
+        let first = gif::Frame {
+            left: frame.0,
+            top: frame.1,
+            width: frame.2,
+            height: frame.3,
+            buffer: std::borrow::Cow::Owned(pixels),
+            ..Default::default()
+        };
+        encoder.write_frame(&first).expect("gif frame");
+    }
+    out
+}

@@ -269,3 +269,32 @@ sections:
         .collect();
     assert!(modules.is_empty());
 }
+
+#[test]
+fn an_image_cell_drawn_past_the_length_cap_falls_back_to_contain() {
+    use shojiku_image::{Asset, AssetKind, AssetStore, RasterFormat};
+    let mut store = AssetStore::empty();
+    store.insert(Asset {
+        id: shojiku_image::cell_asset_key("items", 0, "photo"),
+        kind: AssetKind::Raster {
+            format: RasterFormat::Png,
+            bytes: std::sync::Arc::new(vec![0]),
+            width_px: 2_000_000,
+            height_px: 1,
+        },
+    });
+    let (doc, diags) = cell_table(
+        "          - { data: { key: photo }, type: image, width: 100, fit: none }\n",
+        json!([{ "photo": "row0.png" }]),
+        Some(&store),
+    );
+    assert!(
+        diags
+            .iter()
+            .any(|d| d.code == "length_out_of_range" && d.path.is_some()),
+        "{diags:?}"
+    );
+    // Drawn at the contain size of the 92 x 52 padded cell.
+    let images = image_shapes(&doc.pages[0]);
+    assert_eq!(images[0].w, 92.0);
+}

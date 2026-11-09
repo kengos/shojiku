@@ -8,7 +8,7 @@ use shojiku_core::{EcLevel, ImageFit};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 
 use super::super::Ctx;
-use super::super::atoms::fit_size;
+use super::super::image_fit::fitted_size;
 use super::rows::Cell;
 
 impl<'a, 'b> Ctx<'a, 'b> {
@@ -67,7 +67,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 .push(Diagnostic::new(Code::MissingAsset).arg("key", asset_id));
             return;
         };
-        let (dw, dh) = fit_size(fit, asset.intrinsic_size(), cw, ch);
+        let (dw, dh) = fitted_size(fit, asset.intrinsic_size(), cw, ch, &mut self.diags);
         let clips_to_viewport = asset.clips_to_viewport();
         let opacity = self.sane_opacity(cell.computed.opacity);
         let shape = LayoutItem::Image(ImageShape {

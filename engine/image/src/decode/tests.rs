@@ -199,3 +199,14 @@ fn a_codec_message_is_bounded_before_it_becomes_an_engine_error() {
         "80 characters plus the truncation marker"
     );
 }
+
+#[test]
+fn a_gif_frame_extending_beyond_the_logical_screen_is_not_decoded() {
+    // Loading refuses this GIF first (`check_gif_first_frame`);
+    // `decode_raster` called without that check refuses it too.
+    let bytes = crate::raster::test_support::gif_with_frame((1, 1), (0, 0, 100, 100));
+    assert!(matches!(
+        decode_raster(RasterFormat::Gif, &bytes),
+        Err(ImageError::Bad(_))
+    ));
+}

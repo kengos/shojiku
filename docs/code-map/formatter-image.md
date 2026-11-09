@@ -182,9 +182,14 @@ the manifest wire's key list) lives in `docs/engine/`
   inline SVG / remote URL.
 - `policy.rs` — `AssetPolicy`: open|bundled-only + per-item allow/deny +
   caps.
-- `raster.rs` — magic-byte sniff + header-only dimension checks.
+- `raster.rs` — magic-byte sniff + header-only dimension checks, plus
+  `check_gif_first_frame` (the loader refuses a GIF whose first frame is
+  not exactly its logical screen: krilla sizes the PDF image by the
+  screen but takes the first frame's pixels, so any other frame embeds a
+  mismatched image; reads descriptors only, no LZW).
 - `decode.rs` — `decode_raster`: encoded bytes → straight-alpha RGBA8
-  (png/zune-jpeg/gif/image-webp) for pixel backends.
+  (png/zune-jpeg/gif/image-webp) for pixel backends; `codec_err` is the
+  one bounded door for codec text (shared with `raster.rs`).
 - `store.rs` — `AssetStore` (FontStore-style). `Asset::intrinsic_size` =
   raster pixel rect or SVG `viewBox`; **`Asset::clips_to_viewport`** =
   "can this asset paint outside the rect the fit math gave it" — true
@@ -192,13 +197,39 @@ the manifest wire's key list) lives in `docs/engine/`
   content box whatever the `fit`.
 - `svg.rs` — subset SVG parser root: `SvgLimits`/`SvgTree`/`parse_svg`;
   `SvgPath.fill` is an **`SvgPaint`** = solid OR gradient. resvg/usvg
-  are banned (MPL + ttf-parser).
+  are banned (MPL + ttf-parser). The viewBox is refused outside
+  `bound::check_viewbox`'s limits before anything is walked.
+- `svg/bound.rs` — **`Bound`**, the ONE coordinate range the sink, the
+  stroke check in `walk.rs` and the gradient builder share:
+  `RANGE_RATIO` (1000) viewBox widths in x and heights in y from the
+  origin, per axis so `fit: stretch` cannot turn an aspect ratio into an
+  unbounded device size. `check` refuses a point past the range or a
+  non-finite one (`Refusal`); a refused path is not drawn and nothing is
+  ever moved or reduced, so a line crossing the viewBox is drawn where it
+  was authored or not at all.
+  `stroke_limit`/`gradient_limit` size the other two: a wider stroke is
+  dropped (the fill kept), a gradient past the limit is not used.
+  `svg/gradient.rs`'s `rebase` first moves a `userSpaceOnUse` affine's
+  translation into its points in `f64`, so the viewBox origin (bounded
+  separately by `ORIGIN_MAX`) does not count against the limit when the
+  linear part is invertible; when the rebased points exceed the limit
+  (a very small linear part), the geometry as authored is checked
+  instead. The range is what
+  keeps every number the renderers compute in `f32` finite (the viewBox ->
+  box scale, krilla's union of path bounds, tiny-skia's edges) — sized
+  together with layout's drawn-size cap (`engine/image_fit.rs`) and
+  render-png's device-range check.
 - `svg/style.rs` — affine transforms + inheritable presentation attrs;
   `PaintRef` = solid | `url(#id)` gradient ref; `parse_color`.
 - `svg/walk.rs` — the element walk: group/shape traversal with node and
   depth caps, per-path bbox + gradient-fill resolution.
 - `svg/path.rs` — `d=` parsing into transformed cubics, arc flattening,
-  smooth-command reflection.
+  smooth-command reflection. **`PathSink`** applies the CTM and checks
+  every point through `Bound`; the first refusal sets `refused`, and the
+  caller draws none of the path and warns with the refusal's message
+  (`arc_to_cubics` refuses an arc whose kurbo geometry is not finite,
+  which kurbo would otherwise flatten to no cubic at all). The arc tolerance scales with the radius
+  kurbo resolves, capping one arc at 11 cubics.
 - `svg/paint.rs` — **`SvgPaint`**/`LinearGradient`/`RadialGradient`/
   `GradientStop`/`SpreadMode`: gradient stops in a local space + a
   `local→viewBox` affine; stop normalization + `MAX_GRADIENT_STOPS`.

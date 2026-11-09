@@ -5,6 +5,7 @@
 //! format and reads dimensions from the header, which is what lets a
 //! decompression bomb be rejected before any expensive work happens.
 
+use crate::decode::codec_err;
 use crate::error::ImageError;
 use shojiku_diagnostics::Echo;
 
@@ -57,6 +58,33 @@ pub fn checked_dimensions(bytes: &[u8], max_pixels: u64) -> Result<(u64, u64), I
         });
     }
     Ok((width, height))
+}
+
+/// Refuses a GIF whose first frame does not cover exactly its logical screen:
+/// placed at `(0, 0)` with the screen's width and height.
+///
+/// The dimensions [`checked_dimensions`] reads (and the PDF backend sizes
+/// the embedded image by) are the logical screen's, while both backends
+/// take the pixels from the first frame alone, so a frame of any other
+/// size or position would be stretched by the PNG backend and embedded
+/// with the wrong number of pixels by the PDF one. Reads the screen and
+/// frame descriptors only; no image data is decompressed.
+pub(crate) fn check_gif_first_frame(bytes: &[u8]) -> Result<(), ImageError> {
+    let mut options = gif::DecodeOptions::new();
+    options.skip_frame_decoding(true);
+    let mut decoder = options.read_info(bytes).map_err(codec_err)?;
+    let screen = (decoder.width(), decoder.height());
+    let frame = decoder
+        .next_frame_info()
+        .map_err(codec_err)?
+        .ok_or(ImageError::Bad("gif has no frames".to_string()))?;
+    if (frame.left, frame.top, frame.width, frame.height) != (0, 0, screen.0, screen.1) {
+        return Err(ImageError::Bad(format!(
+            "gif first frame ({}x{} at {},{}) differs from the {}x{} logical screen",
+            frame.width, frame.height, frame.left, frame.top, screen.0, screen.1
+        )));
+    }
+    Ok(())
 }
 
 #[cfg(test)]

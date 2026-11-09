@@ -3,7 +3,7 @@
 
 use crate::error::ImageError;
 use crate::policy::AssetPolicy;
-use crate::raster::{checked_dimensions, sniff};
+use crate::raster::{RasterFormat, check_gif_first_frame, checked_dimensions, sniff};
 use crate::source::{DataUriPayload, ImageSource, classify, decode_data_uri};
 use crate::store::AssetKind;
 use crate::svg::parse_svg;
@@ -225,6 +225,9 @@ fn bundled_kind(
 fn kind_from_bytes(bytes: Vec<u8>, policy: &AssetPolicy) -> Result<AssetKind, ImageError> {
     if let Some(format) = sniff(&bytes) {
         let (width_px, height_px) = checked_dimensions(&bytes, policy.max_pixels)?;
+        if format == RasterFormat::Gif {
+            check_gif_first_frame(&bytes)?;
+        }
         return Ok(AssetKind::Raster {
             format,
             bytes: Arc::new(bytes),

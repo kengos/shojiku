@@ -4,11 +4,12 @@
 
 use crate::engine::overflow::exceeds;
 use crate::tree::{ClipShape, ImageShape, LayoutItem, LineShape};
-use shojiku_core::{BorderStyleKind, ImageFit, ImageItem, Length, RectItem};
+use shojiku_core::{BorderStyleKind, ImageItem, Length, RectItem};
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code};
 use shojiku_image::asset_key;
 
 use super::anchor::{PendingEnd, PendingKind, PendingLine};
+use super::image_fit::fitted_size;
 use super::{Atom, Basis, Ctx, placed_box, with_vertical_margin};
 
 /// Splits a `double` line into the two parallel strokes CSS draws: each a
@@ -39,25 +40,6 @@ pub(in crate::engine) fn double_lines(stroke: &LineShape) -> Vec<LayoutItem> {
             })
         })
         .collect()
-}
-
-/// `object-fit` math (CSS): the drawn size for an `iw × ih` asset in a
-/// `cw × ch` content box. Aspect-preserving: `contain` fits inside
-/// (letterbox), `cover` fills and overflows (min vs max scale). Shared
-/// by image items and image table cells.
-pub(super) fn fit_size(fit: ImageFit, (iw, ih): (f64, f64), cw: f64, ch: f64) -> (f64, f64) {
-    match fit {
-        ImageFit::Contain => {
-            let scale = (cw / iw).min(ch / ih);
-            (iw * scale, ih * scale)
-        }
-        ImageFit::Cover => {
-            let scale = (cw / iw).max(ch / ih);
-            (iw * scale, ih * scale)
-        }
-        ImageFit::Stretch => (cw, ch),
-        ImageFit::None => (iw, ih),
-    }
 }
 
 impl<'a, 'b> Ctx<'a, 'b> {
@@ -141,7 +123,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         // sizes), so the fit math cannot divide by zero.
         let (iw, ih) = asset.intrinsic_size();
         let clips_to_viewport = asset.clips_to_viewport();
-        let (dw, dh) = fit_size(image.fit(), (iw, ih), cw, ch);
+        let (dw, dh) = fitted_size(image.fit(), (iw, ih), cw, ch, &mut self.diags);
         let mut boxes = vec![placed_box(
             &self.current_path(),
             image.id.as_deref(),

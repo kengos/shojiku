@@ -86,6 +86,10 @@ impl Painter<'_> {
             let Some(built) = build_path(&path.cmds, 0.0, 0.0) else {
                 continue;
             };
+            let stroke_width = path.stroke.map_or(0.0, |_| path.stroke_width as f32);
+            if !within_device_range(&built, transform, stroke_width) {
+                continue;
+            }
             if let Some(paint) = path.fill.as_ref().and_then(super::gradient::svg_paint) {
                 pixmap.fill_path(&built, &paint, FillRule::Winding, transform, mask);
             }
@@ -131,6 +135,49 @@ impl Painter<'_> {
     }
 }
 
+/// The farthest, in px, a drawn SVG path may reach from the canvas origin.
+/// Every integer up to 2^24 is exact in `f32`, so the coordinates
+/// tiny-skia computes while clipping a path within this range stay within
+/// a pixel. Past it, tiny-skia's scan converter has been measured to
+/// panic in debug builds (an arc filled at about 8e8 px), and its release
+/// output is not defined. The SVG parser holds coordinates to 1000 viewBox
+/// sizes and stroke widths to 1000 times the smaller viewBox side, so only
+/// an image drawn more than about 16,800 px wide or tall (about 5,600 px
+/// with a stroke at the parser's stroke limit), less its offset on the
+/// page, reaches
+/// this limit.
+pub(crate) const MAX_DEVICE_PX: f32 = 16_777_216.0;
+
+/// Whether `path`, drawn through `transform` with a stroke `stroke_width`
+/// wide (0 for a fill), stays within [`MAX_DEVICE_PX`] of the canvas origin
+/// on both axes. The path's bounds are widened by twice the stroke width,
+/// the farthest a miter join (limit 4) reaches past the path, before they
+/// are mapped to device space.
+pub(crate) fn within_device_range(
+    path: &tiny_skia::Path,
+    transform: Transform,
+    stroke_width: f32,
+) -> bool {
+    let bounds = path.bounds();
+    let reach = 2.0 * stroke_width;
+    let (l, t, r, b) = (
+        bounds.left() - reach,
+        bounds.top() - reach,
+        bounds.right() + reach,
+        bounds.bottom() + reach,
+    );
+    let mut corners = [
+        tiny_skia::Point::from_xy(l, t),
+        tiny_skia::Point::from_xy(r, t),
+        tiny_skia::Point::from_xy(r, b),
+        tiny_skia::Point::from_xy(l, b),
+    ];
+    transform.map_points(&mut corners);
+    corners
+        .iter()
+        .all(|p| p.x.abs() <= MAX_DEVICE_PX && p.y.abs() <= MAX_DEVICE_PX)
+}
+
 /// Builds a tiny-skia [`Pixmap`] from straight-alpha RGBA8, premultiplying
 /// as tiny-skia requires. `None` if the buffer length disagrees with the
 /// dimensions (a corrupt decode) rather than panicking.
@@ -150,3 +197,6 @@ pub(crate) fn pixmap_from_rgba(image: &RgbaImage) -> Option<Pixmap> {
     let size = tiny_skia::IntSize::from_wh(image.width, image.height)?;
     Pixmap::from_vec(premul, size)
 }
+
+#[cfg(test)]
+mod tests;
