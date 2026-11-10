@@ -234,4 +234,5 @@ mod load;
 #[cfg(test)]
 mod tests;
 
+pub(crate) use load::kind_from_bytes;
 use load::{dynamic_asset, static_asset};

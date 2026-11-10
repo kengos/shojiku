@@ -20,11 +20,11 @@ use crate::error::ImageError;
 
 /// Smallest accepted viewBox width or height. With layout's 1,000,000 pt
 /// cap on a drawn image, the viewBox -> box scale stays at most `1e9`.
-pub(super) const VIEWBOX_MIN: f64 = 1e-3;
+pub(crate) const VIEWBOX_MIN: f64 = 1e-3;
 
 /// Largest accepted viewBox width or height. `fit: none` draws one viewBox
 /// unit as one pt, so this equals layout's cap on a resolved length.
-pub(super) const VIEWBOX_MAX: f64 = 1e6;
+pub(crate) const VIEWBOX_MAX: f64 = 1e6;
 
 /// Largest accepted distance of the viewBox origin from zero. The parser
 /// subtracts the origin in `f64` before anything reaches a renderer, so
@@ -36,23 +36,23 @@ pub(super) const ORIGIN_MAX: f64 = 1e9;
 
 /// How many viewBox widths (in x) or heights (in y) a coordinate may lie
 /// from the viewBox origin.
-pub(super) const RANGE_RATIO: f64 = 1_000.0;
+pub(crate) const RANGE_RATIO: f64 = 1_000.0;
 
 /// The warning for a path not drawn because a coordinate is past the range.
-pub(super) const OUT_OF_RANGE: &str = "path with a coordinate more than 1000 viewBox widths or \
+pub(crate) const OUT_OF_RANGE: &str = "path with a coordinate more than 1000 viewBox widths or \
                                        heights from the viewBox origin not drawn";
 
 /// The warning for a path not drawn because a coordinate is not finite.
-pub(super) const NON_FINITE: &str = "path with a non-finite coordinate not drawn";
+pub(crate) const NON_FINITE: &str = "path with a non-finite coordinate not drawn";
 
 /// The warning for a gradient not used because a number is past the
 /// gradient limit.
-pub(super) const GRADIENT_DROPPED: &str = "gradient with a coordinate, radius or transform entry \
+pub(crate) const GRADIENT_DROPPED: &str = "gradient with a coordinate, radius or transform entry \
                                            more than 2000 times the viewBox's larger side from \
                                            zero not used";
 
 /// The warning for a stroke not drawn because its width is past the range.
-pub(super) const STROKE_DROPPED: &str =
+pub(crate) const STROKE_DROPPED: &str =
     "stroke wider than 1000 times the viewBox's smaller side not drawn";
 
 /// Refuses a viewBox (or `width`/`height` size) outside the accepted

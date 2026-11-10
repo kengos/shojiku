@@ -222,7 +222,10 @@ fn bundled_kind(
 
 /// Builds an asset from raw bytes: raster by magic bytes, else SVG if it
 /// looks like markup. The caller has already enforced the byte cap.
-fn kind_from_bytes(bytes: Vec<u8>, policy: &AssetPolicy) -> Result<AssetKind, ImageError> {
+pub(crate) fn kind_from_bytes(
+    bytes: Vec<u8>,
+    policy: &AssetPolicy,
+) -> Result<AssetKind, ImageError> {
     if let Some(format) = sniff(&bytes) {
         let (width_px, height_px) = checked_dimensions(&bytes, policy.max_pixels)?;
         if format == RasterFormat::Gif {

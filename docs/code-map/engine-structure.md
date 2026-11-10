@@ -30,7 +30,7 @@ drop the `shojiku-` prefix; a crate depends only on lower layers.
 | 5 | `authoring` | core, diagnostics, formatter, image, layout, render-png | — |
 | 6 | `capi` | authoring, diagnostics, formatter, image, layout, render-pdf, render-png, signing, verify | core |
 | 6 | `cli` | authoring, core, diagnostics, fetch, formatter, image, layout, render-pdf, render-png, signing, verify | — |
-| 6 | `fuzz` (not a workspace member) | authoring, core, fetch, formatter, layout, signing, verify | — |
+| 6 | `fuzz` (not a workspace member) | authoring, core, fetch, formatter, image, layout, signing, verify | — |
 | 6 | `mcp` | authoring, core, diagnostics, formatter, image, layout | — |
 | 6 | `wasm` | authoring, core, diagnostics, formatter, image, layout, render-pdf, render-png | — |
 | 7 | `napi` | capi | signing |
@@ -319,23 +319,28 @@ first sentence of its `//!` header.
 - `src/lang/specs.rs` 101 — Pack value specs: number separators, per-code currency display, and semantic-unit display (plural categories + layout strings).
 - `src/lib.rs` 24 — Locale-aware value formatting.
 
-### `image` (L2) — 22 files / 3292 lines; tests 22 files / 3106 lines
+### `image` (L2) — 27 files / 4155 lines; tests 27 files / 4007 lines
 
 - `src/decode.rs` 165 — Raster pixel decoding to straight-alpha RGBA8.
 - `src/error.rs` 55 — Error type for asset classification, resolution, and decoding.
+- `src/fuzz.rs` 21 — The fuzz harnesses of the image crate, which the fuzz targets of the `image` group (`make engine:fuzz FUZZ_GROUP=image`) call: raster bytes through the asset classifier and the pixel decoders (`raster`), SVG markup through the subset parser (`svg`), and one params string through the whole asset load with a host policy (`source`).
+- `src/fuzz/raster.rs` 241 — The raster harness the `image_raster` fuzz target and the corpus replay test both run.
+- `src/fuzz/source.rs` 279 ▲ — The asset-source harness the `image_source` fuzz target and the corpus replay test both run.
+- `src/fuzz/svg.rs` 126 — The SVG harness the `image_svg` fuzz target and the corpus replay test both run.
+- `src/fuzz/tree.rs` 155 — The limits every SVG tree the image crate accepts must keep, asserted by all three image harnesses: on what `parse_svg` returns (`svg`), on an SVG tree that `kind_from_bytes` accepted from image bytes (`raster`), and on an SVG asset loaded from a params value (`source`).
 - `src/geom.rs` 18 — Backend-neutral vector-path primitive shared by SVG assets, font glyph outlines, and both renderers (the drawing currency of the layout tree).
-- `src/lib.rs` 34 — `shojiku-image` — image assets for the render pipeline.
+- `src/lib.rs` 36 — `shojiku-image` — image assets for the render pipeline.
 - `src/policy.rs` 78 — Host-side policy for which image sources are acceptable.
-- `src/prepare.rs` 237 — Template + params walk: load every referenced image into an [`AssetStore`], enforcing the [`AssetPolicy`].
+- `src/prepare.rs` 238 — Template + params walk: load every referenced image into an [`AssetStore`], enforcing the [`AssetPolicy`].
 - `src/prepare/bundled.rs` 107 — Bundled-asset byte loading from either a filesystem directory (the CLI / MCP hosts) or host-injected bytes (the WASM host).
 - `src/prepare/cells.rs` 207 — Scoped per-element cell asset preparation: `type: image` table columns and `image` items inside a per-element cell — a `repeat`/`repeat_flow` cell or a table column's `cell:` — each load one asset per bound array element (`dyn:<array>[<i>].<key>`), all sharing one load-fanout cap.
 - `src/prepare/cells/walk.rs` 105 — Finding the per-element cells: which tables carry `type: image` columns, and which `data:`-bound `image` items sit inside a cell — a `repeat`/`repeat_flow` cell or a table column's `cell:`.
-- `src/prepare/load.rs` 248 — Asset loading: static (template `src:`) and dynamic (params-bound) sources, path confinement, and byte->asset classification.
-- `src/raster.rs` 94 — Raster format sniffing and header-only dimension checks.
-- `src/raster/test_support.rs` 86 — Test-only fixture builders shared by the raster tests.
+- `src/prepare/load.rs` 251 — Asset loading: static (template `src:`) and dynamic (params-bound) sources, path confinement, and byte->asset classification.
+- `src/raster.rs` 112 — Raster format sniffing and header-only dimension checks.
+- `src/raster/test_support.rs` 98 — Test-only fixture builders shared by the raster tests.
 - `src/source.rs` 89 — Classification and decoding of raw image source strings.
 - `src/store.rs` 110 — Loaded, validated image assets addressable by id.
-- `src/svg.rs` 169 — SVG subset parsing: markup -> flattened solid-color path list.
+- `src/svg.rs` 174 — SVG subset parsing: markup -> flattened solid-color path list.
 - `src/svg/bound.rs` 142 — The coordinate range of a parsed SVG: the limits on the viewBox, and the range every emitted path coordinate, stroke width and gradient number is held to.
 - `src/svg/gradient.rs` 287 ▲ — `<linearGradient>` / `<radialGradient>` support: collect gradient definitions from the document, then resolve a `url(#id)` fill against a path's bounding box into a backend-neutral [`SvgPaint`].
 - `src/svg/gradient/parse.rs` 133 — Parsing of a single gradient element and its `<stop>` children into the owned [`GradientDef`] intermediate (no document lifetime kept).
@@ -609,7 +614,7 @@ first sentence of its `//!` header.
 - `src/sign.rs` 115 — The `sign` command: a rendered PDF in, a signed one out.
 - `src/verify.rs` 58 — The `verify` command: a signed PDF and a trust anchor in, a report out.
 
-### `fuzz` (L6) — 20 files / 483 lines; tests 0 files / 0 lines
+### `fuzz` (L6) — 23 files / 540 lines; tests 0 files / 0 lines
 
 - `examples/seed.rs` 88 — Grows the corpus with the seeds that may not be committed.
 - `fuzz_targets/cms_container.rs` 13 — The CMS `SignedData` container: arbitrary DER through the decoder.
@@ -623,6 +628,9 @@ first sentence of its `//!` header.
 - `fuzz_targets/formatter_langpack.rs` 15 — A locale pack's YAML.
 - `fuzz_targets/formatter_pack_paths.rs` 22 — A locale pack's `fonts.uses` and an injected font-pack manifest, resolved by both bytes-first resolvers.
 - `fuzz_targets/formatter_pattern.rs` 17 — A date/datetime pattern from a template's `formats:` registry, rendered against the ja-JP pack with a hostile overlay of its era and name tables.
+- `fuzz_targets/image_raster.rs` 17 — Image bytes from a bundled file or a data URI, classified into an asset under one of four pixel caps and, when accepted as a raster, decoded to RGBA.
+- `fuzz_targets/image_source.rs` 21 — One params value bound to an image item, loaded under a host policy (mode, allow and deny lists, byte and pixel caps) against a fixed set of injected files.
+- `fuzz_targets/image_svg.rs` 19 — SVG markup from a template `src:` or a params value, through the subset parser.
 - `fuzz_targets/layout_overflow.rs` 18 — A definite-height text block that overflows: the `shrink` font-size search, the `ellipsis` line clamp and the single-line clamp a `list` entry uses.
 - `fuzz_targets/layout_shape.rs` 20 — A run of params text, shaped over the Latin, Japanese, Thai and Devanagari fallback chain with letter spacing and punctuation trimming.
 - `fuzz_targets/layout_wrap.rs` 20 — A text block's params text, wrapped into lines: any string, split into up to four rich spans, at any width, size, spacing, line-break mode, hanging mode and writing direction the style guards admit.

@@ -24,6 +24,7 @@ shojiku-authoring = { path = "../authoring" }
 shojiku-core = { path = "../core" }
 shojiku-fetch = { path = "../fetch" }
 shojiku-formatter = { path = "../formatter" }
+shojiku-image = { path = "../image" }
 shojiku-layout = { path = "../layout" }
 shojiku-signing = { path = "../signing" }
 shojiku-verify = { path = "../verify" }
@@ -181,6 +182,32 @@ bench = false
 [[bin]]
 name = "layout_overflow"
 path = "fuzz_targets/layout_overflow.rs"
+test = false
+doc = false
+bench = false
+
+# The image targets: raster bytes through the classifier and decoders, SVG
+# markup through the subset parser, and one params value through the asset
+# load. Each target is one call into `shojiku_image::fuzz`, where the
+# asserted properties are checked, so the corpus replay tests run the same
+# checks.
+[[bin]]
+name = "image_raster"
+path = "fuzz_targets/image_raster.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "image_svg"
+path = "fuzz_targets/image_svg.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "image_source"
+path = "fuzz_targets/image_source.rs"
 test = false
 doc = false
 bench = false

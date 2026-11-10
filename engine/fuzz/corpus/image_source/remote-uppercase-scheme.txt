@@ -1,0 +1,2 @@
+
+HTTP://example.com/logo.png

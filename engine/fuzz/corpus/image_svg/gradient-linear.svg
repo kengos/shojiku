@@ -1,0 +1,1 @@
+<svg viewBox="0 0 10 10"><defs><linearGradient id="base"><stop offset="0" stop-color="#ff0000"/><stop offset="0.5" stop-color="#00ff00" stop-opacity="0.5"/><stop offset="1" stop-color="#0000ff"/></linearGradient><linearGradient id="g" href="#base" x1="0" y1="0" x2="1" y2="1" spreadMethod="reflect"/></defs><rect width="10" height="10" fill="url(#g)"/></svg>

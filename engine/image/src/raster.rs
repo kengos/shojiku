@@ -40,13 +40,12 @@ pub fn sniff(bytes: &[u8]) -> Option<RasterFormat> {
 /// Reads dimensions from the image header (no pixel decode) and enforces
 /// the pixel cap.
 pub fn checked_dimensions(bytes: &[u8], max_pixels: u64) -> Result<(u64, u64), ImageError> {
-    let size = imagesize::blob_size(bytes).map_err(|e| {
+    let (width, height) = header_size(bytes).map_err(|e| {
         ImageError::Bad(format!(
             "cannot read image dimensions: {}",
-            Echo::inline(&e.to_string())
+            Echo::inline(&e)
         ))
     })?;
-    let (width, height) = (size.width as u64, size.height as u64);
     if width == 0 || height == 0 {
         return Err(ImageError::Bad("image has a zero dimension".to_string()));
     }
@@ -58,6 +57,25 @@ pub fn checked_dimensions(bytes: &[u8], max_pixels: u64) -> Result<(u64, u64), I
         });
     }
     Ok((width, height))
+}
+
+/// The width and height an image header declares, as the decoders read
+/// them. A WebP is read by image-webp, the decoder `decode_raster` and the
+/// PDF backend (krilla) both use: imagesize reads a lossy (`VP8 `) frame's
+/// 16-bit size fields whole, while their top two bits are a scaling code
+/// and only the low 14 bits are the size, so the size imagesize returns
+/// can differ from the size of the decoded image. In this function
+/// image-webp reads the chunk headers only; no pixel data is decoded or
+/// allocated.
+fn header_size(bytes: &[u8]) -> Result<(u64, u64), String> {
+    if sniff(bytes) == Some(RasterFormat::Webp) {
+        let decoder =
+            image_webp::WebPDecoder::new(std::io::Cursor::new(bytes)).map_err(|e| e.to_string())?;
+        let (width, height) = decoder.dimensions();
+        return Ok((u64::from(width), u64::from(height)));
+    }
+    let size = imagesize::blob_size(bytes).map_err(|e| e.to_string())?;
+    Ok((size.width as u64, size.height as u64))
 }
 
 /// Refuses a GIF whose first frame does not cover exactly its logical screen:

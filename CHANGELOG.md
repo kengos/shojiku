@@ -256,6 +256,15 @@ platform binaries.
   for a params value. A GIF whose first frame is its whole screen, which
   is what encoders normally write, loads as before.
 
+- **A lossy WebP whose size fields carry a scaling code is laid out at its
+  real size.** The engine read the width and height of a lossy WebP with
+  their top two bits included, but those bits are a scaling code and only
+  the low 14 bits are the size, which is what the PDF and the PNG preview
+  draw. Such an image was laid out with the wrong aspect ratio (a 3x2
+  image as 3x16386), or refused by the pixel cap it fits. Its size is now
+  read the way it is decoded. Encoders normally write a scaling code of
+  zero, so ordinary WebP images are unaffected.
+
 ### Security
 
 - **An SVG with very large or infinite coordinates no longer crashes the
