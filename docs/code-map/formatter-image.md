@@ -182,7 +182,9 @@ the manifest wire's key list) lives in `docs/engine/`
   inline SVG / remote URL.
 - `policy.rs` — `AssetPolicy`: open|bundled-only + per-item allow/deny +
   caps.
-- `raster.rs` — magic-byte sniff + header-only dimension checks, plus
+- `raster.rs` — magic-byte sniff + header-only dimension checks (a WebP's
+  size is read by image-webp, the decoder both backends use, because
+  imagesize keeps a lossy frame's scaling bits in its size), plus
   `check_gif_first_frame` (the loader refuses a GIF whose first frame is
   not exactly its logical screen: krilla sizes the PDF image by the
   screen but takes the first frame's pixels, so any other frame embeds a
@@ -265,10 +267,29 @@ the manifest wire's key list) lives in `docs/engine/`
   `repeat`/`repeat_flow` (layout never draws one, so its images would
   only spend the shared cap).
 - `prepare/load.rs` — static (template `src:`) and dynamic
-  (params-bound) loading incl. the shared `dynamic_value` tail.
+  (params-bound) loading incl. the shared `dynamic_value` tail;
+  `kind_from_bytes` (bytes → raster or SVG asset) is `pub(crate)`,
+  re-exported by `prepare.rs` for the raster fuzz harness.
 - `prepare/bundled.rs` — **`AssetsRoot`** None | Dir(FS) |
   Injected(host bytes map): the ONE bundled-byte loader both roots
   share (`confined_key` traversal check + byte cap), so an injected
   WASM host and the CLI reject the same `../`/absolute path and cap
   identically. `prepare_assets` = FS entry, `prepare_assets_injected` =
   bytes entry, both delegating to one walk.
+- `fuzz.rs` (+ `fuzz/raster.rs`, `fuzz/svg.rs`, `fuzz/source.rs` and the
+  shared `fuzz/tree.rs`, each with a `tests.rs`; replayed by
+  `tests/fuzz_corpus/`) — doc-hidden harnesses for the `image` fuzz
+  group. `raster`: bytes through `kind_from_bytes` under one of four
+  `max_pixels` caps, then `decode_raster` — the decoded size equals the
+  header size (what the PDF backend embeds by), an accepted GIF's first
+  frame is its logical screen, error messages stay bounded. `svg`:
+  `parse_svg` under the default limits. `source`: one params value
+  through `prepare_assets_injected` with a policy line — remote never
+  loads, a bundled path loads exactly when confined and injected within
+  the caps, traversal is reported, disallowed inline content gets no
+  asset. `tree::assert_tree` is the ONE check of `svg/bound.rs`'s limits
+  on an accepted tree (viewBox size, point range, stroke and gradient
+  limits, at most one path command per input byte), shared by all three;
+  `bound.rs`'s constants and `MAX_GRADIENT_STOPS` are `pub(crate)`,
+  re-exported by `svg.rs`, for it. Dropped geometry is checked per seed
+  in the replay, not by the harness.

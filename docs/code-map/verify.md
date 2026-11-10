@@ -132,7 +132,7 @@
 - `engine/fuzz/` — the libFuzzer crate, **outside the engine workspace**
   (`exclude = ["fuzz"]`; nightly + a sanitizer runtime + a C++ compiler for
   libFuzzer itself, and it ships nowhere, so `cargo test`/`llvm-cov`/`deny`
-  should all keep describing what does). EIGHTEEN targets in four groups.
+  should all keep describing what does). TWENTY-ONE targets in five groups.
   **sign** — `pdf_document`, `verify_document`, `contents_window`,
   `cms_container`, `trust_anchors` — reads bytes out of a PDF nobody vetted.
   **wire** — `core_template`, `core_params`, `core_definitions`,
@@ -180,6 +180,17 @@
   clamped line is a prefix that fits with its `…`. Input is text: a
   `key=value` settings line (held to the `shojiku_core::facts` ranges the
   style guards admit), then the body, U+001E separating rich spans.
+  **image** — `image_raster`, `image_svg`, `image_source` — image assets,
+  built the same way (one call each into `shojiku_image::fuzz`): an
+  accepted raster's decoded size equals its header size and is within
+  the pixel cap, an accepted GIF's first frame is its logical screen, an
+  accepted SVG keeps every limit `svg/bound.rs` sets (viewBox size,
+  coordinate range, stroke and gradient limits) with at most one path
+  command per input byte, and a params image value is loaded or refused
+  exactly as the source policy says (remote, traversal, bundled-only,
+  deny list, byte and pixel caps). `image_raster` takes bytes (the first
+  selects the pixel cap); the other two take text, `image_source` a
+  settings line then the value.
   `src/lib.rs` generates the anchors a verifier needs, once per process —
   an empty anchor set short-circuits before any parser runs, so a target
   without one fuzzes nothing — and loads the text group's font chain once
@@ -188,7 +199,7 @@
   NOT be committed (a signed document embeds a certificate): run by
   `make engine:fuzz` before fuzzing, gitignored, and the reason a mutating fuzzer
   reaches the container parsers at all. Committed seeds are structural only.
-  Driven by `make engine:fuzz` (`FUZZ_GROUP=sign|wire|scalar|text`, `FUZZ_TARGET`,
+  Driven by `make engine:fuzz` (`FUZZ_GROUP=sign|wire|scalar|text|image`, `FUZZ_TARGET`,
   `FUZZ_SECS`), deliberately outside `make verify` — the gates run the corpus
   REPLAY instead: `engine/core/tests/fuzz_corpus/` and
   `engine/formatter/tests/fuzz_corpus/` for the wire group,
@@ -197,6 +208,7 @@
   `engine/authoring/tests/fuzz_corpus/` for `formatter_pack_paths`'s
   locale-id half, since the formatter cannot depend on authoring),
   `engine/layout/tests/fuzz_corpus/` again for the text group,
+  `engine/image/tests/fuzz_corpus/` for the image group,
   engine/verify's two suites for the sign group. Every replay
   suite asserts its corpus is
   NON-EMPTY; the six WIRE ones additionally assert that at least one seed
@@ -211,7 +223,11 @@
   line; a segment a chain face covers, a character no face maps, a glyph
   trimming narrowed; a shrunk size above the floor and one at it, a
   non-empty clamped prefix, a single-line clamp, a seed needing neither
-  policy). The three
+  policy); each image one does the same (each raster format decoded, a
+  pixel-cap refusal, a decode failure, a GIF frame refusal, the SVG path;
+  a gradient fill, each SVG refusal; each source form), and the SVG
+  replay also checks seed by seed that each dropped geometry is warned
+  AND absent from the tree. The three
   sign-group tests predate this and assert seed counts only.
 
 - `engine/verify/src/testkit.rs` (+ `testkit/keys.rs`, `#[cfg(test)]`) —

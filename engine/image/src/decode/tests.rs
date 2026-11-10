@@ -1,6 +1,7 @@
 //! Unit tests for raster decoding across all four codecs.
 
 use super::*;
+use crate::raster::test_support::jpeg_bytes;
 
 /// Encodes an RGBA8 buffer as PNG with the given color type so tests
 /// exercise every channel-count path through `expand_to_rgba`.
@@ -65,17 +66,6 @@ fn png_indexed_is_expanded_to_rgb() {
     writer.finish().expect("finish");
     let img = decode_raster(RasterFormat::Png, &out).expect("indexed");
     assert_eq!(img.rgba, vec![255, 0, 0, 255]);
-}
-
-/// A tiny 4x3 solid JPEG (generated once with `sips`; JPEG has no
-/// pure-Rust encoder in the tree). Colors are approximate after lossy
-/// compression, so tests assert structure, not exact bytes.
-const TINY_JPEG_B64: &str = "/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAABKADAAQAAAABAAAAAwAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/8AAEQgAAwAEAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAgICAgICAwICAwUDAwMFBgUFBQUGCAYGBgYGCAoICAgICAgKCgoKCgoKCgwMDAwMDA4ODg4ODw8PDw8PDw8PD//bAEMBAgICBAQEBwQEBxALCQsQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEP/dAAQAAf/aAAwDAQACEQMRAD8A8Pooor+dz/SA/9k=";
-
-fn jpeg_bytes() -> Vec<u8> {
-    use base64::Engine;
-    use base64::engine::general_purpose::STANDARD;
-    STANDARD.decode(TINY_JPEG_B64).expect("jpeg fixture")
 }
 
 #[test]

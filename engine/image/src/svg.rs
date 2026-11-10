@@ -30,6 +30,11 @@ pub use paint::{
 };
 
 use bound::{Bound, check_viewbox};
+pub(crate) use bound::{
+    GRADIENT_DROPPED, NON_FINITE, OUT_OF_RANGE, RANGE_RATIO, STROKE_DROPPED, VIEWBOX_MAX,
+    VIEWBOX_MIN,
+};
+pub(crate) use paint::MAX_GRADIENT_STOPS;
 use style::{Affine, PaintRef, Style};
 use walk::ParseCtx;
 

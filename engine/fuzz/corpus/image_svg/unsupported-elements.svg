@@ -1,0 +1,1 @@
+<svg viewBox="0 0 10 10"><defs><path id="a" d="M0 0h10v10z"/></defs><use href="#a"/><symbol id="s"><rect width="1" height="1"/></symbol><image href="http://example.com/x.png" width="10" height="10"/><text x="0" y="5">hi</text><rect width="10" height="10" rx="2" fill="#123456"/></svg>

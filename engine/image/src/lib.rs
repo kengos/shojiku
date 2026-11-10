@@ -10,6 +10,8 @@
 
 mod decode;
 mod error;
+#[doc(hidden)]
+pub mod fuzz;
 mod geom;
 mod policy;
 mod prepare;

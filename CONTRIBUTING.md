@@ -120,15 +120,18 @@ crate's actual deliverable — so only the cross matrix is on-demand.)
 ### Fuzzing (on demand, not a gate)
 
 The parsers that read input nobody vetted have libFuzzer targets in
-`engine/fuzz`, in four groups: **sign** — the shared PDF reader and the
+`engine/fuzz`, in five groups: **sign** — the shared PDF reader and the
 signature-container decoders — **wire** — the authored-input doors
 (template, params, definitions, the aozora-ruby scanner, and the locale
 and font pack manifests) — **scalar** — the single-value checks (a
 font's fetch URL and its redirect hops, a link URL, a date pattern with
-its era table, and the font-pack file paths and pack/locale ids) — and
+its era table, and the font-pack file paths and pack/locale ids) —
 **text** — the measurement of params text (line wrapping, shaping over a
 Latin, Japanese, Thai and Devanagari font chain, and the `shrink` and
-`ellipsis` overflow policies).
+`ellipsis` overflow policies) — and **image** — image assets (raster
+bytes through the format check and the pixel decoders, SVG markup
+through the subset parser, and a params image value through the asset
+source policy).
 
 ```bash
 make engine:fuzz FUZZ_GROUP=wire                          one group

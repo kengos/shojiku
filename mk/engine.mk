@@ -585,7 +585,7 @@ _engine-cli-bin:
 # fuzzing has no natural end, so a gate would either be useless (a few
 # seconds) or unbearable. What CI runs instead is the corpus REPLAY in
 # the `fuzz_corpus` suites of engine/core, engine/formatter, engine/fetch,
-# engine/layout and engine/authoring, and
+# engine/layout, engine/image and engine/authoring, and
 # engine/verify's tests — every committed seed through the same entry points.
 #
 # engine/fuzz is outside the workspace (nightly + libFuzzer + a sanitizer
@@ -598,6 +598,7 @@ _engine-cli-bin:
 #   make engine:fuzz FUZZ_GROUP=sign           the PDF/CMS parsers only
 #   make engine:fuzz FUZZ_GROUP=scalar         the URL/path checks and date patterns
 #   make engine:fuzz FUZZ_GROUP=text           text wrapping, shaping and overflow
+#   make engine:fuzz FUZZ_GROUP=image          raster decoding, SVG parsing and asset sources
 #   make engine:fuzz FUZZ_TARGET=cms_container one target
 #   make engine:fuzz FUZZ_SECS=600             longer runs
 #
@@ -636,8 +637,9 @@ FUZZ_WIRE_TARGETS := core_template core_params core_definitions core_ruby \
                      formatter_langpack formatter_fontpack
 FUZZ_SCALAR_TARGETS := fetch_redirects link_url formatter_pattern formatter_pack_paths
 FUZZ_TEXT_TARGETS := layout_wrap layout_shape layout_overflow
+FUZZ_IMAGE_TARGETS := image_raster image_svg image_source
 FUZZ_TARGETS      := $(FUZZ_SIGN_TARGETS) $(FUZZ_WIRE_TARGETS) $(FUZZ_SCALAR_TARGETS) \
-                     $(FUZZ_TEXT_TARGETS)
+                     $(FUZZ_TEXT_TARGETS) $(FUZZ_IMAGE_TARGETS)
 FUZZ_GROUP   ?=
 FUZZ_TARGET  ?=
 FUZZ_SECS    ?= 60
@@ -658,13 +660,15 @@ else ifeq ($(FUZZ_GROUP),scalar)
 FUZZ_SELECTED := $(FUZZ_SCALAR_TARGETS)
 else ifeq ($(FUZZ_GROUP),text)
 FUZZ_SELECTED := $(FUZZ_TEXT_TARGETS)
+else ifeq ($(FUZZ_GROUP),image)
+FUZZ_SELECTED := $(FUZZ_IMAGE_TARGETS)
 else ifeq ($(FUZZ_GROUP),)
 FUZZ_SELECTED := $(FUZZ_TARGETS)
 else
-$(error unknown FUZZ_GROUP `$(FUZZ_GROUP)`: expected `sign`, `wire`, `scalar` or `text`)
+$(error unknown FUZZ_GROUP `$(FUZZ_GROUP)`: expected `sign`, `wire`, `scalar`, `text` or `image`)
 endif
 
-engine\:fuzz: ## Fuzz the untrusted-input parsers (nightly+libFuzzer; FUZZ_GROUP=sign|wire|scalar|text FUZZ_TARGET=<name>)
+engine\:fuzz: ## Fuzz the untrusted-input parsers (nightly+libFuzzer; FUZZ_GROUP=sign|wire|scalar|text|image FUZZ_TARGET=<name>)
 	@$(call gate,_engine-fuzz,engine:fuzz)
 
 # `rustup toolchain install` runs with the image's own CARGO_HOME: it refuses
