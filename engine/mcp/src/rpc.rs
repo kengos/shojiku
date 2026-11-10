@@ -67,15 +67,23 @@ pub(crate) enum Frame {
 
 /// Reads one newline-delimited frame, bounding memory at [`MAX_LINE`].
 pub(crate) fn read_frame<R: BufRead>(reader: &mut R) -> std::io::Result<Frame> {
+    read_frame_capped(reader, MAX_LINE)
+}
+
+/// Reads one newline-delimited frame whose line may hold at most `cap`
+/// bytes before its newline. [`read_frame`] passes [`MAX_LINE`]; the fuzz
+/// harness passes a few bytes, so that a short input can exceed the cap.
+/// `cap` must be at least 1.
+pub(crate) fn read_frame_capped<R: BufRead>(reader: &mut R, cap: usize) -> std::io::Result<Frame> {
     let mut buf = Vec::new();
     let n = (&mut *reader)
-        .take(MAX_LINE as u64 + 1)
+        .take(cap as u64 + 1)
         .read_until(b'\n', &mut buf)?;
     if n == 0 {
         return Ok(Frame::Eof);
     }
-    if buf.last() != Some(&b'\n') && buf.len() > MAX_LINE {
-        drain_line(reader)?;
+    if buf.last() != Some(&b'\n') && buf.len() > cap {
+        drain_line(reader, cap)?;
         return Ok(Frame::Oversized);
     }
     while matches!(buf.last(), Some(b'\n' | b'\r')) {
@@ -84,13 +92,13 @@ pub(crate) fn read_frame<R: BufRead>(reader: &mut R) -> std::io::Result<Frame> {
     Ok(Frame::Line(String::from_utf8_lossy(&buf).into_owned()))
 }
 
-/// Discards the rest of an oversized line (bounded chunks) so the loop can
-/// resynchronize on the next newline.
-fn drain_line<R: BufRead>(reader: &mut R) -> std::io::Result<()> {
+/// Discards the rest of an oversized line in chunks of at most `cap` bytes
+/// so the loop can resynchronize on the next newline.
+fn drain_line<R: BufRead>(reader: &mut R, cap: usize) -> std::io::Result<()> {
     loop {
         let mut sink = Vec::new();
         let n = (&mut *reader)
-            .take(MAX_LINE as u64)
+            .take(cap as u64)
             .read_until(b'\n', &mut sink)?;
         if n == 0 || sink.last() == Some(&b'\n') {
             return Ok(());

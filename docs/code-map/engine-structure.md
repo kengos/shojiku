@@ -640,7 +640,7 @@ first sentence of its `//!` header.
 - `fuzz_targets/verify_document.rs` 15 — The whole verifier over arbitrary bytes: parse, locate, decode, judge.
 - `src/lib.rs` 66 — Setup shared by the fuzz targets: the key material a verifier needs, and the font chain the `text` group measures with.
 
-### `mcp` (L6) — 27 files / 2784 lines; tests 29 files / 4325 lines
+### `mcp` (L6) — 27 files / 2792 lines; tests 29 files / 4341 lines
 
 - `src/examples.rs` 180 — The bundled-example read surface's data model: the embedded source files (`embed`), the `shojiku://example/…` grammar (`uri`), and the catalog that gives each entry a human title and a line saying what it exercises.
 - `src/examples/embed.rs` 156 — The compile-time example table: every bundled entry's source files, embedded with `include_str!` so the surface works identically from a checkout and from the docker image, needs no root path, and cannot be pointed at anything outside this list.
@@ -655,7 +655,7 @@ first sentence of its `//!` header.
 - `src/reference/uri.rs` 86 — The `shojiku://reference/<page>[#<fragment>]` grammar: parsing a client-supplied string into a page reference, and formatting the two forms back.
 - `src/resources.rs` 155 — The MCP `resources` area: `resources/list` and `resources/read` over the two resource families — the bundled examples (served from this file) and the authoring reference (`resources/reference`).
 - `src/resources/reference.rs` 102 — The `resources` view of the authoring reference: the `resources/list` entries for the 33 pages, and the read of one page or one node.
-- `src/rpc.rs` 135 — JSON-RPC 2.0 plumbing: newline-delimited framing with a line cap, response/error builders, and the bounded echo for hostile strings.
+- `src/rpc.rs` 143 — JSON-RPC 2.0 plumbing: newline-delimited framing with a line cap, response/error builders, and the bounded echo for hostile strings.
 - `src/server.rs` 118 — The dispatch loop: initialize handshake, method routing, and the JSON-RPC error mapping.
 - `src/test_support.rs` 83 — Shared fixtures for the crate's unit tests: the bundled receipt example, the repo pack dirs, temp source files, and a one-shot tool-call helper.
 - `src/tools.rs` 136 — The MCP tool surface: the call dispatcher, the content-part builders every tool answers with, and the in-band failure mapping.
