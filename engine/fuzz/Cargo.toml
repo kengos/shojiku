@@ -21,11 +21,14 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 shojiku-authoring = { path = "../authoring" }
+shojiku-capi = { path = "../capi" }
 shojiku-core = { path = "../core" }
 shojiku-fetch = { path = "../fetch" }
 shojiku-formatter = { path = "../formatter" }
 shojiku-image = { path = "../image" }
 shojiku-layout = { path = "../layout" }
+shojiku-layout-box = { path = "../layout-box" }
+shojiku-mcp = { path = "../mcp" }
 shojiku-signing = { path = "../signing" }
 shojiku-verify = { path = "../verify" }
 
@@ -208,6 +211,53 @@ bench = false
 [[bin]]
 name = "image_source"
 path = "fuzz_targets/image_source.rs"
+test = false
+doc = false
+bench = false
+
+# The box targets: the flex distribution, and length resolution with the
+# grid track math. Each is one call into `shojiku_layout_box::fuzz`.
+[[bin]]
+name = "box_flex"
+path = "fuzz_targets/box_flex.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "box_resolve"
+path = "fuzz_targets/box_resolve.rs"
+test = false
+doc = false
+bench = false
+
+# The host targets: the MCP server's stdio frames and resource URIs, the
+# format catalog, and the C ABI request envelope. Each is one call into the
+# owning crate's `fuzz` module.
+[[bin]]
+name = "mcp_frames"
+path = "fuzz_targets/mcp_frames.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "mcp_uri"
+path = "fuzz_targets/mcp_uri.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "authoring_format_catalog"
+path = "fuzz_targets/authoring_format_catalog.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "capi_request"
+path = "fuzz_targets/capi_request.rs"
 test = false
 doc = false
 bench = false

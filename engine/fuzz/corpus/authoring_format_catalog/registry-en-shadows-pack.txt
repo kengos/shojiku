@@ -1,0 +1,9 @@
+locale=en-US
+---
+formats:
+  compact: { type: date, pattern: "yyyy" }
+  default: { type: date, pattern: "d" }
+sections:
+  body:
+    type: flow
+    items: []

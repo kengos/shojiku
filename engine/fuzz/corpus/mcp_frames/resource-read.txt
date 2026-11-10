@@ -1,0 +1,3 @@
+cap=256
+{"id":3,"method":"resources/read","params":{"uri":"shojiku://reference/box"}}
+{"id":4,"method":"resources/read","params":{}}

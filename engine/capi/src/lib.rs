@@ -37,6 +37,8 @@
 #![deny(clippy::undocumented_unsafe_blocks)]
 
 mod api;
+#[doc(hidden)]
+pub mod fuzz;
 mod input;
 mod ops;
 mod request;

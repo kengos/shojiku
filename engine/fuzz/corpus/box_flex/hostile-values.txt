@@ -1,0 +1,4 @@
+free=NaN justify=around
+1e308 NaN
+inf 1e308 -1 NaN
+1e308 1

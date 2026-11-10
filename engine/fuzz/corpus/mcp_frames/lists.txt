@@ -1,0 +1,3 @@
+cap=256
+{"id":"a","method":"tools/list"}
+{"id":null,"method":"resources/list"}

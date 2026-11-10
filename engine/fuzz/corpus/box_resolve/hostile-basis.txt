@@ -1,0 +1,5 @@
+w=NaN h=inf em=1e308 pct_w=-1e308 count=1000 gap=-1e308
+50%
+2em
+track NaN
+track -5

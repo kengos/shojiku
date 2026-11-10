@@ -138,7 +138,7 @@ impl Request {
     }
 
     /// Bounds the allow/deny lists.
-    fn check_asset_ids(&self) -> Result<(), Failure> {
+    pub(crate) fn check_asset_ids(&self) -> Result<(), Failure> {
         for (key, ids) in [
             ("allowDynamicImage", &self.allow_dynamic_image),
             ("denyDynamicImage", &self.deny_dynamic_image),
@@ -156,7 +156,7 @@ impl Request {
     /// Bounds the preview scale. A non-finite scale would reach the
     /// rasterizer's own arithmetic, and a huge one is an allocation request
     /// wearing a float.
-    fn check_scale(&self) -> Result<(), Failure> {
+    pub(crate) fn check_scale(&self) -> Result<(), Failure> {
         let Some(scale) = self.scale else {
             return Ok(());
         };

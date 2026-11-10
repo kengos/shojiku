@@ -11,6 +11,8 @@
 //! this crate only resolves them.
 
 mod flex;
+#[doc(hidden)]
+pub mod fuzz;
 mod grid;
 mod resolve;
 mod resolved;

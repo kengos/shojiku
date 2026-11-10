@@ -132,7 +132,7 @@
 - `engine/fuzz/` — the libFuzzer crate, **outside the engine workspace**
   (`exclude = ["fuzz"]`; nightly + a sanitizer runtime + a C++ compiler for
   libFuzzer itself, and it ships nowhere, so `cargo test`/`llvm-cov`/`deny`
-  should all keep describing what does). TWENTY-ONE targets in five groups.
+  should all keep describing what does). TWENTY-SEVEN targets in seven groups.
   **sign** — `pdf_document`, `verify_document`, `contents_window`,
   `cms_container`, `trust_anchors` — reads bytes out of a PDF nobody vetted.
   **wire** — `core_template`, `core_params`, `core_definitions`,
@@ -191,6 +191,30 @@
   deny list, byte and pixel caps). `image_raster` takes bytes (the first
   selects the pixel cap); the other two take text, `image_source` a
   settings line then the value.
+  **box** — `box_flex`, `box_resolve` — the box-model math of
+  `shojiku-layout-box` (one call each into `shojiku_layout_box::fuzz`):
+  every flex size is finite and non-negative for any input, and for
+  values a caller can pass every size is within its bounds, a row with
+  room and no weight gives every child its basis clamped to its bounds,
+  and otherwise unbounded sizes add up to the free space (to zero when
+  the free space is negative); a resolved length is kept exactly when it
+  is within `MAX_RESOLVED_PT` (and, vertically, a `%` has a height to
+  resolve against), a dropped one adds one diagnostic, equal tracks fill
+  the total when they fit, and each track offset is the previous offset
+  plus the previous track and the gap. Both take text, one value per
+  token.
+  **host** — `mcp_frames`, `mcp_uri`, `authoring_format_catalog`,
+  `capi_request` — the input a host passes to the engine: the MCP
+  server's stdin bytes through the frame reader (with a cap of a few
+  bytes, so the oversized branch is reachable) and the line handler,
+  every answer one line of JSON-RPC 2.0 with the request's `id` and `tools/call` skipped;
+  `shojiku://reference/…` and `shojiku://example/…` URIs, an accepted one
+  rebuilding to itself and the read tool answering what `resources/read`
+  answers; the format catalog over a hostile `formats:` registry and
+  pattern probes; and the C ABI's `shojiku_validate`, whose status is
+  never `SHOJIKU_ERR_PANIC` (the corpus replay reports a panic as a
+  failure of the never-`SHOJIKU_ERR_PANIC` assertion). `mcp_frames` and
+  `capi_request` take bytes, the other two text.
   `src/lib.rs` generates the anchors a verifier needs, once per process —
   an empty anchor set short-circuits before any parser runs, so a target
   without one fuzzes nothing — and loads the text group's font chain once
@@ -199,8 +223,8 @@
   NOT be committed (a signed document embeds a certificate): run by
   `make engine:fuzz` before fuzzing, gitignored, and the reason a mutating fuzzer
   reaches the container parsers at all. Committed seeds are structural only.
-  Driven by `make engine:fuzz` (`FUZZ_GROUP=sign|wire|scalar|text|image`, `FUZZ_TARGET`,
-  `FUZZ_SECS`), deliberately outside `make verify` — the gates run the corpus
+  Driven by `make engine:fuzz` (`FUZZ_GROUP=sign|wire|scalar|text|image|box|host`,
+  `FUZZ_TARGET`, `FUZZ_SECS`), deliberately outside `make verify` — the gates run the corpus
   REPLAY instead: `engine/core/tests/fuzz_corpus/` and
   `engine/formatter/tests/fuzz_corpus/` for the wire group,
   `engine/fetch/tests/fuzz_corpus/`, `engine/layout/tests/fuzz_corpus/` and
@@ -209,6 +233,9 @@
   locale-id half, since the formatter cannot depend on authoring),
   `engine/layout/tests/fuzz_corpus/` again for the text group,
   `engine/image/tests/fuzz_corpus/` for the image group,
+  `engine/layout-box/tests/fuzz_corpus/` for the box group,
+  `engine/mcp/tests/fuzz_corpus/`, `engine/capi/tests/fuzz_corpus/` and
+  the authoring suite for the host group,
   engine/verify's two suites for the sign group. Every replay
   suite asserts its corpus is
   NON-EMPTY; the six WIRE ones additionally assert that at least one seed
@@ -227,7 +254,15 @@
   pixel-cap refusal, a decode failure, a GIF frame refusal, the SVG path;
   a gradient fill, each SVG refusal; each source form), and the SVG
   replay also checks seed by seed that each dropped geometry is warned
-  AND absent from the tree. The three
+  AND absent from the tree; each box and host one asserts that some seed
+  checked each assertion on a result a no-op engine would not give (a
+  row that grows, shrinks, has no weight, sits at a bound, spreads its
+  free space, or holds a value outside the caller range; each length
+  kind, a drop, a clamp to each bound, filled tracks, advancing offsets;
+  each frame and request shape and an echo past `MAX_ECHO`; each URI
+  family and answer; the registry and probe branches of the catalog;
+  each status `shojiku_validate` gives an envelope, and a `scale` and an
+  id list refused by their bound alone). The three
   sign-group tests predate this and assert seed counts only.
 
 - `engine/verify/src/testkit.rs` (+ `testkit/keys.rs`, `#[cfg(test)]`) —

@@ -1,0 +1,5 @@
+shojiku://example/business
+shojiku://example/a/b/c/d
+shojiku://example/../x
+https://example.com/
+

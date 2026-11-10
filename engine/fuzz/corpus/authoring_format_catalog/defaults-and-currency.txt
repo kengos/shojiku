@@ -1,0 +1,9 @@
+locale=ja-JP
+---
+defaults: { locale: ja-JP, currency: JPY, formats: { date: wareki } }
+formats:
+  stamp: { type: date, pattern: "yyyy.MM.dd" }
+sections:
+  body:
+    type: flow
+    items: []

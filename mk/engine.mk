@@ -585,8 +585,9 @@ _engine-cli-bin:
 # fuzzing has no natural end, so a gate would either be useless (a few
 # seconds) or unbearable. What CI runs instead is the corpus REPLAY in
 # the `fuzz_corpus` suites of engine/core, engine/formatter, engine/fetch,
-# engine/layout, engine/image and engine/authoring, and
-# engine/verify's tests — every committed seed through the same entry points.
+# engine/layout, engine/image, engine/authoring, engine/layout-box,
+# engine/mcp and engine/capi, and engine/verify's tests — every committed
+# seed through the same entry points.
 #
 # engine/fuzz is outside the workspace (nightly + libFuzzer + a sanitizer
 # runtime), so this target owns its whole toolchain: nightly, a C++ compiler
@@ -599,6 +600,8 @@ _engine-cli-bin:
 #   make engine:fuzz FUZZ_GROUP=scalar         the URL/path checks and date patterns
 #   make engine:fuzz FUZZ_GROUP=text           text wrapping, shaping and overflow
 #   make engine:fuzz FUZZ_GROUP=image          raster decoding, SVG parsing and asset sources
+#   make engine:fuzz FUZZ_GROUP=box            the flex distribution, length resolution and grid tracks
+#   make engine:fuzz FUZZ_GROUP=host           MCP frames and URIs, the format catalog, the C ABI
 #   make engine:fuzz FUZZ_TARGET=cms_container one target
 #   make engine:fuzz FUZZ_SECS=600             longer runs
 #
@@ -638,8 +641,11 @@ FUZZ_WIRE_TARGETS := core_template core_params core_definitions core_ruby \
 FUZZ_SCALAR_TARGETS := fetch_redirects link_url formatter_pattern formatter_pack_paths
 FUZZ_TEXT_TARGETS := layout_wrap layout_shape layout_overflow
 FUZZ_IMAGE_TARGETS := image_raster image_svg image_source
+FUZZ_BOX_TARGETS  := box_flex box_resolve
+FUZZ_HOST_TARGETS := mcp_frames mcp_uri authoring_format_catalog capi_request
 FUZZ_TARGETS      := $(FUZZ_SIGN_TARGETS) $(FUZZ_WIRE_TARGETS) $(FUZZ_SCALAR_TARGETS) \
-                     $(FUZZ_TEXT_TARGETS) $(FUZZ_IMAGE_TARGETS)
+                     $(FUZZ_TEXT_TARGETS) $(FUZZ_IMAGE_TARGETS) $(FUZZ_BOX_TARGETS) \
+                     $(FUZZ_HOST_TARGETS)
 FUZZ_GROUP   ?=
 FUZZ_TARGET  ?=
 FUZZ_SECS    ?= 60
@@ -649,9 +655,13 @@ FUZZ_SECS    ?= 60
 # the single-value checks (a fetch URL and its redirect hops, a link URL, a
 # date pattern, the font-pack file paths and the pack/locale ids); text =
 # the measurement of params text (line wrapping, shaping, and the shrink and
-# ellipsis overflow policies) over a fixed font chain. An
-# unknown group name is a typo, and silently fuzzing NOTHING is the worst
-# possible answer to one, so it is refused.
+# ellipsis overflow policies) over a fixed font chain; image = raster
+# decoding, SVG parsing and asset sources; box = the box-model math (flex
+# distribution, length resolution, grid tracks); host = the input a host
+# passes to the engine (MCP frames and resource URIs, the format catalog,
+# the C ABI request envelope). An unknown group name is a typo, and
+# silently fuzzing NOTHING is the worst possible answer to one, so it is
+# refused.
 ifeq ($(FUZZ_GROUP),sign)
 FUZZ_SELECTED := $(FUZZ_SIGN_TARGETS)
 else ifeq ($(FUZZ_GROUP),wire)
@@ -662,13 +672,17 @@ else ifeq ($(FUZZ_GROUP),text)
 FUZZ_SELECTED := $(FUZZ_TEXT_TARGETS)
 else ifeq ($(FUZZ_GROUP),image)
 FUZZ_SELECTED := $(FUZZ_IMAGE_TARGETS)
+else ifeq ($(FUZZ_GROUP),box)
+FUZZ_SELECTED := $(FUZZ_BOX_TARGETS)
+else ifeq ($(FUZZ_GROUP),host)
+FUZZ_SELECTED := $(FUZZ_HOST_TARGETS)
 else ifeq ($(FUZZ_GROUP),)
 FUZZ_SELECTED := $(FUZZ_TARGETS)
 else
-$(error unknown FUZZ_GROUP `$(FUZZ_GROUP)`: expected `sign`, `wire`, `scalar`, `text` or `image`)
+$(error unknown FUZZ_GROUP `$(FUZZ_GROUP)`: expected `sign`, `wire`, `scalar`, `text`, `image`, `box` or `host`)
 endif
 
-engine\:fuzz: ## Fuzz the untrusted-input parsers (nightly+libFuzzer; FUZZ_GROUP=sign|wire|scalar|text|image FUZZ_TARGET=<name>)
+engine\:fuzz: ## Fuzz the untrusted-input parsers (nightly+libFuzzer; FUZZ_GROUP=sign|wire|scalar|text|image|box|host FUZZ_TARGET=<name>)
 	@$(call gate,_engine-fuzz,engine:fuzz)
 
 # `rustup toolchain install` runs with the image's own CARGO_HOME: it refuses

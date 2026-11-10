@@ -1,0 +1,10 @@
+locale=ja-JP
+---
+formats:
+  stamp: { type: date, pattern: "yyyy.MM.dd" }
+  filed: { type: datetime, pattern: "yyyy.MM.dd HH:mm" }
+  filed_day: { type: datetime, pattern: "yyyy.MM.dd" }
+sections:
+  body:
+    type: flow
+    items: []

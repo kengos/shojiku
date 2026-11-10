@@ -1,0 +1,3 @@
+free=100 justify=start align=stretch
+10 1
+20 2
