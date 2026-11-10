@@ -15,11 +15,17 @@ use super::super::{Atom, Basis, Ctx};
 use super::{FlexKind, FlexSpec};
 
 impl<'a, 'b> Ctx<'a, 'b> {
-    /// Plans the row bases: fixed-width children (authored `w`) keep it,
-    /// children without split the leftover width by their `flexGrow`
-    /// weight (default 1 = an equal split). With no unsized children,
-    /// auto margins absorb the free space, then `justifyContent`
-    /// distributes what remains. Each basis carries the slot x; fixed
+    /// Plans the row bases. A fixed-width child (an authored `w`, or the
+    /// cap-height square an unsized checkbox gets) keeps that width
+    /// clamped to its `minWidth`/`maxWidth`. A child without one starts at
+    /// its `flexBasis` (the content width by default; 0 for `flexBasis: 0`
+    /// and for a kind with no intrinsic width — a table, a list, vertical
+    /// text) clamped to the same bounds, then grows by its `flexGrow`
+    /// weight (default 0; 1 for a kind with no intrinsic width that starts
+    /// from the content basis — with `flexBasis: 0` it stays 0), or, when
+    /// the clamped bases exceed the row, shrinks in proportion to its
+    /// basis. Auto margins then absorb the free space the unsized children
+    /// do not use, and `justifyContent` distributes what remains. Each basis carries the slot x; fixed
     /// children see the full parent width (so `%` resolves against the
     /// container, per CSS), unsized ones their share.
     ///
@@ -68,7 +74,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
             // Clamp the authored width to its min/max bounds so the
             // planned slot matches the width the child's ResolvedBox will
             // report. An unsized child carries the same bounds into the
-            // resolution loop, which clamps them AFTER growth.
+            // resolution loop, which clamps its basis before deciding to
+            // grow or shrink and clamps again after.
             let min = self.resolve_x(b.min_width, inner);
             let max = self.resolve_x(b.max_width, inner);
             let outer = self
@@ -120,11 +127,12 @@ impl<'a, 'b> Ctx<'a, 'b> {
         let shares = if flexible.is_empty() {
             Vec::new()
         } else {
-            // Unsized children start at their basis; the leftover is
-            // handed out by `flexGrow`, or — when the bases overflow —
-            // taken back in proportion so the content re-wraps
-            // (`flex-shrink: 1`). Either way min/max freezes an item at
-            // its bound.
+            // Unsized children start at their basis clamped to their
+            // `minWidth`/`maxWidth`. When the clamped sizes fit, the
+            // remaining width is distributed by `flexGrow`; when they
+            // exceed `free`, the excess is subtracted in proportion to the
+            // bases (`flex-shrink: 1`) so the content re-wraps. Either way
+            // min/max freezes an item at its bound.
             resolve_flex_lengths(free, &flexible)
         };
         let leftover = free - shares.iter().sum::<f64>();

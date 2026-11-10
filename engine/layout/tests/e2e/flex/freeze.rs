@@ -122,3 +122,94 @@ fn a_min_width_floor_that_cannot_fit_still_reports_the_overflow_once() {
         .count();
     assert_eq!(overflows, 1, "reported once by the row: {diags:?}");
 }
+
+/// Two bordered, content-sized children (no `flexGrow`, so the default 0,
+/// and no `flexBasis`, so each starts at its text width) in a row `w`
+/// points wide; `bound` is appended to the first child's `box` mapping.
+/// Returns each child's border box as `(x, w)`.
+fn content_row(w: f64, bound: &str, texts: [&str; 2]) -> Vec<(f64, f64)> {
+    let child = |extra: &str, text: &str| {
+        format!(
+            "- type: container\n  box: {{ h: 20{extra} }}\n  style: {{ borderWidth: 1 }}\n  items:\n    - type: text\n      text: {text}"
+        )
+    };
+    let children = format!("{}\n{}", child(bound, texts[0]), child("", texts[1]));
+    let yaml = container_body(
+        &format!("{{ x: 0, y: 0, w: {w}, h: 40, direction: row }}"),
+        &children,
+    );
+    let (doc, diags) = run(&yaml, json!({}));
+    assert!(!diags.has_errors(), "{diags:?}");
+    rect_shapes(&doc.pages[0])
+        .iter()
+        .map(|r| (r.x, r.w))
+        .collect()
+}
+
+#[test]
+fn a_child_that_does_not_grow_reserves_its_min_width() {
+    // `AB` is about 15pt of text under a 120pt minWidth. The row must
+    // reserve the 120pt the child is drawn at, so the sibling starts where
+    // that box ends. The previous implementation placed the sibling at the
+    // content width, inside the first child's box.
+    let r = content_row(300.0, ", minWidth: 120", ["AB", "CD"]);
+    assert_eq!(r[0], (0.0, 120.0), "the child takes its minWidth");
+    assert_eq!(
+        r[1].0, 120.0,
+        "the sibling starts after the child at its minWidth"
+    );
+}
+
+#[test]
+fn a_child_that_does_not_grow_reserves_only_its_max_width() {
+    // About 119pt of text under a 30pt maxWidth: the row reserves the 30pt
+    // the child is drawn at, so the sibling starts right after it. The
+    // previous implementation placed the sibling at the content width,
+    // leaving a gap after the first child's box.
+    let r = content_row(300.0, ", maxWidth: 30", ["ABCDEFGHIJKLMNOP", "CD"]);
+    assert_eq!(r[0], (0.0, 30.0), "the child takes its maxWidth");
+    assert_eq!(
+        r[1].0, 30.0,
+        "the sibling starts right after the capped child"
+    );
+}
+
+#[test]
+fn a_shrinking_row_gives_the_width_a_max_width_child_gives_up_to_its_sibling() {
+    // Two long texts in a 100pt row, the first with a 30pt maxWidth: the
+    // first child is 30 wide and the sibling takes the other 70, so the
+    // row is filled. The previous implementation left part of the row
+    // unused.
+    let r = content_row(
+        100.0,
+        ", maxWidth: 30",
+        ["ABCDEFGHIJKLMNOP", "QRSTUVWXYZABCDEF"],
+    );
+    assert_eq!(r[0], (0.0, 30.0), "the capped child keeps its maxWidth");
+    assert_eq!(r[1], (30.0, 70.0), "the sibling fills the rest of the row");
+}
+
+#[test]
+fn a_row_whose_min_widths_do_not_fit_shrinks_the_other_child_without_a_warning() {
+    // The two texts (about 15pt each) fit the 100pt row, but the first
+    // child's 90pt minWidth does not leave room for both: the row shrinks
+    // the second child to the 10pt left and reports no overflow, because
+    // the shrunk row fits.
+    let child = |extra: &str, text: &str| {
+        format!(
+            "- type: container\n  box: {{ h: 20{extra} }}\n  style: {{ borderWidth: 1 }}\n  items:\n    - type: text\n      text: {text}"
+        )
+    };
+    let children = format!("{}\n{}", child(", minWidth: 90", "AB"), child("", "CD"));
+    let yaml = container_body("{ x: 0, y: 0, w: 100, h: 40, direction: row }", &children);
+    let (doc, diags) = run(&yaml, json!({}));
+    let r: Vec<(f64, f64)> = rect_shapes(&doc.pages[0])
+        .iter()
+        .map(|s| (s.x, s.w))
+        .collect();
+    assert_eq!(r, vec![(0.0, 90.0), (90.0, 10.0)]);
+    assert!(
+        !diags.iter().any(|d| d.code == "flex_row_overflow"),
+        "the shrunk row fits: {diags:?}"
+    );
+}

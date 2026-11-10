@@ -179,3 +179,110 @@ fn flex_lengths_take_a_min_violation_back_out_of_the_siblings() {
     assert_eq!(sizes, vec![180.0, 60.0, 60.0]);
     assert_eq!(sizes.iter().sum::<f64>(), 300.0);
 }
+
+fn bounded(basis: f64, weight: f64, min: Option<f64>, max: Option<f64>) -> FlexItem {
+    FlexItem {
+        basis,
+        weight,
+        min,
+        max,
+    }
+}
+
+#[test]
+fn flex_lengths_return_the_min_width_for_a_child_with_no_weight() {
+    // A content-sized child (flexGrow 0, the default) narrower than its
+    // `minWidth` takes the bound, so the row reserves 120 for it rather
+    // than its 15pt content and the next child does not overlap it.
+    let sizes = resolve_flex_lengths(
+        300.0,
+        &[bounded(15.0, 0.0, Some(120.0), None), item(16.0, 0.0)],
+    );
+    assert_eq!(sizes, vec![120.0, 16.0]);
+}
+
+#[test]
+fn flex_lengths_return_the_max_width_for_a_child_with_no_weight() {
+    // maxWidth: a 119pt content capped at 30 returns 30, so the row leaves
+    // no gap before the next child.
+    let sizes = resolve_flex_lengths(
+        300.0,
+        &[bounded(119.0, 0.0, None, Some(30.0)), item(16.0, 0.0)],
+    );
+    assert_eq!(sizes, vec![30.0, 16.0]);
+}
+
+#[test]
+fn flex_lengths_give_the_width_a_max_capped_child_gives_up_to_its_sibling_when_shrinking() {
+    // Two 119pt contents in a 100pt row, the first with a 30pt maxWidth:
+    // the first child stays at 30, and the second shrinks only to the 70
+    // that is left (CSS
+    // §9.7: each round subtracts the deficit from the bases).
+    let sizes = resolve_flex_lengths(
+        100.0,
+        &[bounded(119.0, 0.0, None, Some(30.0)), item(119.0, 0.0)],
+    );
+    assert_eq!(sizes, vec![30.0, 70.0]);
+}
+
+#[test]
+fn flex_lengths_decide_the_direction_from_the_clamped_sizes() {
+    // The bases (15 + 16) fit a 100pt row, but the first child's 90pt
+    // minWidth does not leave room for both: the row shrinks, the first
+    // child stays at its 90pt minWidth and the second shrinks to 10.
+    let sizes = resolve_flex_lengths(
+        100.0,
+        &[bounded(15.0, 1.0, Some(90.0), None), item(16.0, 1.0)],
+    );
+    assert_eq!(sizes, vec![90.0, 10.0]);
+}
+
+#[test]
+fn flex_lengths_let_min_win_over_max_on_a_child_with_no_weight() {
+    let sizes = resolve_flex_lengths(300.0, &[bounded(50.0, 0.0, Some(80.0), Some(20.0))]);
+    assert_eq!(sizes, vec![80.0]);
+}
+
+#[test]
+fn flex_lengths_freeze_a_growing_child_whose_basis_is_over_its_max_width() {
+    // A child with a weight whose 80pt basis is over its 30pt maxWidth is
+    // frozen at 30 before the loop, so the second child grows into the
+    // other 70. Without that freeze the first round would count the 80pt
+    // basis, leave 20 of room, and the second child would stop at its 20pt
+    // minWidth.
+    let sizes = resolve_flex_lengths(
+        100.0,
+        &[
+            bounded(80.0, 1.0, None, Some(30.0)),
+            bounded(0.0, 1.0, Some(20.0), None),
+        ],
+    );
+    assert_eq!(sizes, vec![30.0, 70.0]);
+}
+
+#[test]
+fn flex_lengths_return_the_hypothetical_sizes_when_they_equal_the_free_space() {
+    // 90 (a 15pt basis raised to its minWidth) + 10 is exactly 100: no
+    // child grows or shrinks.
+    let sizes = resolve_flex_lengths(
+        100.0,
+        &[bounded(15.0, 1.0, Some(90.0), None), item(10.0, 1.0)],
+    );
+    assert_eq!(sizes, vec![90.0, 10.0]);
+}
+
+#[test]
+fn flex_lengths_clamp_a_hostile_basis_before_choosing_the_direction() {
+    // A 1e308 basis capped at 30 counts as 30: the row grows, the capped
+    // child returns 30 and a NaN basis under a minWidth returns its 5pt
+    // minWidth.
+    let sizes = resolve_flex_lengths(
+        100.0,
+        &[
+            bounded(1e308, 0.0, None, Some(30.0)),
+            bounded(f64::NAN, 0.0, Some(5.0), None),
+            item(10.0, 0.0),
+        ],
+    );
+    assert_eq!(sizes, vec![30.0, 5.0, 10.0]);
+}

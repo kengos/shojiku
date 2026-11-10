@@ -24,10 +24,13 @@
 - `flex.rs` — flex distribution math, axis-generic pure fns
   (`main_spacing`/`cross_offset`/`auto_share`/`equal_share`/`grow_shares`);
   `flex/lengths.rs` — CSS §9.7 resolution of flexible main sizes
-  (`FlexItem { basis, weight, min, max }` → `resolve_flex_lengths`): grow
-  by `flexGrow` weight, or shrink in proportion to the bases when they
-  overflow, freezing an item at a violated min/max and redistributing
-  what it gave up. Loops over NUMBERS only — one round per freeze, at
+  (`FlexItem { basis, weight, min, max }` → `resolve_flex_lengths`): the
+  bases clamped to their bounds decide grow or shrink, an item that
+  cannot grow (when the row grows: weight 0 or a basis above `max`) or
+  shrink (when the row shrinks: a basis below `min`) is frozen at its
+  clamped basis, then grow by `flexGrow` weight or shrink in proportion
+  to the bases, freezing an item at a violated min/max and distributing
+  the difference to the unfrozen items. Loops over NUMBERS only — one round per freeze, at
   most n — so children are placed exactly once.
 - `grid.rs` — track math (`equal_track`/`track_offsets`).
 

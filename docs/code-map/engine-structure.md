@@ -349,10 +349,10 @@ first sentence of its `//!` header.
 - `src/svg/style.rs` 253 — SVG presentation state: affine transforms, inheritable style attributes, and their parsers.
 - `src/svg/walk.rs` 268 — The element walk: group/shape traversal with node and depth caps, emitting solid-color paths.
 
-### `layout-box` (L2) — 6 files / 682 lines; tests 6 files / 694 lines
+### `layout-box` (L2) — 6 files / 678 lines; tests 6 files / 801 lines
 
 - `src/flex.rs` 128 — Flex distribution math: main-axis spacing (`justifyContent`), cross-axis alignment (`alignItems`), and auto-margin free-space absorption.
-- `src/flex/lengths.rs` 205 — Resolving flexible lengths (CSS Flexbox §9.7): turning each unsized row child's basis into a final main size.
+- `src/flex/lengths.rs` 201 — Resolving flexible lengths (CSS Flexbox §9.7): turning each unsized row child's basis into a final main size.
 - `src/grid.rs` 30 — Static-grid track math (box-model Phase 3): equal-track sizing and cumulative track offsets.
 - `src/lib.rs` 70 — Box-model math for the layout pass: the positioning bases, guarded length/edge resolution, and the resolved CSS box.
 - `src/resolve.rs` 85 — Guarded length/edge resolution: `%` -> absolute pt against a [`Basis`], with the range caps untrusted templates require.
@@ -369,7 +369,7 @@ first sentence of its `//!` header.
 - `src/read.rs` 80 — Reading a response body without trusting its length.
 - `src/transport.rs` 104 — The HTTP seam.
 
-### `layout` (L3) — 139 files / 20468 lines; tests 278 files / 39051 lines
+### `layout` (L3) — 139 files / 20476 lines; tests 278 files / 39142 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -407,7 +407,7 @@ first sentence of its `//!` header.
 - `src/engine/flex/child.rs` 64 — Placing and measuring ONE flex/grid child.
 - `src/engine/flex/column.rs` 229 — The column side of the flex walk: the main-axis `flexGrow` pre-pass (heights measured, then shared) and the per-item main/cross offsets.
 - `src/engine/flex/kind.rs` 66 — `FlexKind`: the classification of a box child into the atom kinds that participate in flex/grid placement, plus the authored-box accessor both the planning pre-pass and the walk read it through.
-- `src/engine/flex/offsets.rs` 238 — The row side of the flex walk: the main-axis pre-pass (slot bases from measured widths) and the cross-axis offsets, feeding the walk in the parent module.
+- `src/engine/flex/offsets.rs` 246 — The row side of the flex walk: the main-axis pre-pass (slot bases from measured widths) and the cross-axis offsets, feeding the walk in the parent module.
 - `src/engine/flex/slots.rs` 90 — Slot emission: the document-order tail every box-children walk (flex and grid) shares, plus the flow body's horizontal auto-margin shift.
 - `src/engine/flow.rs` 147 — Flow-section placement: the flow item walk; the paginating cursor lives in [`layouter`].
 - `src/engine/flow/layouter.rs` 102 — The paginating flow cursor: page breaks, the page cap, and atom placement (vertical fit + the horizontal-overflow check).
