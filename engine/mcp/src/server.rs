@@ -43,7 +43,7 @@ pub fn serve<R: BufRead, W: Write>(
 
 /// Parses one frame and dispatches it; `None` means nothing to send (a
 /// notification, which is never answered — not even with an error).
-fn handle_line(args: &ServerArgs, line: &str) -> Option<Value> {
+pub(crate) fn handle_line(args: &ServerArgs, line: &str) -> Option<Value> {
     let message: Value = match serde_json::from_str(line) {
         Ok(value) => value,
         Err(err) => {

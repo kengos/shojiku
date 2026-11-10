@@ -1,0 +1,2 @@
+shojiku://example/no/such
+shojiku://example/business/receipt-ja/missing.yml

@@ -1,0 +1,2 @@
+cap=256
+{"id":7,"method":"tools/call","params":{"name":"validate","arguments":{"templatePath":"/etc/passwd"}}}

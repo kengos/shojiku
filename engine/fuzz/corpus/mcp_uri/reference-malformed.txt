@@ -1,0 +1,5 @@
+shojiku://reference/../box
+shojiku://reference/box#a#b
+shojiku://reference/box#
+shojiku://reference/%2e%2e
+shojiku://reference/box#aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

@@ -15,6 +15,8 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 mod examples;
+#[doc(hidden)]
+pub mod fuzz;
 mod instructions;
 mod reference;
 mod resources;

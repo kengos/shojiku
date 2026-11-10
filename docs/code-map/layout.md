@@ -33,6 +33,17 @@
   the difference to the unfrozen items. Loops over NUMBERS only — one round per freeze, at
   most n — so children are placed exactly once.
 - `grid.rs` — track math (`equal_track`/`track_offsets`).
+- `fuzz.rs` (+ `fuzz/flex.rs`, `fuzz/resolve.rs`, each with a `tests.rs`;
+  replayed by `tests/fuzz_corpus/`) — doc-hidden harnesses for the `box`
+  fuzz group: `flex` drives `resolve_flex_lengths` and the spacing/share
+  fns over a text row (settings line, then one item per line), `resolve`
+  drives `resolve_x`/`resolve_y`/`clamp_size` and the grid track fns.
+  Sizes are asserted finite for any input, and bounds and the free-space
+  sum only for values a caller can pass (finite, within
+  `MAX_RESOLVED_PT`, bases not negative, each `flexGrow` weight 0 or at
+  least `f64::MIN_POSITIVE`). `resolve_edges` is not driven (an
+  `EdgeSpec` comes only from the template parser). Map of the fuzz crate:
+  [verify.md](verify.md).
 
 Wire types stay in core; content measurement stays in layout.
 

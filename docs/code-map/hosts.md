@@ -21,10 +21,14 @@ false`), no clap.
   `valid_locale_id` (the ONE charset-guard home) + `load_pack` (id +
   overlay string → builtin(+merge) | standalone | NotFound; never
   touches the FS).
-- `fuzz.rs` (+ `fuzz/tests.rs`, `tests/fuzz_corpus/`) — doc-hidden
+- `fuzz.rs` (+ `fuzz/locale.rs`, `fuzz/catalog.rs`, each with a
+  `tests.rs`; replayed by `tests/fuzz_corpus/`) — doc-hidden harnesses.
   `locale_id`: an id `valid_locale_id` accepts must be one path segment
   (the formatter's `assert_one_path_segment`); run by the
-  `formatter_pack_paths` fuzz target ([verify.md](verify.md)).
+  `formatter_pack_paths` fuzz target. `catalog`: `format_catalog` over a
+  template text (a hostile `formats:` registry) and pattern probes, for
+  the `authoring_format_catalog` target of the `host` group
+  ([verify.md](verify.md)).
 - `fs.rs` — the FS pack discovery both FS hosts share:
   `resolve_font_dirs`/`resolve_locale_dir` (flags > env > `./packs/*`),
   `primary_font_dir` (the dir a NEW pack is created in — the same
@@ -485,7 +489,8 @@ host over authoring.
 
 - `lib.rs` — `ServerArgs` (pack flags like the CLI), `McpError` (only
   transport I/O aborts), `run_stdio`.
-- `rpc.rs` — framing (`read_frame` bounded 1 MiB with drain-resync,
+- `rpc.rs` — framing (`read_frame` bounded 1 MiB with drain-resync;
+  `read_frame_capped` takes the cap, so the fuzz harness can pass a few bytes;
   `write_frame`, error codes incl. MCP's `RESOURCE_NOT_FOUND` -32002,
   `RpcError { code, message, data }` — the tool surface's `(code,
   message)` pair converts into it — and the clip echo guard).
@@ -493,6 +498,13 @@ host over authoring.
   negotiation + declared capabilities + `instructions`, `ping`,
   `tools/list`, `tools/call`, `resources/list`, `resources/read`;
   notifications never answered).
+- `fuzz.rs` (+ `fuzz/frames.rs`, `fuzz/uri.rs`, each with a `tests.rs`;
+  replayed by `tests/fuzz_corpus/`) — doc-hidden harnesses for the `host`
+  fuzz group. `frames` reads a byte stream with `read_frame_capped` and
+  answers each line through `server.rs`'s `handle_line`, skipping
+  `tools/call` (its tools read the fuzzing machine's files); `uri` reads
+  reference and example URIs through `resources::read` and the read tool.
+  Map of the fuzz crate: [verify.md](verify.md).
 - `instructions.rs` — the `INSTRUCTIONS` const returned at initialize:
   three-file model, the authoring loop, the example surface, the
   reference surface, and the staleness rule. A signpost, size-pinned by
@@ -786,6 +798,16 @@ per SDK covers both.
   The render/preview backend refusals are `From` impls rather than per-site
   `map_err` closures, since the backends refuse only inputs the engine does
   not produce.
+- `fuzz.rs` (+ `fuzz/tests.rs`, replayed by `tests/fuzz_corpus/`) —
+  doc-hidden `request`, the `capi_request` harness of the `host` fuzz
+  group: the fuzz input as the envelope of `shojiku_validate`, read back
+  through the exported accessors and freed, asserting the status is never
+  `SHOJIKU_ERR_PANIC` (the `catch_unwind` in `status.rs`'s
+  `shield_result` turns a panic into `Failure::Panic`, which
+  `shojiku_validate` returns as that status; the corpus replay test
+  reports it as a failure of the never-`SHOJIKU_ERR_PANIC` assertion).
+  Only `validate`: it reads no file and draws nothing. Map of the fuzz
+  crate: [verify.md](verify.md).
 - `include/shojiku.h` — hand-written (cbindgen was rejected: a new toolchain
   dependency for a 15-symbol surface, and the prose is the point). A parity
   test in `tests/capi/header.rs` runs BOTH ways against the `#[unsafe(no_mangle)]`

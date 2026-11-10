@@ -1,0 +1,2 @@
+shojiku://reference/box#noSuchKey
+shojiku://reference/nosuchpage

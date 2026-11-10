@@ -44,6 +44,22 @@ fn oversized_line_at_eof_drains_cleanly() {
 }
 
 #[test]
+fn a_smaller_cap_bounds_the_line_the_same_way() {
+    // `abcd` is one byte over a cap of 3, so it is drained in chunks of 3
+    // and the next line is read whole; `abc` fits the cap exactly.
+    let mut input = Cursor::new(b"abcd\nabc\n".to_vec());
+    assert!(matches!(
+        read_frame_capped(&mut input, 3).unwrap(),
+        Frame::Oversized
+    ));
+    assert!(matches!(read_frame_capped(&mut input, 3).unwrap(), Frame::Line(l) if l == "abc"));
+    assert!(matches!(
+        read_frame_capped(&mut input, 3).unwrap(),
+        Frame::Eof
+    ));
+}
+
+#[test]
 fn builders_shape_responses() {
     let ok = result_response(json!(1), json!({ "a": 1 }));
     assert_eq!(ok["jsonrpc"], "2.0");

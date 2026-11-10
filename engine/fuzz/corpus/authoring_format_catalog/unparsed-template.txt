@@ -1,0 +1,4 @@
+locale=ja-JP
+probe=date G
+---
+formats: [

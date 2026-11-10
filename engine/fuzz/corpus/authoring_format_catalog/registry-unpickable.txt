@@ -1,0 +1,9 @@
+locale=ja-JP
+---
+formats:
+  "bad\u0007": { type: date, pattern: d }
+  "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn": { type: date, pattern: d }
+sections:
+  body:
+    type: flow
+    items: []

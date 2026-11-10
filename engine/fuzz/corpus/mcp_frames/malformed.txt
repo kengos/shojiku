@@ -1,0 +1,6 @@
+cap=256
+not json
+[1,2]
+{"id":5}
+{"params":{}}
+   
