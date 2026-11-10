@@ -97,8 +97,9 @@ Paint order stays document order.
   row. That pair is the migration for any template written before the
   `flexGrow` default became 0.
   A negative / non-finite `flexGrow` warns (`invalid_flex_grow`) and
-  contributes 0; if every unsized child weighs 0 the split falls back to
-  equal so the row is never silently empty.
+  contributes 0. A child at `flexGrow: 0` does not grow: when no unsized
+  child has a weight above 0, the width the children do not use is free
+  space for auto margins and `justifyContent`, as in CSS.
 - **A `column` shares leftover HEIGHT the same way**, when the parent
   height is definite: a child with no `h` starts from its content height
   and takes its `flexGrow` share of what is left. It costs nothing unless
@@ -109,13 +110,21 @@ Paint order stays document order.
   back in proportion to their bases — CSS's `flex-shrink: 1` — so text
   re-wraps rather than running off the edge. `minWidth` floors that (and
   `maxWidth` caps growth): a child pinned at a bound stops flexing and
-  its share moves to the others. Only a row that still does not fit
-  afterwards warns `flex_row_overflow`.
+  its share moves to the others. In a row that grows, a child that does
+  not grow and whose basis (its content width, or 0 for `flexBasis: 0`)
+  is outside its `minWidth`/`maxWidth` gets the `minWidth` or `maxWidth`
+  as its width, and the row reserves that `minWidth` or `maxWidth` for
+  it. In a row that shrinks, a child is never narrower than its
+  `minWidth`. Whether the row grows or shrinks is decided from the
+  children's widths clamped to their bounds (CSS's hypothetical main
+  size).
+  Only a row that still does not fit afterwards warns `flex_row_overflow`.
 - **Auto margins beat alignment and justification** (CSS order): on the
   main axis they absorb all free space before `justifyContent`; on the
   cross axis they override `alignItems`. In a row, unsized children
-  consume the free space first, so auto margins and `justifyContent`
-  only act when every child has a width.
+  that grow consume the free space first, so auto margins and
+  `justifyContent` act on what those children leave — all of it when
+  none of them grows.
 - **The flow body** is the column-flex special case with pagination;
   flow items additionally honor **horizontal** auto margins
   (`margin: { left: auto }` right-aligns a fixed-width flow item).

@@ -1,13 +1,17 @@
 //! Resolving flexible lengths (CSS Flexbox §9.7): turning each unsized
 //! row child's basis into a final main size.
 //!
-//! Two directions share one shape. When the bases leave room, the
-//! leftover is distributed by `flexGrow` weight; when they overflow, the
-//! deficit is taken back in proportion to each basis — CSS's
+//! Two directions share one shape. When the hypothetical sizes (each
+//! basis clamped to its `minWidth`/`maxWidth`) fit in `free`, the
+//! remaining space is distributed by `flexGrow` weight; when they exceed
+//! it, the deficit is subtracted in proportion to each basis — CSS's
 //! `flex-shrink` with every factor at its initial 1, which is what makes
-//! a long line of text re-wrap instead of running off the row. Either
-//! way, an item whose `minWidth`/`maxWidth` bound is violated is frozen
-//! at the clamped size and what it gave up is redistributed to the rest.
+//! a long line of text re-wrap instead of running off the row. An item
+//! that cannot grow (when the row grows) or shrink (when the row shrinks)
+//! is frozen at its hypothetical size first; then an item whose bound the
+//! distribution violates is frozen at that bound, and the difference
+//! between its target and the bound is distributed to the unfrozen
+//! items.
 //!
 //! The loop is over NUMBERS, never over layout: each round freezes at
 //! least one item, so it runs at most `items.len()` rounds and the
@@ -39,19 +43,52 @@ pub struct FlexItem {
 /// Every returned size is finite and non-negative: hostile bases and
 /// bounds (`1e308`, `NaN`) reach here from templates, and a row cursor
 /// must never walk backwards.
+///
+/// Follows CSS §9.7 steps 1 and 2 before the loop: each item's
+/// hypothetical size (its basis clamped to its bounds) decides whether the
+/// row grows or shrinks, and an item that cannot grow (or shrink) when the
+/// row grows (or shrinks) is frozen at its hypothetical size before the
+/// loop. In a growing row, a child with no weight returns its basis
+/// clamped to its `minWidth`/`maxWidth`; in a shrinking row it never ends
+/// under its `minWidth`, and can end under its `maxWidth`.
 pub fn resolve_flex_lengths(free: f64, items: &[FlexItem]) -> Vec<f64> {
-    let mut sizes: Vec<f64> = items.iter().map(|i| sane(i.basis)).collect();
+    let mut sizes: Vec<f64> = items.iter().map(hypothetical).collect();
     let total: f64 = sizes.iter().sum();
-    if total > free {
-        shrink_to_fit(&mut sizes, items, free);
+    let grows = total <= free;
+    let mut frozen: Vec<bool> = items
+        .iter()
+        .zip(&sizes)
+        .map(|(item, hypo)| inflexible(item, *hypo, grows))
+        .collect();
+    if grows {
+        grow_to_fill(&mut sizes, items, &mut frozen, free);
     } else {
-        grow_to_fill(&mut sizes, items, free);
+        shrink_to_fit(&mut sizes, items, &mut frozen, free);
     }
     sizes.iter().map(|s| sane(*s)).collect()
 }
 
-/// The bases leave room: hand it out by `flexGrow` weight, freezing any
-/// item that hits a bound.
+/// An item's hypothetical main size: its basis clamped to its bounds (CSS
+/// §9.2; §9.7 step 1 sums these sizes).
+fn hypothetical(item: &FlexItem) -> f64 {
+    sane(clamp_size(sane(item.basis), item.min, item.max))
+}
+
+/// Whether an item is frozen at its hypothetical size before the loop (CSS
+/// §9.7 step 2): when the row grows, an item with weight 0 or a basis
+/// above its `maxWidth`; when the row shrinks, an item with a basis below
+/// its `minWidth`.
+fn inflexible(item: &FlexItem, hypo: f64, grows: bool) -> bool {
+    let base = sane(item.basis);
+    if grows {
+        item.weight <= 0.0 || base > hypo
+    } else {
+        base < hypo
+    }
+}
+
+/// The hypothetical sizes fit in `free`: distribute the room by
+/// `flexGrow` weight, freezing any item that reaches a bound.
 ///
 /// Every round re-distributes from the BASES (CSS §9.7 step 4: the free
 /// space is the container minus the frozen items' sizes minus the
@@ -62,99 +99,53 @@ pub fn resolve_flex_lengths(free: f64, items: &[FlexItem]) -> Vec<f64> {
 /// the size it was clamped up to, and the siblings keep a share the row
 /// cannot afford. A `minWidth` above its natural share used to overflow
 /// the row by exactly that difference.
-fn grow_to_fill(sizes: &mut [f64], items: &[FlexItem], free: f64) {
-    let n = items.len();
-    let mut frozen = vec![false; n];
-    for _ in 0..n {
-        let weights: Vec<f64> = unfrozen(items, &frozen, |i| i.weight);
+///
+/// An item with weight 0 was frozen before the loop, so when no item has a
+/// weight above 0 the space the sizes do not use is left for the caller's
+/// auto margins and `justifyContent`.
+fn grow_to_fill(sizes: &mut [f64], items: &[FlexItem], frozen: &mut [bool], free: f64) {
+    for _ in 0..items.len() {
+        let weights: Vec<f64> = unfrozen(items, frozen, |i| i.weight);
         if weights.is_empty() {
             return;
         }
-        // Every unfrozen item at `flexGrow: 0` (the CSS default) means
-        // nobody grows and the leftover stays free space for the
-        // caller's `justifyContent`. `grow_shares` would hand out an
-        // equal split here — the right answer when a basis is 0 and an
-        // ungrown child would be invisible, and the wrong one now that a
-        // basis is the child's content.
-        if weights.iter().all(|w| *w <= 0.0) {
-            return;
-        }
-        let frozen_sum: f64 = sizes
-            .iter()
-            .zip(&frozen)
-            .filter(|(_, f)| **f)
-            .map(|(s, _)| *s)
-            .sum();
-        let base_sum: f64 = unfrozen(items, &frozen, |i| sane(i.basis)).iter().sum();
-        let room = sane(free - frozen_sum - base_sum);
+        let room = sane(free - frozen_sum(sizes, frozen) - base_sum(items, frozen));
         let shares = grow_shares(room, &weights);
-        if !grow_from_bases(sizes, items, &mut frozen, &shares) {
+        if !from_bases(sizes, items, frozen, &shares, 1.0) {
             return;
         }
     }
 }
 
-/// Sets each unfrozen item to its base plus this round's share, freezing
-/// every one whose bounds the result violates. Returns whether anything
-/// froze — nothing frozen means the round settled and the loop is done.
-fn grow_from_bases(
-    sizes: &mut [f64],
-    items: &[FlexItem],
-    frozen: &mut [bool],
-    shares: &[f64],
-) -> bool {
-    let mut froze = false;
-    let mut share_i = 0;
-    for i in 0..sizes.len() {
-        if frozen[i] {
-            continue;
-        }
-        let target = sane(sane(items[i].basis) + shares[share_i]);
-        share_i += 1;
-        let clamped = clamp_size(target, items[i].min, items[i].max);
-        sizes[i] = clamped;
-        if (clamped - target).abs() > f64::EPSILON {
-            frozen[i] = true;
-            froze = true;
-        }
-    }
-    froze
-}
-
-/// The bases overflow: take the deficit back in proportion to each
-/// basis (CSS `flex-shrink: 1` on every item), freezing at `minWidth`.
+/// The hypothetical sizes exceed `free`: subtract the deficit in
+/// proportion to each basis (CSS `flex-shrink: 1` on every item),
+/// freezing any item that reaches a bound.
 ///
 /// Proportional-to-basis is not an approximation of CSS here — it is
 /// exactly the scaled shrink factor `basis × shrink` with every shrink
 /// at its initial value. An authorable `flexShrink` would weight it
-/// further; the wire does not carry one.
-fn shrink_to_fit(sizes: &mut [f64], items: &[FlexItem], free: f64) {
-    let n = items.len();
-    let mut frozen = vec![false; n];
-    for _ in 0..n {
-        let used: f64 = sizes.iter().sum();
-        let deficit = sane(used - free);
-        if deficit <= 0.0 {
+/// further; the wire does not carry one. Like growing, every round
+/// re-distributes from the bases: the deficit is the frozen items' sizes
+/// plus the unfrozen items' bases, minus `free`.
+fn shrink_to_fit(sizes: &mut [f64], items: &[FlexItem], frozen: &mut [bool], free: f64) {
+    for _ in 0..items.len() {
+        let bases: Vec<f64> = unfrozen(items, frozen, |i| sane(i.basis));
+        if bases.is_empty() {
             return;
         }
-        // Weight by the CURRENT size, so an item already frozen at its
-        // minimum stops absorbing the deficit its siblings must take.
-        let weights: Vec<f64> = unfrozen_sizes(sizes, &frozen);
-        if weights.is_empty() {
-            return;
-        }
-        let shares = grow_shares(deficit, &weights);
-        if !apply(sizes, items, &mut frozen, &shares, -1.0) {
+        let deficit = sane(frozen_sum(sizes, frozen) + base_sum(items, frozen) - free);
+        let shares = grow_shares(deficit, &bases);
+        if !from_bases(sizes, items, frozen, &shares, -1.0) {
             return;
         }
     }
 }
 
-/// Applies one round's shares (`sign` = +1 to grow, −1 to shrink) and
-/// freezes every item whose bounds the result violates. Returns whether
-/// anything froze — nothing frozen means the round settled and the loop
-/// is done.
-fn apply(
+/// Sets each unfrozen item to its base plus (`sign` = +1) or minus
+/// (`sign` = −1) this round's share, freezing every one whose bounds the
+/// result violates. Returns whether anything froze — nothing frozen means
+/// the round settled and the loop is done.
+fn from_bases(
     sizes: &mut [f64],
     items: &[FlexItem],
     frozen: &mut [bool],
@@ -167,7 +158,7 @@ fn apply(
         if frozen[i] {
             continue;
         }
-        let target = sane(sizes[i] + sign * shares[share_i]);
+        let target = sane(sane(items[i].basis) + sign * shares[share_i]);
         share_i += 1;
         let clamped = clamp_size(target, items[i].min, items[i].max);
         sizes[i] = clamped;
@@ -179,6 +170,21 @@ fn apply(
     froze
 }
 
+/// The frozen items' current sizes, summed.
+fn frozen_sum(sizes: &[f64], frozen: &[bool]) -> f64 {
+    sizes
+        .iter()
+        .zip(frozen)
+        .filter(|(_, f)| **f)
+        .map(|(s, _)| *s)
+        .sum()
+}
+
+/// The unfrozen items' bases, summed.
+fn base_sum(items: &[FlexItem], frozen: &[bool]) -> f64 {
+    unfrozen(items, frozen, |i| sane(i.basis)).iter().sum()
+}
+
 /// The unfrozen items' values under `pick`, in order.
 fn unfrozen(items: &[FlexItem], frozen: &[bool], pick: fn(&FlexItem) -> f64) -> Vec<f64> {
     items
@@ -186,16 +192,6 @@ fn unfrozen(items: &[FlexItem], frozen: &[bool], pick: fn(&FlexItem) -> f64) -> 
         .zip(frozen)
         .filter(|(_, f)| !**f)
         .map(|(i, _)| pick(i))
-        .collect()
-}
-
-/// The unfrozen items' CURRENT sizes, in order — the shrink weights.
-fn unfrozen_sizes(sizes: &[f64], frozen: &[bool]) -> Vec<f64> {
-    sizes
-        .iter()
-        .zip(frozen)
-        .filter(|(_, f)| !**f)
-        .map(|(s, _)| *s)
         .collect()
 }
 

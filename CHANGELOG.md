@@ -217,6 +217,19 @@ platform binaries.
 
 ### Fixed
 
+- **A flex-row child that does not grow now keeps its `minWidth` and
+  `maxWidth` in a row where no child grows.** A row child with no `w` and
+  no `flexGrow` (the default 0) was laid out at its content width while
+  its own box was drawn at the bound, so a child narrower than its
+  `minWidth` was overlapped by the next one and a child wider than its
+  `maxWidth` left a gap after it. The row now reserves the bounded width,
+  the same as CSS. Whether a row shrinks is now decided from each child's
+  width clamped to its `minWidth`/`maxWidth`, so a row whose content
+  widths fit but whose `minWidth` values do not now shrinks the children
+  without a `minWidth`, and no longer warns `flex_row_overflow` when the
+  shrunk row fits. In a shrinking row, a child stopped at its `maxWidth`
+  no longer leaves part of the row unused: its siblings fill the row.
+
 - **A template parse error in a section's or a container's own fields is no
   longer reported at an item inside it that repeats the same mistake.** When
   a flow body's `gap` or `box` held a bad value and an item in it held the
