@@ -373,7 +373,7 @@ first sentence of its `//!` header.
 - `src/read.rs` 80 — Reading a response body without trusting its length.
 - `src/transport.rs` 104 — The HTTP seam.
 
-### `layout` (L3) — 139 files / 20528 lines; tests 278 files / 39261 lines
+### `layout` (L3) — 141 files / 20888 lines; tests 282 files / 39752 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -452,7 +452,7 @@ first sentence of its `//!` header.
 - `src/engine/table/span.rs` 129 — Table spanning: the `headerGroups` group row (cells spanning several columns above the labels) and the `mergeEmptyCells` body transform (a value extends right over the empty cells after it).
 - `src/engine/table/style.rs` 155 — Table style resolution: the authored grid border (with the table's 0.5pt default), the zebra row cascade, and the authored-or-default folds for the non-inherited properties whose table defaults differ from the engine initial values.
 - `src/engine/table/style/conditional.rs` 88 — Per-row conditional style layers: which `row.conditionalStyles` entries a body row's own element selects, and the layers they add on top of the base/zebra row style.
-- `src/engine/text.rs` 200 — Text content and atoms: binding/interpolation resolution and the text-item atom (margins + padding); block building lives in [`block`] (plain) and [`rich`] (spans).
+- `src/engine/text.rs` 203 — Text content and atoms: binding/interpolation resolution and the text-item atom (margins + padding); block building lives in [`block`] (plain) and [`rich`] (spans).
 - `src/engine/text/block.rs` 249 — Wrapped + aligned text-block building: border-box padding, vertical alignment, the box decoration (via `super::super::decoration`), and (via [`glyphs`]) the missing-glyph diagnostic.
 - `src/engine/text/block/glyphs.rs` 70 — Missing-glyph (tofu) diagnostics: the capped distinct-offender scan shared by plain blocks and rich spans.
 - `src/engine/text/block/lines.rs` 115 — Plain-text line placement for [`super`]'s `text_block`: wrapping with the block's settings, then measuring and aligning each wrapped line (including the hanging-punctuation exclusion) into placed [`TextLine`]s.
@@ -460,7 +460,8 @@ first sentence of its `//!` header.
 - `src/engine/text/height.rs` 58 — Definite-height overflow bookkeeping shared by the plain ([`super::block`]) and rich ([`super::rich`]) block builders: available content height, the final reserved height under an overflow policy, and the post-policy overflow warning.
 - `src/engine/text/mark.rs` 168 — Text-anchored circled-text overlay: an oval auto-centered on a text item's glyph band, computed from the finished block's line geometry and the primary face's cap/ascent/descent metrics.
 - `src/engine/text/metrics.rs` 108 — Inspect text-metrics builder: per-line baseline + cap/em band for an id-carrying horizontal text item, per-column axis + em band for a vertical one — so the Designer (and an AI patch loop) can snap overlays to the glyph band instead of pixel-measuring a preview.
-- `src/engine/text/overflow.rs` 137 — Text overflow policies: `shrink` (fit-to-box font scaling) and `ellipsis` (line clamp + `…`) for definite-height boxes.
+- `src/engine/text/overflow.rs` 197 — Text overflow policies: `shrink` (fit-to-box font scaling) and `ellipsis` (line clamp + `…`) for definite-height boxes.
+- `src/engine/text/overflow/clamp.rs` 89 — The cut-point search of the `…` clamp, separated from the shaping so the number of times it shapes can be counted and bounded.
 - `src/engine/text/paginate.rs` 273 ▲ — Long-text pagination: a flow text item taller than the flow region splits at the last fitting line and continues page by page, like table rows — instead of warning (`section_overflow`) and drawing over.
 - `src/engine/text/paginate/vertical.rs` 171 — Vertical column pagination: a flow vertical-writing block needing more columns than its box width holds continues on the NEXT page (fragments of whole columns, right-to-left reading order preserved) instead of extending left past the box.
 - `src/engine/text/resolve.rs` 201 — Binding resolution: the ONE place a bound params value becomes a display string.
@@ -484,8 +485,9 @@ first sentence of its `//!` header.
 - `src/font/face/metrics.rs` 138 — Vertical band metrics (cap height, descent): the baseline-relative extents form marks center on and the `inspect` text-metrics surface exposes, with conventional fallbacks and hostile-value clamps for faces whose OS/2 table is absent or garbage.
 - `src/font/face/pen.rs` 67 — Glyph-outline collector: turns a skrifa outline into the tree's [`PathCmd`]s, flipping y-up font space into y-down layout space and elevating TrueType quadratics to cubics (the tree carries only cubics).
 - `src/font/load.rs` 160 — `FontStore` construction: the two production loaders (filesystem packs and host-injected bytes) plus the test-only `from_faces` shortcut.
-- `src/font/shape.rs` 224 — Fallback-aware shaping over a face chain.
-- `src/font/shape/harf.rs` 148 — HarfBuzz (harfrust) adapter: shapes one already-itemized segment (all chars covered by a single face) into glyphs with pt-scaled advances and positioning offsets.
+- `src/font/shape.rs` 226 — Fallback-aware shaping over a face chain.
+- `src/font/shape/breaks.rs` 149 — Prefix widths at the cut points where a text can be cut without shaping the prefix again.
+- `src/font/shape/harf.rs` 169 — HarfBuzz (harfrust) adapter: shapes one already-itemized segment (all chars covered by a single face) into glyphs with pt-scaled advances and positioning offsets.
 - `src/font/shape/itemize.rs` 40 — Face itemization: split a run into maximal segments that one face covers, using the same per-char first-covering-face rule the pre-shaping code used.
 - `src/font/shape/trim.rs` 136 — Fullwidth-punctuation trimming (half-width punctuation) as a post-shaping advance adjustment — the `textSpacingTrim` mechanism.
 - `src/font/verify.rs` 68 — Font-pack integrity + embedding-rights checks at load: the manifest sha256 must match the file bytes (tamper/corruption), and the OS/2 `fsType` must permit embedding unless the pack attests a separately-held embedding license (fsType cannot express purchased embed rights).
@@ -495,9 +497,9 @@ first sentence of its `//!` header.
 - `src/font/vertical/shaped/combine.rs` 142 — tate-chu-yoko (tate-chū-yoko) combined cells: runs of up to N consecutive ASCII digits (`digits N`) — or a whole run (`all`) — shaped horizontally and drawn upright in ONE 1em cell of the column.
 - `src/font/vertical/shaped/trim.rs` 102 — Vertical half-width punctuation: fullwidth-punctuation trimming over an arranged column — the `textSpacingTrim` mechanism with the axes swapped.
 - `src/font/vertical/uax50.rs` 116 — UAX#50 Vertical_Orientation upright ranges — GENERATED by `scripts/gen-uax50.py` from VerticalOrientation.txt (Unicode 16.0.0); do not edit by hand.
-- `src/fuzz.rs` 112 — The fuzz harnesses of the layout crate: the link-URL gate (here) and the text measurement the `text` fuzz group drives — line wrapping (`wrap`), shaping (`shape`) and the overflow policies (`overflow`), over the font chain `input` loads.
+- `src/fuzz.rs` 114 — The fuzz harnesses of the layout crate: the link-URL gate (here) and the text measurement the `text` fuzz group drives — line wrapping (`wrap`), shaping (`shape`) and the overflow policies (`overflow`), over the font chain `input` loads.
 - `src/fuzz/input.rs` 182 — The input shape the three text harnesses share, and the font chain they measure with.
-- `src/fuzz/overflow.rs` 245 — The text-overflow harness the `layout_overflow` fuzz target and the corpus replay test both run.
+- `src/fuzz/overflow.rs` 279 ▲ — The text-overflow harness the `layout_overflow` fuzz target and the corpus replay test both run.
 - `src/fuzz/shape.rs` 190 — The shaping harness the `layout_shape` fuzz target and the corpus replay test both run.
 - `src/fuzz/wrap.rs` 237 — The line-wrapping harness the `layout_wrap` fuzz target and the corpus replay test both run.
 - `src/lib.rs` 31 — Shojiku layout engine.

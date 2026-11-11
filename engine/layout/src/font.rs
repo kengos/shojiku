@@ -20,7 +20,7 @@ pub(crate) mod vertical;
 
 pub use face::{FontFace, PositionedGlyph};
 pub use shape::{RunOptions, all_missing, run_width, shape_run};
-pub(crate) use shape::{char_width, itemize};
+pub(crate) use shape::{char_width, itemize, safe_prefix_widths};
 pub(crate) use vertical::vertical_extent;
 pub use vertical::{VGlyph, arrange_vertical, down_advance_over};
 // The pack-integrity rules, exposed so a pack GENERATOR satisfies exactly

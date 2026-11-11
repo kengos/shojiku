@@ -5,6 +5,9 @@ use super::*;
 use crate::font::test_support::ja_store;
 use crate::wrap::wrap_text;
 
+mod equivalence;
+mod shaping;
+
 #[test]
 fn fit_font_size_returns_base_when_it_already_fits() {
     let store = ja_store();

@@ -225,6 +225,22 @@ platform binaries.
 
 ### Fixed
 
+- **A long `list` entry or a `textOverflow: ellipsis` line no longer takes
+  time that grows with the square of its length.** Cutting a line to end
+  in `…` shaped the whole remaining line again for every character it
+  removed, so a 10,000-character entry took about 5 seconds and a
+  30,000-character one about 46. The line is now shaped once (and its
+  leading characters that decide no script once more), and a cut point
+  that HarfBuzz reports as safe takes its width from the shaping of the line; the text
+  before a cut whose shaping can differ (kerning, ligatures, a cut inside
+  a combining sequence) is shaped by itself, at most 64 times per line.
+  The text kept before `…` is the same as before, except on a line where
+  more than 64 such cuts lie between the end of the line and the longest
+  prefix that fits with `…`: once 64 prefixes are shaped, only cuts whose
+  width is known are considered, so the kept text can be shorter than the
+  longest prefix that fits, never longer, and is empty (only `…`) when no
+  cut with a known width fits. The kept text still fits the box with `…`.
+
 - **A flex-row child that does not grow now keeps its `minWidth` and
   `maxWidth` in a row where no child grows.** A row child with no `w` and
   no `flexGrow` (the default 0) was laid out at its content width while

@@ -10,6 +10,7 @@
 //! (`face_index` 0); the chain is never empty (the primary is always
 //! present).
 
+mod breaks;
 mod harf;
 mod itemize;
 #[cfg(test)]
@@ -23,6 +24,7 @@ use shojiku_core::{TextCombine, TextSpacingTrim};
 // The vertical arrangement (`super::vertical::shaped`) reuses the same
 // itemize → shape-per-segment machinery for its upright (top-to-bottom)
 // and rotated (horizontal, then rotated as a run) segments.
+pub(crate) use breaks::safe_prefix_widths;
 pub(crate) use harf::{ShapedGlyph, VerticalShapedGlyph, shape_segment, shape_segment_vertical};
 pub(crate) use itemize::itemize;
 pub(in crate::font) use trim::{is_close, is_open};

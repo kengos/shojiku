@@ -27,6 +27,8 @@ mod overflow;
 mod shape;
 mod wrap;
 
+#[cfg(test)]
+pub(crate) use input::test_chain;
 pub use input::text_chain;
 pub use overflow::{OverflowPaths, overflow};
 pub use shape::{ShapePaths, shape};
