@@ -233,6 +233,8 @@ export const ja: LanguageCatalog = {
     invalid_document_language:
       '`document.{key}` は言語タグではありません（使えるのは A-Z a-z 0-9 と `-` のみ）。PDF には書き込まれません',
     link_url_too_long: 'リンク URL が {max} バイトを超えています。リンクは無視されました',
+    link_url_not_ascii:
+      'リンク URL は 7 ビット ASCII である必要があります（それ以外の文字は % エンコードまたは punycode にしてください）。リンクは無視されました',
     qr_content_too_long:
       'qr_code の内容が {bytes} バイトです（上限 {max} 超過）。項目はスキップされました',
     char_grid_clamped:
@@ -1267,6 +1269,8 @@ export const ja: LanguageCatalog = {
       'リンク先にできるのはウェブアドレス・メールアドレス・電話番号だけです。http:// / https:// / mailto: / tel: のいずれかで始めてください。',
     'panel.link.problem.tooLong':
       'このアドレスは {max} バイトを超えています。PDF のリンクが持てる長さより長くなりました。',
+    'panel.link.problem.notAscii':
+      '日本語などの ASCII 以外の文字は PDF のリンクに入れられません。ドメインは punycode に、パスとクエリは % で始まる形に変換してください。',
     'panel.ruby.title': 'ルビ（ふりがな）',
     'panel.ruby.spacing':
       'ルビは行と行のあいだに描かれ、そのために行の間隔は広がりません。隣の行に重なるときは「{lineHeight}」を大きくしてください。1行目のルビは枠の外（横書きは上、縦書きは右）にはみ出すので、収めるには「{padding}」を空けてください。',

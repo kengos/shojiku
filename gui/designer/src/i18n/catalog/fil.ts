@@ -1060,6 +1060,8 @@ export const fil: LanguageCatalog = {
       'Ang link ay maaari lamang tumungo sa isang web address, email address o numero ng telepono. Simulan ito sa http://, https://, mailto: o tel:.',
     'panel.link.problem.tooLong':
       'Mas mahaba sa {max} byte ang address na ito, lampas sa kayang dalhin ng isang PDF link.',
+    'panel.link.problem.notAscii':
+      'ASCII na character lang ang puwede sa address ng link. I-percent-encode ang ibang character sa path o query, at isulat ang domain name bilang punycode (xn--…).',
     'panel.ruby.title': 'Ruby (furigana)',
     'panel.ruby.spacing':
       'Nasa pagitan ng mga linya ang mga basa, at hindi naglalayo ang mga linya para sa kanila. Kung dumikit sila sa katabing linya, palakihin ang “{lineHeight}”. Lumalabas sa kahon ang mga basa ng unang linya (sa itaas sa pahalang na teksto, sa kanan sa patayong teksto); para manatili sa loob, magdagdag ng “{padding}”.',

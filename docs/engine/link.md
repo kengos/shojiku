@@ -73,12 +73,22 @@ object form reserves room for internal destinations later.
 - `http`, `https`, `mailto` and `tel` only (`unsupported_link_scheme`), 2048
   bytes maximum (`link_url_too_long`), and an empty URL drops the link
   (`empty_link_url`) while the item still renders.
+- ASCII only (`link_url_not_ascii`). A PDF `/URI` action is a 7-bit ASCII
+  string, and the engine writes the URL as given, so any character outside
+  ASCII makes the engine write no link and report the warning — including
+  the invisible ones that make a URL display differently from its target
+  (bidi overrides, zero-width characters). Percent-encode a path or query
+  (`%E9%81%93`) and write a domain name as punycode (`xn--fsq.jp`) in the
+  value given as `link.url` (template or params). The ASCII check runs
+  after the scheme check, so a URL whose scheme is outside the allowlist still reports
+  `unsupported_link_scheme`.
 
 ## Diagnostics
 
 | Code | Severity | Meaning |
 | --- | --- | --- |
 | `unsupported_link_scheme` | warning | scheme outside http/https/mailto/tel, or control characters; link dropped |
+| `link_url_not_ascii` | warning | resolved URL contains a character outside 7-bit ASCII; link dropped |
 | `link_url_too_long` | warning | resolved URL over 2048 bytes; link dropped |
 | `empty_link_url` | warning | resolved URL empty/whitespace; link dropped |
 | `unknown_data_key` / `missing_data` | error / warning | `{key}` in the URL fails the usual binding checks |

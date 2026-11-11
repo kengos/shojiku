@@ -67,6 +67,14 @@ platform binaries.
 
 ### Changed
 
+- **A `link:` URL must now be 7-bit ASCII.** A PDF `/URI` action holds
+  7-bit ASCII, but a URL with a Japanese path, a non-ASCII domain name, or an
+  invisible character (a bidi override, a zero-width character) was
+  written into the `/URI` action as UTF-8 bytes. For such a URL the engine now writes no link,
+  reports the `link_url_not_ascii` warning, and still renders the item.
+  Percent-encode the path or query and write the domain as punycode in the
+  value given as `link.url` (template or params). The Designer's link field
+  shows the same refusal when you leave the field.
 - **A `shojiku_core::yaml::Value` read as a Rust type fails with
   `shojiku_core::yaml::TreeError`**, where it failed with
   `serde::de::value::Error`. The message is word for word the same. Only

@@ -34,12 +34,27 @@ fn corpus(target: &str) -> Vec<String> {
 #[test]
 fn every_link_url_seed_is_accepted_by_the_rule_or_refused() {
     let seeds = corpus("link_url");
-    assert!(seeds.len() >= 8, "the committed link-URL seeds are missing");
-    let accepted = seeds.iter().filter(|text| link_url(text)).count();
-    // Positive and negative control: the corpus holds URLs the gate accepts
-    // (so the assertions run) and URLs it refuses.
-    assert!(accepted >= 1, "no link-URL seed is accepted");
-    assert!(accepted < seeds.len(), "no link-URL seed is refused");
+    assert!(
+        seeds.len() >= 12,
+        "the committed link-URL seeds are missing"
+    );
+    let paths: Vec<_> = seeds.iter().map(|text| link_url(text)).collect();
+    // Positive and negative controls, taken from the `LinkPaths` that
+    // `link_url` returns: the corpus holds URLs the gate accepts (so the
+    // assertions run) and URLs it refuses for a non-ASCII character and for
+    // an unlisted scheme.
+    assert!(
+        paths.iter().any(|p| p.accepted),
+        "no link-URL seed is accepted"
+    );
+    assert!(
+        paths.iter().any(|p| p.refused_not_ascii),
+        "no link-URL seed is refused for a non-ASCII character"
+    );
+    assert!(
+        paths.iter().any(|p| p.refused_scheme),
+        "no link-URL seed is refused for its scheme"
+    );
 }
 
 /// The fuzzed font chain, loaded once for this test binary from the same

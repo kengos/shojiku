@@ -585,10 +585,11 @@ Full authorable spec: [box](box.md), [flex](flex.md),
   reserved for `destination:` later; unknown keys reject.
 - **Layout is the trust boundary**: the resolved URL is gated before it
   enters the tree — scheme allowlist `http`/`https`/`mailto`/`tel`
-  (ASCII-case-insensitive), no control characters, ≤ 2048 bytes;
+  (ASCII-case-insensitive), no control characters, ≤ 2048 bytes, 7-bit
+  ASCII only (a PDF `/URI` is 7-bit ASCII);
   rejects warn (`unsupported_link_scheme` / `link_url_too_long` /
-  `empty_link_url`) and drop the link. The tree carries the sanitized
-  URL on `TextBlock` (plain blocks) / `TextRun` (rich; span link
+  `link_url_not_ascii` / `empty_link_url`) and drop the link. The tree carries
+  the sanitized URL on `TextBlock` (plain blocks) / `TextRun` (rich; span link
   overrides the block's, a rejected span link does not fall back) /
   `ImageShape`.
 - **PDF backend** emits one borderless URI-action annotation per line

@@ -217,7 +217,7 @@ inline:
 | `visible_type_mismatch` | an item's params value type differs from its `visible.equals`; not shown. Also raised at validate against the DECLARED field type |
 | `visible_value_not_bool` | an `equals`-less `visible:` binding's value is not a boolean; not shown |
 | `qr_content_too_long` / `qr_module_too_small` | QR content over 1 KiB (skipped) / modules under 1 pt (drawn) |
-| `unsupported_link_scheme` / `link_url_too_long` / `empty_link_url` | resolved `link.url` outside http/https/mailto/tel (or control chars) / over 2048 bytes / empty — the link is dropped, the item still renders |
+| `unsupported_link_scheme` / `link_url_not_ascii` / `link_url_too_long` / `empty_link_url` | resolved `link.url` outside http/https/mailto/tel (or control chars) / containing a non-ASCII character / over 2048 bytes / empty — the link is dropped, the item still renders |
 | `document_metadata_control_chars` / `document_metadata_too_long` / `invalid_document_language` | a resolved `document:` value carries control characters / is over its byte cap (2048, or 64 for `language`) / is not a `[A-Za-z0-9-]` language tag — that field is not written to the PDF and is NOT replaced by its fallback |
 | `table_too_wide` | sized columns exceed the flow width |
 | `row_overflow` | a row overflows with `autoPageBreak: false` |

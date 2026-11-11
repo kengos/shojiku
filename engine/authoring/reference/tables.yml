@@ -2072,10 +2072,10 @@
         "Code": "`qr_content_too_long` / `qr_module_too_small`"
         "Meaning": "QR content over 1 KiB (skipped) / modules under 1 pt (drawn)"
       reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
-    - keys: ["unsupported_link_scheme", "link_url_too_long", "empty_link_url"]
+    - keys: ["unsupported_link_scheme", "link_url_not_ascii", "link_url_too_long", "empty_link_url"]
       cells:
-        "Code": "`unsupported_link_scheme` / `link_url_too_long` / `empty_link_url`"
-        "Meaning": "resolved `link.url` outside http/https/mailto/tel (or control chars) / over 2048 bytes / empty — the link is dropped, the item still renders"
+        "Code": "`unsupported_link_scheme` / `link_url_not_ascii` / `link_url_too_long` / `empty_link_url`"
+        "Meaning": "resolved `link.url` outside http/https/mailto/tel (or control chars) / containing a non-ASCII character / over 2048 bytes / empty — the link is dropped, the item still renders"
       reason: "the Code cell keeps the page's own spelling; the prose is authored per row because a code's meaning is written for the section it appears in"
     - keys: ["document_metadata_control_chars", "document_metadata_too_long", "invalid_document_language"]
       cells:

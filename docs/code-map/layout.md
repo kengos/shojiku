@@ -265,17 +265,19 @@ Wire types stay in core; content measurement stays in layout.
   `run_width`) and containers (Σ children + gaps in a `row`, the widest
   in a `column`; collapsed children skipped).
 - `engine/link.rs` — `link:`: `resolve_link` (scope-aware interpolation) +
-  `check_link_url` (scheme allowlist + length/control gates) — layout is
-  the trust boundary; renderers emit what the tree carries. Plus `linked`,
+  `check_link_url` (scheme allowlist + length/control/7-bit-ASCII gates,
+  scheme before ASCII) — layout is the trust boundary; renderers emit what
+  the tree carries. Plus `linked`,
   the `PlacedBox.linked` stamp: it reads the DRAWN items (mirroring
   `render-pdf/annot.rs`, clip recursion included) rather than the five
   `resolve_link` call sites, which is what makes one function answer for
   plain / rich / vertical / per-span / image and report false for a URL the
   gate dropped.
 - `fuzz.rs` (+ `fuzz/tests.rs`, `tests/fuzz_corpus/`) — the doc-hidden
-  fuzz harnesses. `link_url`: calls `check_link_url` and
-  asserts every accepted URL is the trimmed input, within `MAX_LINK_URL`,
-  free of control characters and on the scheme allowlist. The `text`
+  fuzz harnesses. `link_url`: calls `check_link_url`, returns a `LinkPaths`
+  (which result `check_link_url` returned, set from its `Err` variant) and
+  asserts every accepted URL is the trimmed input, within `MAX_LINK_URL`, only
+  bytes `0x20..=0x7E` and on the scheme allowlist. The `text`
   group, one file each: `fuzz/wrap.rs` (`wrap_spans_hung`),
   `fuzz/shape.rs` (`shape_run`), `fuzz/overflow.rs` (`fit_font_size`,
   `clamp_with_ellipsis`, `clamp_line` — `pub(crate)` for this and

@@ -42,7 +42,7 @@ export const LINK_SCHEMES: readonly string[] = ['http:', 'https:', 'mailto:', 't
 export const MAX_LINK_URL_BYTES = 2048;
 
 /** Why a typed URL would be dropped, or `null` for one the panel will author. */
-export type LinkProblem = 'scheme' | 'tooLong';
+export type LinkProblem = 'scheme' | 'tooLong' | 'notAscii';
 
 /** ASCII-only lowercasing, matching Rust's `eq_ignore_ascii_case`. Not
  * `String.toLowerCase()`, which is Unicode-aware and can change a string's
@@ -89,7 +89,14 @@ export function linkUrlProblem(url: string): LinkProblem | null {
     return 'scheme';
   }
   const lower = asciiLower(trimmed);
-  return LINK_SCHEMES.some((scheme) => lower.startsWith(scheme)) ? null : 'scheme';
+  if (!LINK_SCHEMES.some((scheme) => lower.startsWith(scheme))) {
+    return 'scheme';
+  }
+  // A PDF `/URI` is 7-bit ASCII, so any other character (bidi overrides and
+  // zero-width characters included) is refused. The ASCII check runs after the
+  // scheme check, as in `check_link_url`, so a URL whose scheme is outside
+  // `LINK_SCHEMES` still returns `'scheme'`.
+  return /\P{ASCII}/u.test(trimmed) ? 'notAscii' : null;
 }
 
 /** Where the caret lands after a splice, and the text it lands in. */
