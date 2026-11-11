@@ -6,7 +6,7 @@ use super::{LinkReject, MAX_LINK_URL, check_link_url};
 fn allowed_schemes_pass_and_trim() {
     for url in [
         "https://example.com/a?b=c",
-        "http://例.jp/道",
+        "http://xn--fsq.jp/%E9%81%93",
         "mailto:billing@example.com",
         "tel:+81-3-0000-0000",
     ] {
@@ -54,6 +54,51 @@ fn control_characters_are_rejected() {
     // An *interior* newline is a control reject, not trimmed away.
     assert_eq!(
         check_link_url("https://exa\nmple.com"),
+        Err(LinkReject::Control)
+    );
+}
+
+#[test]
+fn non_ascii_characters_are_rejected_after_the_scheme_check() {
+    for url in [
+        "http://例.jp/道",
+        "https://example.com/\u{202E}gpj.exe",
+        "https://example.com/\u{2066}a",
+        "https://example.com/\u{200B}a",
+        "https://example.com/\u{FEFF}",
+        "https://例.jp/",
+        "https://example.com/道",
+        "mailto:a@example.com?subject=請求書",
+    ] {
+        assert_eq!(check_link_url(url), Err(LinkReject::NotAscii), "{url:?}");
+    }
+    // `check_link_url` accepts an interior ASCII space: it is ASCII, although a
+    // URI may not contain it.
+    assert_eq!(
+        check_link_url("https://example.com/a b"),
+        Ok("https://example.com/a b")
+    );
+    // `check_link_url` trims before it checks, so leading and trailing ASCII
+    // spaces do not cause a refusal.
+    assert_eq!(
+        check_link_url(" https://example.com/ "),
+        Ok("https://example.com/")
+    );
+}
+
+#[test]
+fn scheme_and_control_rejections_take_priority_over_non_ascii() {
+    // A URL whose scheme begins with a full-width `ｊ` (U+FF4A) is outside the
+    // allowlist, so the result is still `Scheme`.
+    assert_eq!(
+        check_link_url("\u{FF4A}avascript:alert(1)"),
+        Err(LinkReject::Scheme)
+    );
+    // An interior U+0085 (a C1 control character) returns `Control`, not
+    // `NotAscii`, because the control check runs first. A trailing U+0085 is
+    // trimmed as whitespace before any check.
+    assert_eq!(
+        check_link_url("https://example.com/\u{85}a"),
         Err(LinkReject::Control)
     );
 }

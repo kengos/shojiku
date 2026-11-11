@@ -35,6 +35,17 @@ fn hostile_scheme_via_params_is_dropped() {
 }
 
 #[test]
+fn bidi_override_url_via_params_is_dropped() {
+    // U+202E makes a URL display differently from its target; layout
+    // omits the link, reports `link_url_not_ascii`, and still renders the page.
+    dropped_with(
+        &linked_text("\"{u}\""),
+        json!({ "u": "https://example.com/\u{202E}gpj.exe" }),
+        "link_url_not_ascii",
+    );
+}
+
+#[test]
 fn static_file_url_is_dropped() {
     dropped_with(
         &linked_text("\"file:///C:/secrets.txt\""),

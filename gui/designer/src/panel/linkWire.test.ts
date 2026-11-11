@@ -40,6 +40,17 @@ describe('the link gate the panel mirrors', () => {
     expect(Number(match?.[1])).toBe(MAX_LINK_URL_BYTES);
   });
 
+  it('link.rs checks ASCII after the scheme allowlist', () => {
+    // `check_link_url` runs `if !trimmed.is_ascii() { … }` after the allowlist
+    // test, so a URL outside the allowlist still gets `LinkReject::Scheme`.
+    const body = source.slice(source.indexOf('fn check_link_url'));
+    expect(
+      body.includes('is_ascii()'),
+      'check_link_url in link.rs no longer calls is_ascii()',
+    ).toBe(true);
+    expect(body.indexOf('LinkReject::Scheme')).toBeLessThan(body.indexOf('is_ascii()'));
+  });
+
   it('gates the RESOLVED url, which is why an interpolating one is passed through', () => {
     // The load-bearing fact behind `linkUrlProblem`'s first branch: the
     // interpolation runs BEFORE the check, so nothing about the authored

@@ -28,9 +28,24 @@ pub(crate) enum LinkReject {
     /// reader's machine, so `file:`/`javascript:`/anything unknown is
     /// dropped rather than passed through.
     Scheme,
+    /// Contains a character outside 7-bit ASCII. A PDF `/URI` action is a
+    /// 7-bit ASCII string (ISO 32000-1, Table 206, URI actions), and the
+    /// renderer writes the URL's UTF-8 bytes into it unchanged, so a
+    /// non-ASCII character is not a valid `/URI` byte. The ASCII check also
+    /// refuses the invisible characters that make a URL display differently
+    /// from its target (bidi overrides, zero-width characters). To link to a
+    /// URL with a non-ASCII path, query or host, the author percent-encodes
+    /// the path or query and writes the host as punycode.
+    NotAscii,
 }
 
 /// Gates one resolved URL: `Ok` carries the trimmed form to emit.
+///
+/// The checks run in this order: empty, over [`MAX_LINK_URL`] bytes, control
+/// character, scheme, non-ASCII character. The scheme check runs before the
+/// non-ASCII check so that an input outside the scheme allowlist still
+/// returns `Err(LinkReject::Scheme)`. An accepted URL is trimmed, within the
+/// cap, and made only of the bytes `0x20..=0x7E`.
 pub(crate) fn check_link_url(url: &str) -> Result<&str, LinkReject> {
     let trimmed = url.trim();
     if trimmed.is_empty() {
@@ -43,14 +58,16 @@ pub(crate) fn check_link_url(url: &str) -> Result<&str, LinkReject> {
         return Err(LinkReject::Control);
     }
     let allowed = ["http:", "https:", "mailto:", "tel:"];
-    if allowed
+    if !allowed
         .iter()
         .any(|scheme| starts_with_ignore_case(trimmed, scheme))
     {
-        Ok(trimmed)
-    } else {
-        Err(LinkReject::Scheme)
+        return Err(LinkReject::Scheme);
     }
+    if !trimmed.is_ascii() {
+        return Err(LinkReject::NotAscii);
+    }
+    Ok(trimmed)
 }
 
 /// ASCII-case-insensitive prefix test (schemes are ASCII; `JaVaScRiPt:`
@@ -91,6 +108,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
             Err(LinkReject::Control | LinkReject::Scheme) => {
                 self.diags
                     .push(Diagnostic::new(Code::UnsupportedLinkScheme));
+                None
+            }
+            Err(LinkReject::NotAscii) => {
+                self.diags.push(Diagnostic::new(Code::LinkUrlNotAscii));
                 None
             }
         }

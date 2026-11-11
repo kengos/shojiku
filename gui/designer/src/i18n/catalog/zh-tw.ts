@@ -177,6 +177,8 @@ export const zhTw: LanguageCatalog = {
     invalid_document_language:
       '`document.{key}` 不是語言標籤（只能使用 A-Z a-z 0-9 與 `-`）；不會寫入 PDF',
     link_url_too_long: '連結 URL 超過 {max} 位元組；已捨棄連結',
+    link_url_not_ascii:
+      '連結 URL 必須是 7 位元 ASCII（其他字元請做百分號編碼或使用 punycode）；已捨棄連結',
     qr_content_too_long: 'qr_code 內容為 {bytes} 位元組（超過上限 {max}）；已略過項目',
     char_grid_clamped:
       '格線 {columns}×{lines} 超出每張 1..={max} 格的範圍；已限制為 {clamped_columns}×{clamped_lines}',
@@ -1162,6 +1164,8 @@ export const zhTw: LanguageCatalog = {
     'panel.link.problem.scheme':
       '連結目標只能是網址、電子郵件地址或電話號碼。請以 http:// / https:// / mailto: / tel: 開頭。',
     'panel.link.problem.tooLong': '這個位址超過 {max} 位元組，超出 PDF 連結能容納的長度。',
+    'panel.link.problem.notAscii':
+      '連結位址只能使用 ASCII 字元。請將路徑或查詢中的其他字元做百分號編碼，並將網域名稱寫成 punycode（xn--…）。',
     'panel.ruby.title': '注音（ruby）',
     'panel.ruby.spacing':
       '注音畫在行與行之間，行距不會因此加大。注音碰到相鄰的行時，請加大「{lineHeight}」。第一行的注音會超出框外（橫排在上方，直排在右側）；要收在框內，請設定「{padding}」。',

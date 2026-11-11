@@ -1,7 +1,7 @@
 //! A `link:` URL after interpolation: params control it, and layout's gate
 //! decides whether it reaches a PDF `/URI` action. Every URL the gate
 //! accepts is checked against the rule the gate documents (trimmed, within
-//! the length cap, no control character, an allowed scheme).
+//! the length cap, only the bytes 0x20..=0x7E, an allowed scheme).
 //!
 //! The harness lives in `shojiku_layout::fuzz`, where the corpus replay test
 //! runs the same code.

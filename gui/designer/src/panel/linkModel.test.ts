@@ -82,6 +82,30 @@ describe('linkUrlProblem', () => {
     expect(linkUrlProblem('\u0009https://x.test/\u000A')).toBeNull();
   });
 
+  it('returns notAscii for a non-ASCII character, checked after the scheme allowlist', () => {
+    // The bidi and zero-width cases are written as escapes because those
+    // characters are invisible in source.
+    for (const url of [
+      'http://例.jp/道',
+      'https://x.test/\u202Egpj.exe',
+      'https://x.test/\u2066a',
+      'https://x.test/\u200Ba',
+      // JS `trim()` removes a leading or trailing U+FEFF but Rust's `trim`
+      // does not, and the panel saves the JS-trimmed value, so the engine
+      // receives a U+FEFF only from inside the URL.
+      'https://x.test/\uFEFFa',
+      'mailto:a@x.test?subject=請求書',
+    ]) {
+      expect(linkUrlProblem(url), url).toBe('notAscii');
+    }
+    // A full-width `ｊ` is not an allowed scheme, so `linkUrlProblem` still
+    // returns `'scheme'`.
+    expect(linkUrlProblem('\uFF4Aavascript:alert(1)')).toBe('scheme');
+    // A percent-encoded path and a punycode host are ASCII, so `linkUrlProblem`
+    // returns null.
+    expect(linkUrlProblem('http://xn--fsq.jp/%E9%81%93')).toBeNull();
+  });
+
   it('measures the cap in BYTES, not characters', () => {
     // The discriminating case. `'あ'` is three UTF-8 bytes, so this url is over
     // the cap in bytes and comfortably under it in CHARACTERS — a `.length`

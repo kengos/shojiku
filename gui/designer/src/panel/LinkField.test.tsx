@@ -138,6 +138,13 @@ describe('committing a url', () => {
     expect(screen.getByRole('status').textContent).toContain('http://');
   });
 
+  it('refuses a non-ASCII url, authors NOTHING, and names the ASCII rule', () => {
+    const controller = draw({ type: 'text', text: 'hi' });
+    fireEvent.blur(url(), { target: { value: 'http://例.jp/道' } });
+    expect(controller.applyAll).not.toHaveBeenCalled();
+    expect(screen.getByRole('status').textContent).toContain('ASCII');
+  });
+
   it('names the BYTE cap when the url is too long', () => {
     // The other arm of the refusal message. The number in it is the engine's
     // own `MAX_LINK_URL`, passed as an ICU arg rather than written into six

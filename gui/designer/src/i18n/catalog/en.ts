@@ -215,6 +215,8 @@ export const en: LanguageCatalog = {
     invalid_document_language:
       '`document.{key}` is not a language tag (only A-Z a-z 0-9 and `-`); it is not written to the PDF',
     link_url_too_long: 'link URL exceeds {max} bytes; link dropped',
+    link_url_not_ascii:
+      'link URL must be 7-bit ASCII (percent-encode or punycode other characters); link dropped',
     qr_content_too_long: 'qr_code content is {bytes} bytes (over the {max} cap); item skipped',
     char_grid_clamped:
       'grid {columns}×{lines} is outside 1..={max} cells per sheet; clamped to {clamped_columns}×{clamped_lines}',
@@ -1250,6 +1252,8 @@ export const en: LanguageCatalog = {
       'A link can only go to a web address, an email address or a phone number. Start it with http://, https://, mailto: or tel:.',
     'panel.link.problem.tooLong':
       'This address is longer than {max} bytes, which is more than a PDF link can carry.',
+    'panel.link.problem.notAscii':
+      'A link address can only use ASCII characters. Percent-encode other characters in the path or query, and write a domain name as punycode (xn--…).',
     'panel.ruby.title': 'Ruby (furigana)',
     'panel.ruby.spacing':
       'Readings sit in the space between lines, and lines do not move apart for them. If they touch the neighbouring line, increase “{lineHeight}”. The first line’s readings stick out of the box (above it in horizontal text, to its right in vertical text); to keep them inside, add “{padding}”.',

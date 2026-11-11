@@ -451,7 +451,8 @@ that answers it per FRAGMENT.
   the panel is hiding). `linkUrlProblem` mirrors
   `engine/layout/src/engine/link.rs::check_link_url` — trim, the 2048-**BYTE**
   cap, Cc control characters, the `http`/`https`/`mailto`/`tel` allowlist under
-  ASCII-only case folding — with ONE branch that is not in the engine and is
+  ASCII-only case folding, then any non-ASCII character (`notAscii`) — with
+  ONE branch that is not in the engine and is
   the load-bearing one: **a URL containing `{` is always passed through**,
   because `resolve_link` interpolates before it gates and all TEN bundled
   examples that author a link interpolate it, none carrying a scheme of its

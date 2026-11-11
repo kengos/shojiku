@@ -96,7 +96,7 @@ fn the_spec_covers_every_registry_code() {
         codes(),
         "diagnostics.md and the registry differ"
     );
-    assert_eq!(documented.len(), 158, "the registry is 158 codes");
+    assert_eq!(documented.len(), 159, "the registry is 159 codes");
 }
 
 #[test]

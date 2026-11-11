@@ -27,6 +27,14 @@ import { InsertFieldMenu } from '../text/InsertFieldMenu';
 import { FIELD_LABEL, INPUT } from '../ui/chrome';
 import { type LinkProblem, linkUrlProblem, MAX_LINK_URL_BYTES, spliceAt } from './linkModel';
 
+/** The message key for each refusal. A `Record` over `LinkProblem`, so a new
+ * kind of refusal is a type error in `PROBLEM_KEY` until it has a message. */
+const PROBLEM_KEY = {
+  scheme: 'panel.link.problem.scheme',
+  tooLong: 'panel.link.problem.tooLong',
+  notAscii: 'panel.link.problem.notAscii',
+} as const satisfies Record<LinkProblem, string>;
+
 export interface LinkUrlFieldProps {
   /** Unique within the rendered panel — a module constant is safe only while
    * one such field can be on screen at a time. */
@@ -151,9 +159,7 @@ export function LinkUrlField(props: LinkUrlFieldProps) {
       />
       {problem === null ? null : (
         <output className="mt-0.5 block rounded-md bg-error-bg px-2 py-0.5 text-sm text-error-text">
-          {problem === 'scheme'
-            ? t('panel.link.problem.scheme')
-            : t('panel.link.problem.tooLong', { max: MAX_LINK_URL_BYTES })}
+          {t(PROBLEM_KEY[problem], { max: MAX_LINK_URL_BYTES })}
         </output>
       )}
       {input === null ? null : (

@@ -117,6 +117,7 @@ diagnostic_codes! {
     RowConditionScopeIgnored = "row_condition_scope_ignored", Warning, Data, "`{key}`: `scope: document` has no effect on a row condition; the key is read from each row";
     EmptyLinkUrl = "empty_link_url", Warning, Data, "link URL is empty; link dropped";
     UnsupportedLinkScheme = "unsupported_link_scheme", Warning, Data, "link URL must be http/https/mailto/tel without control characters; link dropped";
+    LinkUrlNotAscii = "link_url_not_ascii", Warning, Data, "link URL must be 7-bit ASCII (percent-encode or punycode other characters); link dropped";
     DocumentMetadataControlChars = "document_metadata_control_chars", Warning, Data, "`document.{key}` contains control characters; it is not written to the PDF";
     DocumentMetadataTooLong = "document_metadata_too_long", Warning, Data, "`document.{key}` is over {max} bytes; it is not written to the PDF";
     InvalidDocumentLanguage = "invalid_document_language", Warning, Data, "`document.{key}` is not a language tag (only A-Z a-z 0-9 and `-`); it is not written to the PDF";
