@@ -11,7 +11,9 @@
 //! fits with its `…` and does not end in an opening bracket or quote.
 
 use super::input::{Input, LENGTH};
-use crate::engine::{MIN_SHRINK_FONT_PT, clamp_line, clamp_with_ellipsis, exceeds, fit_font_size};
+use crate::engine::{
+    MIN_SHRINK_FONT_PT, clamp_line, clamp_with_ellipsis_checked, exceeds, fit_font_size,
+};
 use crate::font::{FontFace, RunOptions, run_width};
 use crate::wrap::{no_line_end, wrap_text_chain};
 use shojiku_core::LineBreak;
@@ -20,11 +22,17 @@ use shojiku_core::facts::{FONT_SIZE, LETTER_SPACING, LINE_HEIGHT};
 #[cfg(test)]
 mod tests;
 
-/// The most body characters one input uses. The clamp shapes the whole
-/// line again for every character it removes, so its cost grows with the
-/// square of the line length; this cap keeps one input far below the
-/// fuzzer's per-input timeout.
-const MAX_BODY_CHARS: usize = 1024;
+/// The most body characters one input uses. The clamp shapes the line once
+/// and at most 64 of its prefixes: about 540,000 characters of shaping per
+/// clamp for a body of this length, and the clamp runs three times per
+/// input (about 1.6 million in all). The shrink search wraps the body about
+/// 50 times. The cap keeps one input far below the fuzzer's per-input
+/// timeout. It does not catch a clamp that has become quadratic again: that
+/// would cost about 33 million characters of shaping per clamp (about 100
+/// million per input, around 10 seconds), under the timeout. The unit test
+/// `a_long_japanese_line_needs_no_shaping_of_its_own` counts the prefix
+/// shapings to catch a clamp that has become quadratic again.
+const MAX_BODY_CHARS: usize = 8192;
 
 /// The most lines the `lines` setting may keep.
 const MAX_KEPT_LINES: usize = 64;
@@ -165,7 +173,7 @@ impl Fit<'_> {
     fn clamp(&self, content: &str, max_lines: usize) -> Option<usize> {
         let lines = self.wrap(content, self.size);
         let clamp = || {
-            clamp_with_ellipsis(
+            clamp_with_ellipsis_checked(
                 self.faces,
                 lines.clone(),
                 self.size,
@@ -174,9 +182,11 @@ impl Fit<'_> {
                 max_lines,
             )
         };
-        let clamped = clamp();
+        let result = clamp();
+        let clamped = &result.lines;
+        let again = clamp();
         assert!(
-            clamped == clamp(),
+            *clamped == again.lines && result.bound_reached == again.bound_reached,
             "clamping the same input twice gave different lines"
         );
         let kept = max_lines.min(lines.len());
@@ -192,7 +202,31 @@ impl Fit<'_> {
         );
         let original = lines[kept - 1].trim_end();
         let prefix = self.assert_clamped_line(last, original);
+        if !result.bound_reached {
+            self.assert_no_longer_candidate_fits(prefix, original);
+        }
         (prefix.len() < original.len()).then(|| prefix.chars().count())
+    }
+
+    /// When the shaping bound was not reached, the clamp kept the longest
+    /// prefix that fits, so the next longer candidate (the next prefix of
+    /// `original` that ends in a char that is neither whitespace nor
+    /// line-end prohibited) must not fit with `…`.
+    fn assert_no_longer_candidate_fits(&self, prefix: &str, original: &str) {
+        let longer = original[prefix.len()..]
+            .char_indices()
+            .filter(|&(_, c)| !c.is_whitespace() && !no_line_end(c))
+            .map(|(i, c)| prefix.len() + i + c.len_utf8())
+            .next();
+        if let Some(end) = longer {
+            assert!(
+                exceeds(
+                    self.width_of(&original[..end]) + self.width_of("…"),
+                    self.width
+                ),
+                "the clamp cut shorter than the longest prefix that fits"
+            );
+        }
     }
 
     /// Asserts the single-line clamp a `list` entry uses. Returns whether

@@ -20,6 +20,10 @@ pub(crate) struct ShapedGlyph {
     pub x_offset: f64,
     pub y_offset: f64,
     pub cluster: usize,
+    /// harfrust's `unsafe_to_break`: breaking the text at the start of this
+    /// glyph's cluster and shaping each side alone may give glyphs or
+    /// advances that differ from the whole run's.
+    pub unsafe_to_break: bool,
 }
 
 /// Shapes `text` with `face` at `size` pt. `ligatures = false` disables the
@@ -44,6 +48,23 @@ pub(crate) fn shape_segment(
         // the i32 first would overflow on a hostile i32::MIN offset.
         y_offset: -f64::from(pos.y_offset) * scale,
         cluster: info.cluster as usize,
+        unsafe_to_break: info.unsafe_to_break(),
+    })
+}
+
+/// The byte offset just past the first char of `text` that decides the
+/// script harfrust guesses for the whole segment (the first char whose
+/// script is not Common, Inherited or Unknown), or `None` when no char
+/// does. Shaping a prefix guesses the script from the prefix alone, so a
+/// prefix that ends before this offset can shape differently from the
+/// same chars inside the whole segment.
+pub(super) fn script_decided_end(text: &str) -> Option<usize> {
+    let mut one = [0u8; 4];
+    text.char_indices().find_map(|(i, c)| {
+        let mut buffer = Buffer::new();
+        buffer.push_str(c.encode_utf8(&mut one));
+        buffer.guess_segment_properties();
+        buffer.script().map(|_| i + c.len_utf8())
     })
 }
 

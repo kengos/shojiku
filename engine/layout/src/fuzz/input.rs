@@ -67,7 +67,7 @@ pub fn text_chain(fonts_dir: &Path) -> Vec<FontFace> {
 
 /// The fuzzed chain, loaded once per unit-test binary.
 #[cfg(test)]
-pub(super) fn test_chain() -> &'static [FontFace] {
+pub(crate) fn test_chain() -> &'static [FontFace] {
     static CHAIN: std::sync::OnceLock<Vec<FontFace>> = std::sync::OnceLock::new();
     CHAIN.get_or_init(|| text_chain(&crate::font::test_support::repo_font_dir()))
 }

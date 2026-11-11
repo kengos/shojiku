@@ -45,7 +45,7 @@ pub use assemble::layout;
 // The fuzz harness (`crate::fuzz::overflow`) calls the overflow policies
 // and checks their results with the engine's fit comparison (`exceeds`).
 pub(crate) use overflow::exceeds;
-pub(crate) use text::{MIN_SHRINK_FONT_PT, clamp_line, clamp_with_ellipsis, fit_font_size};
+pub(crate) use text::{MIN_SHRINK_FONT_PT, clamp_line, clamp_with_ellipsis_checked, fit_font_size};
 
 use crate::boxes::{BoxIndex, PlacedBox, translate_boxes};
 use crate::font::FontStore;

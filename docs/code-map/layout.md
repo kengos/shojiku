@@ -420,7 +420,11 @@ Wire types stay in core; content measurement stays in layout.
   line placement, hanging-aware); `block/glyphs.rs` (missing-glyph scan);
   `text/height.rs` (definite-height overflow bookkeeping shared
   plain+rich); `text/overflow.rs` (policy math: `fit_font_size` bisection,
-  measured-`…` clamp, line-end-kinsoku-aware).
+  measured-`…` clamp, line-end-kinsoku-aware); `text/overflow/clamp.rs`
+  (the clamp's cut-point search: prefix widths known from one shaping of
+  the line (and one more of its leading Common, Inherited or Unknown chars),
+  else at most `MAX_SHAPINGS` prefix shapings — linear in the
+  line length; the shaping is a closure so a test counts it).
 - `text/paginate.rs` — flow text pagination: auto-height flow text splits
   at line boundaries table-style; `split_block` finds the splittable block,
   while the box travels as DATA on the `Ctx::split_chrome` channel
@@ -507,7 +511,12 @@ Wire types stay in core; content measurement stays in layout.
   adapter; `shape_segment_vertical` = the top-to-bottom variant, GSUB
   `vert` auto-applied; a buffer harfrust marks as failed
   (`allocation_successful() == false`) is not read, and the run degrades
-  per-char).
+  per-char). `shape/breaks.rs` (`safe_prefix_widths`: the width of every
+  prefix that shapes the same alone — segment ends, uncovered chars, harfrust
+  cluster starts without `unsafe_to_break` at/after the script-deciding
+  char, the leading Common, Inherited or Unknown chars shaped once more by
+  themselves, every char end of an uncovered or shaper-less segment —
+  summed in `run_width` order so it is bit-equal to `run_width(prefix)`).
 - `font/vertical.rs` — the vertical-writing arrangement, the ONE home both renderers
   call so vertical draw == measure: `orientation(c)` (full UAX#50),
   `down_advance` (the wrapper's break estimate), `arrange_vertical(…) →

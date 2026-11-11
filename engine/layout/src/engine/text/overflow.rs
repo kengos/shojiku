@@ -14,9 +14,12 @@
 //! identity it does not have.
 
 use crate::engine::overflow::exceeds;
-use crate::font::{FontFace, RunOptions, run_width};
-use crate::wrap::{no_line_end, wrap_text_chain};
+use crate::font::{FontFace, RunOptions, run_width, safe_prefix_widths};
+use crate::wrap::wrap_text_chain;
+use clamp::{MAX_SHAPINGS, kept_len};
 use shojiku_core::LineBreak;
+
+mod clamp;
 
 /// The `shrink` font-size floor: below this the text is unreadable and a
 /// hostile ratio of content to box could otherwise chase zero. When even
@@ -69,46 +72,103 @@ pub(crate) fn fit_font_size(
 /// face/size/spacing as the text, so reserved == drawn). Trailing
 /// line-end-prohibited characters (line-end kinsoku: opening brackets and
 /// opening quotes) are dropped so a clamp never ends `「…` or `“…`.
-/// `max_lines == 0` clamps to
-/// nothing — the caller warns.
+/// `max_lines == 0` clamps to nothing — the caller warns.
+///
+/// The kept text is the longest prefix that fits, except on a line where
+/// more than `clamp::MAX_SHAPINGS` candidate prefixes (those whose width
+/// shaping the whole line does not determine) would have to be shaped to
+/// find it: once that many are shaped, only candidates with a known width
+/// are considered, so the kept text can be shorter than the longest
+/// prefix that fits, and is empty when no candidate with a known width
+/// fits. See [`clamp_with_ellipsis_checked`] to learn whether the shaping
+/// bound was reached. The cost is one shaping of the line plus at most
+/// `MAX_SHAPINGS` shapings of a prefix, so it is linear in the line length.
 pub(crate) fn clamp_with_ellipsis(
     chain: &[&FontFace],
-    mut lines: Vec<String>,
+    lines: Vec<String>,
     size: f64,
     letter_spacing: f64,
     content_w: f64,
     max_lines: usize,
 ) -> Vec<String> {
+    clamp_with_ellipsis_checked(chain, lines, size, letter_spacing, content_w, max_lines).lines
+}
+
+/// The result of [`clamp_with_ellipsis_checked`].
+pub(crate) struct Clamped {
+    /// The clamped lines.
+    pub lines: Vec<String>,
+    /// True when `MAX_SHAPINGS` prefixes were shaped and a later candidate
+    /// with no known width was skipped (see [`clamp_with_ellipsis`]), so
+    /// the last line's kept text may be shorter than the longest prefix
+    /// that fits. False when the kept text is exactly the longest prefix
+    /// that fits.
+    pub bound_reached: bool,
+}
+
+/// [`clamp_with_ellipsis`], also reporting whether `MAX_SHAPINGS` prefixes
+/// were shaped and a later candidate with no known width was skipped.
+pub(crate) fn clamp_with_ellipsis_checked(
+    chain: &[&FontFace],
+    lines: Vec<String>,
+    size: f64,
+    letter_spacing: f64,
+    content_w: f64,
+    max_lines: usize,
+) -> Clamped {
+    let opts = RunOptions::spacing_only(letter_spacing);
+    clamp_with_shaper(
+        chain,
+        lines,
+        (size, letter_spacing),
+        content_w,
+        max_lines,
+        |prefix| run_width(chain, prefix, size, opts),
+    )
+}
+
+/// The body of [`clamp_with_ellipsis_checked`], with the shaping of a
+/// candidate prefix passed in as `shape_width` so a test can count how many
+/// prefixes are shaped. `(size, letter_spacing)` are the measurement
+/// arguments of `run_width`.
+fn clamp_with_shaper(
+    chain: &[&FontFace],
+    mut lines: Vec<String>,
+    (size, letter_spacing): (f64, f64),
+    content_w: f64,
+    max_lines: usize,
+    shape_width: impl FnMut(&str) -> f64,
+) -> Clamped {
     const ELLIPSIS: char = '…';
     lines.truncate(max_lines);
     let Some(last) = lines.last_mut() else {
-        return lines;
+        return Clamped {
+            lines,
+            bound_reached: false,
+        };
     };
-    let ellipsis_w = run_width(
-        chain,
-        &ELLIPSIS.to_string(),
-        size,
-        RunOptions::spacing_only(letter_spacing),
+    let opts = RunOptions::spacing_only(letter_spacing);
+    let ellipsis_w = run_width(chain, &ELLIPSIS.to_string(), size, opts);
+    let text = last.trim_end();
+    // `safe_prefix_widths` shapes the line once (and its leading Common,
+    // Inherited or Unknown chars once more) and lists the width of each prefix whose shaping
+    // alone equals its part of the line's shaping; a candidate prefix with
+    // no width in `known` is shaped by itself, at most `MAX_SHAPINGS` times.
+    let known = safe_prefix_widths(chain, text, size, letter_spacing);
+    let kept = kept_len(
+        text,
+        ellipsis_w,
+        content_w,
+        &known,
+        shape_width,
+        MAX_SHAPINGS,
     );
-    loop {
-        let trimmed = last.trim_end();
-        let fits = !exceeds(
-            run_width(
-                chain,
-                trimmed,
-                size,
-                RunOptions::spacing_only(letter_spacing),
-            ) + ellipsis_w,
-            content_w,
-        );
-        let ends_prohibited = trimmed.chars().next_back().is_some_and(no_line_end);
-        if (fits && !ends_prohibited) || trimmed.is_empty() {
-            let mut clamped = trimmed.to_string();
-            clamped.push(ELLIPSIS);
-            *last = clamped;
-            return lines;
-        }
-        last.truncate(trimmed.len() - trimmed.chars().next_back().map_or(0, char::len_utf8));
+    let mut clamped = text[..kept.len].to_string();
+    clamped.push(ELLIPSIS);
+    *last = clamped;
+    Clamped {
+        lines,
+        bound_reached: kept.bound_reached,
     }
 }
 
