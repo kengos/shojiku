@@ -318,7 +318,7 @@ endif
 # (scripts/pinned-tools.sh). Nothing fails when step 2 is forgotten: the pins
 # above would then name an image nobody runs, and those fetches would go on.
 # Afterwards `make docker:clean:images` drops the previous image locally.
-RUST_VERSION     := 1.99.0
+RUST_VERSION     := 1.100.0
 LLVM_COV_VERSION := 0.9.1
 # cargo-deny for engine:deny. The toolchain image installs the upstream release
 # binary, checked against the per-architecture checksum below; a gate whose
