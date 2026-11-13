@@ -31,7 +31,7 @@ permissions:
 env:
   # Keep in sync with Makefile RUST_VERSION (which ci.yml runs through) and the
   # three Dockerfile builders.
-  RUST_VERSION: "1.99.0"
+  RUST_VERSION: "1.100.0"
   CARGO_TERM_COLOR: always
   # Gates are quiet by default; a CI log wants the raw output (see ci.yml).
   V: 1
