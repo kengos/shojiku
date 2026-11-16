@@ -326,8 +326,8 @@ LLVM_COV_VERSION := 0.9.1
 CARGO_DENY_VERSION := 0.20.2
 CARGO_DENY_SHA256_x86_64 := 9f12ed4c49936e09b48bf862b595cde2fe64fcbd9d74dfacac6131ca824c8d5f
 CARGO_DENY_SHA256_aarch64 := 995c82be0defc7a025cae49a2aa2644ce8245c9a3318fc4103907c6a285e8c7d
-TOOLCHAIN_TAG    := 1.99.0-llvmcov0.9.1
-TOOLCHAIN_DIGEST := sha256:0d631062b245b823cf952225f77621d83290161402ba86b045a6dafb06479b81
+TOOLCHAIN_TAG    := 1.100.0-llvmcov0.9.1
+TOOLCHAIN_DIGEST := sha256:e371cc64b78781d27fc9cdf45affe6c07b882a211f1e136e081476e1ed2eb1c4
 RUST_IMAGE   := ghcr.io/kengos/shojiku-toolchain@$(TOOLCHAIN_DIGEST)
 # Pinned to a DIGEST like SYFT_IMAGE below. `docker:scan` hands this image the
 # docker socket, root on the docker host (the CI runner included), so a mutable
