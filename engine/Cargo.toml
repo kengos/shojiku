@@ -74,7 +74,11 @@ serde_json = "1"
 # The YAML parser behind shojiku_core::yaml (the only crate allowed to use
 # it, see deny.toml). Without the default `comments` feature: the door reads
 # no comment text.
-serde-saphyr = { version = "2.0", default-features = false, features = ["deserialize", "serialize"] }
+# Held below 2.1: from 2.1 a key with no value where a list or a mapping is
+# wanted (`items:`) is rejected, and 0.3 read that as an empty one, so it
+# cannot be refused without a deprecation first. The cap stays until that is
+# decided; dependabot.yml holds the same line.
+serde-saphyr = { version = ">=2.0, <2.1", default-features = false, features = ["deserialize", "serialize"] }
 # Wraps a Deserializer so a structural parse error carries the field PATH
 # (`sections.body.items[3].columns[0]`) alongside the parser's line/column.
 # dtolnay, MIT/Apache-2.0, serde-only dependency: deny.toml stays clean, no

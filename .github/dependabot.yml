@@ -40,6 +40,12 @@ updates:
         versions: [">=0.3"]
       - dependency-name: pkcs8
         versions: [">=0.11"]
+      # serde-saphyr 2.1 rejects a key with no value where a list or a mapping
+      # is wanted (`items:`), which 0.3 read as an empty one; that cannot be
+      # refused without a deprecation. Held with the cap in engine/Cargo.toml:
+      # remove this entry together with that upper bound.
+      - dependency-name: serde-saphyr
+        versions: [">=2.1"]
     # A `wasm-bindgen` bump (it rides the minor-patch group) is incomplete as
     # dependabot opens it, and `make engine:wasm` fails on it: the CLI that
     # target runs refuses a module built against another crate version. The

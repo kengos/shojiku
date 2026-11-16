@@ -6,6 +6,9 @@ message: the key `compact` appears twice in one mapping at `dateFormats`, line 4
 parse
 message: the key `id` appears twice in one mapping at `.`, line 2 column 1
 
+## lang-empty-value-table.yml
+ok id=xx dateFormats={}
+
 ## lang-integer-past-64-bits.yml
 parse
 message: number.groupSize: invalid u32 at line 5, column 14
@@ -46,6 +49,9 @@ message: weekdaysShort: expected sequence start at line 2, column 16
 ## manifest-duplicate-key.yml
 error
 message: the key `version` appears twice in one mapping at `.`, line 2 column 1
+
+## manifest-empty-value-faces.yml
+ok version=1 license=OFL-1.1 faces=0
 
 ## manifest-empty.yml
 error
