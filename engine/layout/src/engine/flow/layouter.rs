@@ -1,6 +1,8 @@
 //! The paginating flow cursor: page breaks, the page cap, and atom
 //! placement (vertical fit + the horizontal-overflow check).
 
+use std::ops::{Deref, DerefMut};
+
 use crate::boxes::translate_boxes;
 use crate::engine::overflow::exceeds;
 use shojiku_diagnostics::{Diagnostic, DiagnosticCode as Code, Diagnostics};
@@ -11,9 +13,49 @@ use super::super::{Atom, Basis, PageBuild, translate};
 /// `char_grid`, whose cell-assignment cap derives from it.
 pub(in crate::engine) const MAX_PAGES: usize = 500;
 
+/// The pages a flow has built: never empty, because the only constructor
+/// takes the first page, and only growable, because there is no method
+/// that removes one.
+pub(in crate::engine) struct PageBuilds(Vec<PageBuild>);
+
+impl PageBuilds {
+    fn new(first: PageBuild) -> Self {
+        Self(vec![first])
+    }
+
+    fn push(&mut self, page: PageBuild) {
+        self.0.push(page);
+    }
+
+    /// The page being filled (the newest one).
+    fn last_mut(&mut self) -> &mut PageBuild {
+        let last = self.0.len() - 1;
+        &mut self.0[last]
+    }
+
+    /// The finished pages, in order.
+    pub(in crate::engine) fn into_vec(self) -> Vec<PageBuild> {
+        self.0
+    }
+}
+
+impl Deref for PageBuilds {
+    type Target = [PageBuild];
+
+    fn deref(&self) -> &[PageBuild] {
+        &self.0
+    }
+}
+
+impl DerefMut for PageBuilds {
+    fn deref_mut(&mut self) -> &mut [PageBuild] {
+        &mut self.0
+    }
+}
+
 /// Flow placement state across pages.
 pub(in crate::engine) struct FlowLayouter {
-    pub(in crate::engine) pages: Vec<PageBuild>,
+    pub(in crate::engine) pages: PageBuilds,
     pub(in crate::engine) region_top: f64,
     pub(in crate::engine) region_bottom: f64,
     /// The region's horizontal extent, for the horizontal-overflow
@@ -29,7 +71,7 @@ pub(in crate::engine) struct FlowLayouter {
 impl FlowLayouter {
     pub(in crate::engine) fn new(region: &Basis, region_top: f64, region_bottom: f64) -> Self {
         Self {
-            pages: vec![PageBuild::default()],
+            pages: PageBuilds::new(PageBuild::default()),
             region_top,
             region_bottom,
             region_x: region.x,
@@ -65,6 +107,21 @@ impl FlowLayouter {
         true
     }
 
+    /// The page at index `target` (0-based), starting new pages until it exists.
+    /// `None` only when `break_page` refuses a new page at `MAX_PAGES`.
+    pub(in crate::engine) fn page_at(
+        &mut self,
+        target: usize,
+        diags: &mut Diagnostics,
+    ) -> Option<&mut PageBuild> {
+        while self.pages.len() <= target {
+            if !self.break_page(diags) {
+                return None;
+            }
+        }
+        self.pages.get_mut(target)
+    }
+
     /// Places an atom at the cursor, breaking the page first if needed.
     pub(in crate::engine) fn place(&mut self, atom: Atom, diags: &mut Diagnostics) {
         if self.truncated {
@@ -90,13 +147,10 @@ impl FlowLayouter {
         if !self.fits(atom.height) {
             diags.push(Diagnostic::new(Code::SectionOverflow));
         }
-        // `pages` is non-empty from construction and only ever grows, but
-        // degrade to a no-op rather than panic if that invariant breaks.
-        if let Some(page) = self.pages.last_mut() {
-            page.items.extend(translate(&atom.items, self.cursor));
-            page.boxes.extend(translate_boxes(&atom.boxes, self.cursor));
-            self.cursor += atom.height;
-            self.fresh_page = false;
-        }
+        let page = self.pages.last_mut();
+        page.items.extend(translate(&atom.items, self.cursor));
+        page.boxes.extend(translate_boxes(&atom.boxes, self.cursor));
+        self.cursor += atom.height;
+        self.fresh_page = false;
     }
 }

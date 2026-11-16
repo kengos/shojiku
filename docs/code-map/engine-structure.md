@@ -150,7 +150,7 @@ first sentence of its `//!` header.
 - `src/lib.rs` 221 — Structured diagnostics shared across the Shojiku engine.
 - `src/render.rs` 48 — Single-pass message-template substitution.
 
-### `signing` (L0) — 25 files / 2816 lines; tests 27 files / 4029 lines
+### `signing` (L0) — 25 files / 2816 lines; tests 27 files / 4068 lines
 
 - `src/bounded.rs` 51 — The error-echo decision, in the one form a future variant cannot miss.
 - `src/cms.rs` 167 — Assembling the CMS `SignedData` that a PDF signature dictionary carries.
@@ -178,7 +178,7 @@ first sentence of its `//!` header.
 - `src/testkit/keys.rs` 52 — Test key material, generated fresh for every test process.
 - `src/xref.rs` 116 — The classic cross-reference table: subsection headers and their entries.
 
-### `core` (L1) — 98 files / 12361 lines; tests 111 files / 16126 lines
+### `core` (L1) — 98 files / 12361 lines; tests 111 files / 16200 lines
 
 - `src/catalog.rs` 157 — A flattened, queryable view of `definitions` for validation/formatting.
 - `src/catalog/flatten.rs` 120 — The schema → lookup-table walk: one `Schema` node becomes a scalar entry, an object to descend, or an [`ArrayGroup`] under its dotted path.
@@ -296,7 +296,7 @@ first sentence of its `//!` header.
 - `src/testkit.rs` 204 — Test-only fixtures: minimal signable documents, and signed ones.
 - `src/testkit/keys.rs` 65 — Test key material, generated fresh for every test process.
 
-### `formatter` (L2) — 20 files / 2402 lines; tests 24 files / 4241 lines
+### `formatter` (L2) — 20 files / 2402 lines; tests 24 files / 4330 lines
 
 - `src/format.rs` 235 — `format(value, type, locale, options) -> string`
 - `src/format/dated.rs` 121 — Resolving a date/datetime pick: which tables a dated field reads, and whether a name is one it can already resolve.
@@ -319,7 +319,7 @@ first sentence of its `//!` header.
 - `src/lang/specs.rs` 101 — Pack value specs: number separators, per-code currency display, and semantic-unit display (plural categories + layout strings).
 - `src/lib.rs` 24 — Locale-aware value formatting.
 
-### `image` (L2) — 27 files / 4155 lines; tests 27 files / 4007 lines
+### `image` (L2) — 27 files / 4155 lines; tests 27 files / 4028 lines
 
 - `src/decode.rs` 165 — Raster pixel decoding to straight-alpha RGBA8.
 - `src/error.rs` 55 — Error type for asset classification, resolution, and decoding.
@@ -349,7 +349,7 @@ first sentence of its `//!` header.
 - `src/svg/style.rs` 253 — SVG presentation state: affine transforms, inheritable style attributes, and their parsers.
 - `src/svg/walk.rs` 268 — The element walk: group/shape traversal with node and depth caps, emitting solid-color paths.
 
-### `layout-box` (L2) — 10 files / 1403 lines; tests 10 files / 1120 lines
+### `layout-box` (L2) — 10 files / 1403 lines; tests 10 files / 1134 lines
 
 - `src/flex.rs` 128 — Flex distribution math: main-axis spacing (`justifyContent`), cross-axis alignment (`alignItems`), and auto-margin free-space absorption.
 - `src/flex/lengths.rs` 201 — Resolving flexible lengths (CSS Flexbox §9.7): turning each unsized row child's basis into a final main size.
@@ -373,7 +373,7 @@ first sentence of its `//!` header.
 - `src/read.rs` 80 — Reading a response body without trusting its length.
 - `src/transport.rs` 104 — The HTTP seam.
 
-### `layout` (L3) — 141 files / 20888 lines; tests 282 files / 39752 lines
+### `layout` (L3) — 141 files / 20968 lines; tests 284 files / 40198 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -401,7 +401,7 @@ first sentence of its `//!` header.
 - `src/engine/char_grid/markup.rs` 44 — `char_grid` content → ruby segments: the opt-in `markup: aozora` parse and the diagnostics its warnings become.
 - `src/engine/char_grid/ruby.rs` 159 — Ruby (furigana) placement for `char_grid`: each annotated base run gets its reading laid along the run — above it (horizontal) or to its right (vertical, as a real vertical column the renderers shape with GSUB `vert`) — shrunk to fit the run's extent with a 4pt floor.
 - `src/engine/char_grid/sheet.rs` 249 — One `char_grid` sheet's atom: background fill, the stroked cell grid, and the per-cell text blocks.
-- `src/engine/container.rs` 177 — Containers: box resolution and the style cascade push/restore (the box-children walk, with flex placement, lives in `super::flex`; its absolutely positioned children go through `super::absolute`).
+- `src/engine/container.rs` 193 — Containers: box resolution and the style cascade push/restore (the box-children walk, with flex placement, lives in `super::flex`; its absolutely positioned children go through `super::absolute`).
 - `src/engine/decoration.rs` 159 — Box decoration: the `backgroundColor` fill and the border stroke, emitted over an item's border box using existing tree primitives so renderers never change.
 - `src/engine/decoration/dash.rs` 54 — Dash-pattern derivation for `borderStyle: dashed | dotted`.
 - `src/engine/decoration/paint.rs` 213 — Box decoration as DATA: a decorated box's fully resolved paint, plus the pure emitter over it.
@@ -413,9 +413,9 @@ first sentence of its `//!` header.
 - `src/engine/flex/kind.rs` 66 — `FlexKind`: the classification of a box child into the atom kinds that participate in flex/grid placement, plus the authored-box accessor both the planning pre-pass and the walk read it through.
 - `src/engine/flex/offsets.rs` 246 — The row side of the flex walk: the main-axis pre-pass (slot bases from measured widths) and the cross-axis offsets, feeding the walk in the parent module.
 - `src/engine/flex/slots.rs` 90 — Slot emission: the document-order tail every box-children walk (flex and grid) shares, plus the flow body's horizontal auto-margin shift.
-- `src/engine/flow.rs` 147 — Flow-section placement: the flow item walk; the paginating cursor lives in [`layouter`].
-- `src/engine/flow/layouter.rs` 102 — The paginating flow cursor: page breaks, the page cap, and atom placement (vertical fit + the horizontal-overflow check).
-- `src/engine/fragments.rs` 104 — Per-page vertical extents of a paginating item's placed atoms, emitted as the item's own `PlacedBox` fragments (one per page it spans).
+- `src/engine/flow.rs` 146 — Flow-section placement: the flow item walk; the paginating cursor lives in [`layouter`].
+- `src/engine/flow/layouter.rs` 156 — The paginating flow cursor: page breaks, the page cap, and atom placement (vertical fit + the horizontal-overflow check).
+- `src/engine/fragments.rs` 116 — Per-page vertical extents of a paginating item's placed atoms, emitted as the item's own `PlacedBox` fragments (one per page it spans).
 - `src/engine/grid.rs` 296 ▲ — Static grid child placement (box-model Phase 3, `box.type: grid`): children without authored `box.x`/`box.y` tile the column tracks in fill order (`direction`), rows are explicit tracks or sized by their tallest child, and `justifyContent` distributes leftover track space.
 - `src/engine/grid/cells.rs` 189 — Cell assignment and `auto` column measurement.
 - `src/engine/grid/span.rs` 107 — Grid span placement: the occupancy map that assigns each grid child its `(column, row)` cell honoring `columnSpan`/`rowSpan`.
@@ -433,11 +433,11 @@ first sentence of its `//!` header.
 - `src/engine/path.rs` 93 — The structural path stack: addresses every laid-out item in the validate-diagnostic grammar (`sections.body.items[3].items[0]`, `…cell.items[1]`, `…columns[2]`) so `inspect` emits a stable `PlacedBox.path` for id-less items too, not only id-carrying ones.
 - `src/engine/predicate.rs` 81 — Pure presence predicate shared by the declarative `{ key, equals?
 - `src/engine/qr.rs` 184 — QR code items: content is encoded at *layout* time and emitted as run-length-merged module [`RectShape`]s — no tree/renderer/asset change, which is what lets a `qr_code` work inside `repeat` cells with element-scoped bindings on day one.
-- `src/engine/repeat.rs` 209 — Imposition / n-up (`type: repeat`): tiles data-scoped cells into a rigid columns x rows grid that fills the flow region and paginates.
+- `src/engine/repeat.rs` 205 — Imposition / n-up (`type: repeat`): tiles data-scoped cells into a rigid columns x rows grid that fills the flow region and paginates.
 - `src/engine/repeat/cell.rs` 44 — One imposition cell: the `repeat` face of the shared slot-filling cell — a grid slot at an absolute page position, always definite.
 - `src/engine/repeat/marks.rs` 250 — Cut marks for an imposition grid: short ticks just outside the grid's bounding box at every cut position, so the imposed sheet can be cut without measuring.
 - `src/engine/repeat/pages.rs` 126 — Pure imposition page math: how many grid rows fit on the first page, and which page/slot each bound element lands in.
-- `src/engine/repeat_flow.rs` 78 — Flow repeat (`type: repeat_flow`): one auto-height card per array element, stacked in flow with `gap` and paginating card-by-card.
+- `src/engine/repeat_flow.rs` 77 — Flow repeat (`type: repeat_flow`): one auto-height card per array element, stacked in flow with `gap` and paginating card-by-card.
 - `src/engine/resolve.rs` 136 — Resolve-pass primitives: thin `Ctx` bridges to the box-model math in `shojiku-layout-box` (length/edge resolution, `ResolvedBox`), the page margin resolution, and the layered style resolver (engine default <- inherited <- named styles <- inline).
 - `src/engine/resolve/sane.rs` 157 — Sanity guards over the style scalars a template can set to anything: color, font size, line height, letter spacing, and the two stroke widths.
 - `src/engine/sheet.rs` 21 — Sheet-level placement: the one emit tail every band and absolute-body item goes through, and the page-edge overflow check it carries.
@@ -449,7 +449,7 @@ first sentence of its `//!` header.
 - `src/engine/table/rows/cell.rs` 97 — The `cell:` column arm: a table cell hosting freely placed items.
 - `src/engine/table/rows/measure.rs` 90 — Auto-row height measurement: what each cell needs before the row is drawn.
 - `src/engine/table/rows/prepare.rs` 206 — Preparing cells from columns: the header row's labels (interpolated against top-level params, like any other static text) and one body row's content, each resolved under the right style cascade before `row_atom` measures and draws them.
-- `src/engine/table/span.rs` 129 — Table spanning: the `headerGroups` group row (cells spanning several columns above the labels) and the `mergeEmptyCells` body transform (a value extends right over the empty cells after it).
+- `src/engine/table/span.rs` 130 — Table spanning: the `headerGroups` group row (cells spanning several columns above the labels) and the `mergeEmptyCells` body transform (a value extends right over the empty cells after it).
 - `src/engine/table/style.rs` 155 — Table style resolution: the authored grid border (with the table's 0.5pt default), the zebra row cascade, and the authored-or-default folds for the non-inherited properties whose table defaults differ from the engine initial values.
 - `src/engine/table/style/conditional.rs` 88 — Per-row conditional style layers: which `row.conditionalStyles` entries a body row's own element selects, and the layers they add on top of the base/zebra row style.
 - `src/engine/text.rs` 203 — Text content and atoms: binding/interpolation resolution and the text-item atom (margins + padding); block building lives in [`block`] (plain) and [`rich`] (spans).
@@ -468,12 +468,12 @@ first sentence of its `//!` header.
 - `src/engine/text/rich.rs` 198 — Rich text blocks: resolving `spans` into styled runs on a uniform line grid — one shared baseline and line height per block, so mixed sizes sit on a baseline grid and long-text pagination keeps its uniform-line capacity math.
 - `src/engine/text/rich/lines.rs` 79 — Line positioning for rich blocks: alignment from summed run widths, then runs laid left to right on the block's shared baseline grid.
 - `src/engine/text/rich/resolve.rs` 142 — Span resolution for rich blocks: per-span style cascade, content binding, font chains, the MAX_SPANS layout guard, the shared missing-glyph budget, and the block-wide uniform grid.
-- `src/engine/text/ruby.rs` 219 — Ruby (furigana) readings on text items: template-authored `ruby: [{ base, text }]` pairs matched against the DRAWN text of a finished block (post-policy, so what the reader sees is what is annotated) and emitted as small ordinary [`crate::tree::TextBlock`]s — beside the base column (vertical, JLREQ) or above the base run (horizontal) — so the renderers need no ruby knowledge.
+- `src/engine/text/ruby.rs` 215 — Ruby (furigana) readings on text items: template-authored `ruby: [{ base, text }]` pairs matched against the DRAWN text of a finished block (post-policy, so what the reader sees is what is annotated) and emitted as small ordinary [`crate::tree::TextBlock`]s — beside the base column (vertical, JLREQ) or above the base run (horizontal) — so the renderers need no ruby knowledge.
 - `src/engine/text/ruby/cells.rs` 152 — Per-line glyph-cell builders for the ruby matcher: one [`Cell`] per arranged/shaped glyph of a drawn line, with rich runs re-based into the line's joined text so base locating works across span boundaries.
 - `src/engine/text/ruby/horizontal.rs` 125 — The horizontal ruby applier: readings as small horizontal blocks centered ABOVE their base run's em band, shrunk to the run's shaped width with the print floor, split proportionally when the base wraps across lines.
 - `src/engine/text/ruby/vertical.rs` 120 — The vertical ruby applier: readings as small upright vertical columns just right of their base run (JLREQ), shrunk to the run's shaped extent with the print floor, split proportionally when the base wraps across columns.
 - `src/engine/text/vblock.rs` 268 — Vertical plain-text block building.
-- `src/engine/text/vcol.rs` 212 — Shared vertical-writing column geometry: per-column down-extent measurement, along-column `textAlign`, the logical `verticalAlign` column-stack shift, column-left stepping, and the down-extent `…` clamp.
+- `src/engine/text/vcol.rs` 215 — Shared vertical-writing column geometry: per-column down-extent measurement, along-column `textAlign`, the logical `verticalAlign` column-stack shift, column-left stepping, and the down-extent `…` clamp.
 - `src/engine/text/voverflow.rs` 164 — Vertical `textOverflow` policy math: column measurement (wrap + shaped extents + the hung-char alignment basis), the `shrink` fit bisection, and the `ellipsis` end-column clamp.
 - `src/engine/text/vrich.rs` 227 — Vertical rich-text blocks: the `spans` counterpart of [`super::rich`] when `writingMode: vertical_rl`.
 - `src/engine/text/vrich/place.rs` 87 — Vertical rich column positioning: one wrapped column's pieces into stacked [`TextRun`]s with the shaped extent / hung-exclusion bases.
@@ -510,14 +510,14 @@ first sentence of its `//!` header.
 - `src/tree/text.rs` 204 — Text-block tree types: wrapped lines, rich runs, decoration; the uniform run view both renderers draw through lives in [`view`].
 - `src/tree/text/view.rs` 112 — The uniform run view ([`RunView`]) both renderers draw through, and its builder [`TextBlock::line_runs`] — split from the tree types ([`super`]) for the line budget.
 - `src/wrap.rs` 140 — Greedy text wrapping with CJK-aware break opportunities and optional kinsoku (CJK line-break prohibition — one set serves Japanese and Chinese; see `wrap/kinsoku.rs`).
-- `src/wrap/hang.rs` 85 — Hanging punctuation (hanging punctuation) as a wrap post-pass: a line-terminating comma or full stop hangs past the end edge instead of wrapping to the next line, keeping the line count down.
+- `src/wrap/hang.rs` 89 — Hanging punctuation (hanging punctuation) as a wrap post-pass: a line-terminating comma or full stop hangs past the end edge instead of wrapping to the next line, keeping the line count down.
 - `src/wrap/kinsoku.rs` 202 — The kinsoku character-class tables and the per-mode line-start / line-end prohibition predicates — the single home shared by the line wrapper (`wrap::rich`) and the ellipsis clamp (`engine::text::overflow`).
 - `src/wrap/rich.rs` 286 ▲ — The styled-char wrapping engine: tokenizing, greedy line assembly, and kinsoku over `(char, span)` pairs, so rich spans and plain text (a one-span input) break identically.
 - `src/wrap/rich/token.rs` 104 — Tokenizing for the styled-char wrapping engine: greedy-fill units over `(char, span)` pairs — Latin words, single CJK chars, space runs, and atomic `textCombineUpright: all` span runs.
 - `src/wrap/rich/width.rs` 79 — Per-char and per-token advances along the wrapping axis — the measurement half of the styled-char engine, tate-chu-yoko-aware.
 - `src/wrap/thai.rs` 74 — Thai word segmentation for line breaking.
 
-### `render-pdf` (L4) — 6 files / 967 lines; tests 16 files / 1847 lines
+### `render-pdf` (L4) — 6 files / 967 lines; tests 17 files / 2146 lines
 
 - `src/annot.rs` 107 — Link annotations: walks a laid-out page and emits one krilla link annotation per linked run/line rect (text) or draw box (image).
 - `src/draw.rs` 274 ▲ — krilla draw calls: layout items, images (raster + SVG playback), glyph mapping, and geometry/paint conversions at the f32 boundary.
@@ -526,7 +526,7 @@ first sentence of its `//!` header.
 - `src/text.rs` 166 — Text drawing for the PDF backend: the fallback-chain glyph runs and the krilla glyph mapping.
 - `src/text/vertical.rs` 203 — Vertical text drawing for the PDF backend.
 
-### `render-png` (L4) — 6 files / 1166 lines; tests 15 files / 2393 lines
+### `render-png` (L4) — 6 files / 1166 lines; tests 16 files / 2601 lines
 
 - `src/lib.rs` 275 ▲ — PNG preview rendering: rasterizes a [`LayoutDocument`] with tiny-skia.
 - `src/paint.rs` 250 — The tiny-skia painter: per-page drawing of text glyph outlines, rects, lines, clip groups, and (via `paint/image.rs`) images at a uniform px/pt scale.
@@ -535,7 +535,7 @@ first sentence of its `//!` header.
 - `src/paint/text.rs` 134 — Text drawing for the PNG backend: glyph outlines filled per run.
 - `src/paint/text/vertical.rs` 217 — Vertical text drawing for the PNG backend: one column per [`TextLine`], each glyph placed by the shared `arrange_vertical` home so drawing matches what layout measured.
 
-### `authoring` (L5) — 46 files / 5537 lines; tests 47 files / 6409 lines
+### `authoring` (L5) — 46 files / 5537 lines; tests 47 files / 6422 lines
 
 - `src/bin/reference-gen.rs` 48 — `reference-gen` — writes the key catalog and the reference's generated tables to their committed paths.
 - `src/capabilities.rs` 47 — The engine's machine-readable capability list: what a GUI/SDK may offer against *this* binary (feature gating across versions).
@@ -623,7 +623,7 @@ first sentence of its `//!` header.
 - `src/sign.rs` 115 — The `sign` command: a rendered PDF in, a signed one out.
 - `src/verify.rs` 58 — The `verify` command: a signed PDF and a trust anchor in, a report out.
 
-### `mcp` (L6) — 32 files / 3495 lines; tests 33 files / 4639 lines
+### `mcp` (L6) — 32 files / 3494 lines; tests 33 files / 4657 lines
 
 - `src/examples.rs` 180 — The bundled-example read surface's data model: the embedded source files (`embed`), the `shojiku://example/…` grammar (`uri`), and the catalog that gives each entry a human title and a line saying what it exercises.
 - `src/examples/embed.rs` 156 — The compile-time example table: every bundled entry's source files, embedded with `include_str!` so the surface works identically from a checkout and from the docker image, needs no root path, and cannot be pointed at anything outside this list.
@@ -638,7 +638,7 @@ first sentence of its `//!` header.
 - `src/main.rs` 10 — `shojiku-mcp` binary entry point.
 - `src/reference.rs` 48 — The authoring-reference read surface's data model: the embedded pages (`embed`), their front matter and body (`page`), the `shojiku://reference/…` grammar (`uri`), and resolution into the key catalog (`nodes`).
 - `src/reference/embed.rs` 72 — The compile-time reference table: every page of the authoring reference, embedded with `include_str!` so the surface works identically from a checkout and from the docker image, needs no root path, and cannot be pointed at anything outside this list.
-- `src/reference/nodes.rs` 204 — Resolution into the key catalog: a page's declared shapes as a JSON Schema fragment, and a fragment selector as the catalog node(s) it names.
+- `src/reference/nodes.rs` 203 — Resolution into the key catalog: a page's declared shapes as a JSON Schema fragment, and a fragment selector as the catalog node(s) it names.
 - `src/reference/page.rs` 92 — One reference page's data model: the YAML front matter split off the markdown, parsed for the four fields this surface serves, plus the H1 title and the body.
 - `src/reference/uri.rs` 86 — The `shojiku://reference/<page>[#<fragment>]` grammar: parsing a client-supplied string into a page reference, and formatting the two forms back.
 - `src/resources.rs` 155 — The MCP `resources` area: `resources/list` and `resources/read` over the two resource families — the bundled examples (served from this file) and the authoring reference (`resources/reference`).

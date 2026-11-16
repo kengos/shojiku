@@ -56,6 +56,20 @@ fn every_flex_seed_keeps_the_distribution_properties() {
 }
 
 #[test]
+fn a_row_whose_sizes_stay_inside_their_bounds_reports_neither_the_min_nor_the_max_bound() {
+    // One growing item with a minWidth below and a maxWidth above its
+    // resolved size: the bound checks run on a size that is not at either
+    // bound, so neither bound path is reported.
+    let seed = std::fs::read_to_string(
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../fuzz/corpus/box_flex/grow-inside-bounds.txt"),
+    )
+    .expect("the inside-bounds seed");
+    let paths = flex(&seed);
+    assert!(!paths.min_bound && !paths.max_bound, "{paths:?}");
+}
+
+#[test]
 fn every_resolve_seed_keeps_the_length_and_track_properties() {
     let seeds = corpus("box_resolve");
     assert!(seeds.len() >= 8, "the committed resolve seeds are missing");

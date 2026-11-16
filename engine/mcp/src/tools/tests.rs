@@ -233,3 +233,21 @@ fn assert_bundle_over(arguments: &Value) {
         }
     }
 }
+
+#[test]
+fn a_tools_call_for_list_examples_answers_with_the_example_catalog() {
+    let args = crate::test_support::server_args();
+    let via_call = call(
+        &args,
+        &json!({ "name": "list_examples", "arguments": { "cursor": "ignored" } }),
+    )
+    .expect("list_examples");
+    assert_eq!(via_call["isError"], false);
+    assert_eq!(via_call, examples::list(&json!({})).expect("list"));
+    let catalog = text_json(&content(&via_call)[0]);
+    assert!(
+        catalog["howToRead"]
+            .as_str()
+            .is_some_and(|how| how.contains("get_example"))
+    );
+}

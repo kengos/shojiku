@@ -91,9 +91,8 @@ impl<'a, 'b> Ctx<'a, 'b> {
                 Item::Container(container) => {
                     // Flow ignores `box.y` (items stack), like every other
                     // flow item.
-                    if let Some(atom) = self.container_atom(container, &region, 1) {
-                        layouter.place(h_auto_margin(atom, &region), &mut self.diags);
-                    }
+                    let atom = self.container_atom_within_depth(container, &region, 1);
+                    layouter.place(h_auto_margin(atom, &region), &mut self.diags);
                 }
                 Item::Repeat(repeat) => {
                     self.place_repeat(repeat, &region, &mut layouter);
@@ -142,6 +141,6 @@ impl<'a, 'b> Ctx<'a, 'b> {
             }
         }
         self.leave_item(body_mark);
-        layouter.pages
+        layouter.pages.into_vec()
     }
 }

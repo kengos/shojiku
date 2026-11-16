@@ -120,6 +120,9 @@ Wire types stay in core; content measurement stays in layout.
 - `engine/flow.rs` — the flow item walk; `engine/flow/layouter.rs` —
   `FlowLayouter`, the paginating cursor (page breaks, the `MAX_PAGES`
   runaway cap, atom placement = vertical fit + horizontal-overflow check).
+  `PageBuilds` is a list of pages that starts with one page and has no way to
+  remove one, so `last_mut` always returns a page; `page_at` returns `None`
+  only when the `MAX_PAGES` limit is reached.
 - `engine/absolute.rs` — `absolute_atom`, the ONE per-kind dispatch for an
   item placed at its authored `box.y`: band items, absolute-body items and
   container children with `box.x`/`box.y` (called from
@@ -581,7 +584,7 @@ Wire types stay in core; content measurement stays in layout.
 
 Modules mirror the src module they target: `atoms`/`band`/`bindings/`
 (carriers/scopes/precedence)/`char_grid/`/`container`/`flex/`/`flow`
-(+`page_break`)/`grid/` (+auto/fr/spans/track_width)/`link/`/`repeat/`/`repeat_flow/`/`table/`
+(+`page_break`)/`grid/` (+auto/fr/spans/track_width/unresolved)/`link/`/`repeat/`/`repeat_flow/`/`table/`
 (geom/rows/style/boxes (+`boxes/groups` — the `headerGroups` box
 addressing, `boxes/merge` — the `mergeEmptyCells` widths)/vertical)/`text` (+ overflow/paginate/ (+decoration, slack)/glyphs/
 decoration/rich/line_break/spacing_trim/hanging/ruby/ and the vertical

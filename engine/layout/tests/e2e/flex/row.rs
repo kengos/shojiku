@@ -280,3 +280,33 @@ fn an_auto_cross_margin_opts_a_row_child_out_of_stretch() {
         "auto margin opts out of stretch: {short} vs {tall}"
     );
 }
+
+#[test]
+fn an_unsized_rect_in_a_stretch_row_warns_once_and_does_not_set_the_cross_size() {
+    // An auto-height `stretch` row measures its children first to find the
+    // tallest. A `rect` with no `h` produces no atom, so it contributes no
+    // height: the bordered container beside it keeps its own content
+    // height (the same as in a row without the rect), and the missing size
+    // is reported once, by the placement pass (not the measuring pass).
+    let row = |rect: &str| {
+        let yaml = container_body(
+            "{ x: 0, y: 0, w: 200, direction: row }",
+            &format!(
+                "{rect}- type: container\n  box: {{ flexBasis: 0 }}\n  style: {{ borderWidth: 1 }}\n  items:\n    - type: text\n      text: a"
+            ),
+        );
+        let (doc, diags) = run(&yaml, json!({}));
+        let heights: Vec<f64> = rect_shapes(&doc.pages[0]).iter().map(|r| r.h).collect();
+        let missing = diags
+            .iter()
+            .filter(|d| d.code == "rect_missing_size")
+            .count();
+        (heights, missing)
+    };
+    let (alone, none) = row("");
+    let (with_rect, missing) = row("- type: rect\n  box: { w: 50 }\n");
+    assert_eq!(none, 0);
+    assert_eq!(missing, 1);
+    assert_eq!(alone.len(), 1);
+    assert_eq!(with_rect, alone);
+}

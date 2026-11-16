@@ -209,3 +209,24 @@ fn data_binding_and_interpolation_fill_cells() {
     let block = main_block(&doc.pages[0]);
     assert_eq!(line_texts(block), vec!["題", "吾", "輩"]);
 }
+
+#[test]
+fn an_undefined_style_name_leaves_the_cell_defaults_unchanged() {
+    // `validate` reports the unknown name; layout skips it silently, so the
+    // sheet is drawn exactly as it is without the name: the default 0.5pt
+    // black grid and the chars centered in their cells.
+    let yaml = grid_template(
+        200.0,
+        200.0,
+        "        text: ああ\n        grid: { charsPerLine: 2, lines: 1, cellSize: 20 }\n        styleNames: [ghostSheet]\n",
+    );
+    let (doc, diags) = run(&yaml, json!({}));
+    assert!(diags.is_empty(), "diags: {diags:?}");
+    let page = &doc.pages[0];
+    let rects = grid_rects(page);
+    assert_eq!(rects.len(), 2);
+    assert_eq!(rects[0].stroke_width, 0.5);
+    assert_eq!(rects[0].stroke, Some((0.0, 0.0, 0.0)));
+    let block = main_block(page);
+    assert_eq!((block.lines[0].x, block.lines[0].y), (5.0, 5.0));
+}

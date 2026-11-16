@@ -40,6 +40,28 @@ fn load_from_specs_with_no_faces_is_no_fonts() {
     assert!(matches!(err, FontError::NoFonts(_)));
 }
 
+#[test]
+fn load_from_specs_reports_a_face_file_that_cannot_be_read() {
+    // A resolved spec whose font file is missing: loading that face fails with
+    // an I/O error, and `load_from_specs` returns it instead of building a
+    // store from the remaining faces.
+    let pack = ja_pack();
+    let mut specs = resolve_face_specs(&pack, &[repo_font_dir()]).expect("resolve");
+    specs[0].path = std::path::PathBuf::from("/no/such/font.ttf");
+    let err = FontStore::load_from_specs(specs, &pack).unwrap_err();
+    assert!(matches!(err, FontError::Io { .. }));
+}
+
+#[test]
+fn load_from_specs_with_a_pack_that_declares_no_default_font_is_no_fonts() {
+    // The pack has no `fonts.default`, so the default face id cannot be
+    // determined and the specs are not loaded at all.
+    let pack = LangPack::from_yaml_str("id: xx-XX").expect("pack");
+    let specs = resolve_face_specs(&ja_pack(), &[repo_font_dir()]).expect("resolve");
+    let err = FontStore::load_from_specs(specs, &pack).unwrap_err();
+    assert!(matches!(err, FontError::NoFonts(ref id) if id == "xx-XX"));
+}
+
 fn sha_hex(bytes: &[u8]) -> String {
     Sha256::digest(bytes)
         .iter()

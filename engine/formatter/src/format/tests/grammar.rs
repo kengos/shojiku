@@ -174,6 +174,65 @@ fn month_and_weekday_names_fall_back_across_lists() {
 }
 
 #[test]
+fn a_short_month_or_weekday_list_falls_back_to_the_long_list_at_the_missing_index() {
+    // monthsShort and weekdaysShort hold one entry each, so July and Monday
+    // are missing from them: `MMM` and `E` read the long list at that index,
+    // and `MMMM` and `EEEE` read their own long list directly.
+    let months: Vec<String> = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ]
+    .iter()
+    .map(|name| format!("\"{name}\""))
+    .collect();
+    let yaml = format!(
+        "id: xx-XX\ndateFormats:\n  default: \"MMM MMMM E EEEE\"\n\
+         monthsShort: [\"Jan\"]\nmonthsLong: [{}]\n\
+         weekdaysShort: [\"Sun\"]\n\
+         weekdaysLong: [\"Sunday\", \"Mon-long\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\", \"Saturday\"]\n",
+        months.join(", ")
+    );
+    let pack = LangPack::from_yaml_str(&yaml).expect("pack");
+    // 2026-07-06 is a Monday.
+    let out = fmt(
+        &json!("2026-07-06"),
+        Some(&spec(FieldType::Date)),
+        None,
+        &pack,
+    );
+    assert_eq!(out, "July July Mon-long Mon-long");
+}
+
+#[test]
+fn month_and_weekday_names_missing_from_both_lists_render_the_number_and_the_english_name() {
+    // Both the short and the long list stop before July and Monday: `MMM`
+    // and `MMMM` render the month number, `E` and `EEEE` the English name.
+    let pack = LangPack::from_yaml_str(
+        "id: xx-XX\ndateFormats:\n  default: \"MMM MMMM E EEEE\"\n\
+         monthsShort: [\"Jan\"]\nmonthsLong: [\"January\"]\n\
+         weekdaysShort: [\"Sun\"]\nweekdaysLong: [\"Sunday\"]\n",
+    )
+    .expect("pack");
+    let out = fmt(
+        &json!("2026-07-06"),
+        Some(&spec(FieldType::Date)),
+        None,
+        &pack,
+    );
+    assert_eq!(out, "7 7 Monday Monday");
+}
+
+#[test]
 fn builtin_ja_goldens_are_stable() {
     // Golden set per agents/lang.md: date, datetime, currency, quantity,
     // percentage against the compiled ja-JP pack.
@@ -266,4 +325,34 @@ fn a_long_repeat_run_renders_every_token() {
         &pack,
     );
     assert_eq!(out, "05".repeat(200));
+}
+
+#[test]
+fn a_pack_without_era_year_one_or_day_periods_renders_ss_g_y_and_a() {
+    // The pack has one era, no `eraYearOne` and no `dayPeriods`:
+    // `G` renders the era name, `y` renders "1" in the first year of the
+    // era, `ss` is the zero-padded second, and `a` falls back to "AM".
+    let with_era = LangPack::from_yaml_str(
+        "id: xx-XX\ndatetimeFormats:\n  default: \"G y ss a\"\n\
+         eras:\n  - { name: Showa, start: \"1926-12-25\" }\n",
+    )
+    .expect("pack");
+    let out = fmt(
+        &json!("1926-12-25T00:00:07Z"),
+        Some(&spec(FieldType::Datetime)),
+        None,
+        &with_era,
+    );
+    assert_eq!(out, "Showa 1 07 AM");
+
+    // A pack without eras renders `G` as an empty string.
+    let without_era =
+        LangPack::from_yaml_str("id: xx-XX\ndatetimeFormats:\n  default: \"[G]\"\n").expect("pack");
+    let out = fmt(
+        &json!("2026-07-05T00:00:00Z"),
+        Some(&spec(FieldType::Datetime)),
+        None,
+        &without_era,
+    );
+    assert_eq!(out, "[]");
 }

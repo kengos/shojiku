@@ -11,6 +11,7 @@ mod patterns;
 mod rasters;
 mod raw;
 mod spans;
+mod unusable_geometry;
 mod vertical;
 mod vertical_decoration;
 

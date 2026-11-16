@@ -57,13 +57,17 @@ pub(super) fn apply_hang(
     let mut received = false;
     let mut i = 0;
     while i < lines.len() {
-        if i > 0 && !received && hangable(&lines[i], line_break) && !lines[i - 1].is_empty() {
+        // `hung` holds one flag per line before `i`, so it is empty
+        // exactly when `i == 0` (no previous line to receive).
+        if let Some(h) = hung.last_mut()
+            && !received
+            && hangable(&lines[i], line_break)
+            && !lines[i - 1].is_empty()
+        {
             let moved = lines[i].remove(0);
             lines[i - 1].push(moved);
             received = true;
-            if let Some(h) = hung.last_mut() {
-                *h = true;
-            }
+            *h = true;
             if lines[i].is_empty() {
                 // Fully hung up — drop the empty line; the next line shifts
                 // into `i` with the receiver's one-pull budget spent.

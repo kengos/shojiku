@@ -57,12 +57,11 @@ impl<'a, 'b> Ctx<'a, 'b> {
             // The card container is addressable as `…items[i].item`; its
             // children become `…item.items[j]` via `container_atom`.
             let card_mark = self.enter_item("item".to_string());
-            if let Some(atom) = self.container_atom(&rf.item, region, 1) {
-                let atom = h_auto_margin(atom, region);
-                let height = atom.height;
-                layouter.place(atom, &mut self.diags);
-                frags.track(layouter, height);
-            }
+            let atom = self.container_atom_within_depth(&rf.item, region, 1);
+            let atom = h_auto_margin(atom, region);
+            let height = atom.height;
+            layouter.place(atom, &mut self.diags);
+            frags.track(layouter, height);
             self.leave_item(card_mark);
         }
         self.scope = saved_scope;

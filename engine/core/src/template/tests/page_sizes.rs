@@ -22,7 +22,7 @@ fn named_sizes_have_expected_dimensions() {
 
 #[test]
 fn named_sizes_parse_and_round_trip() {
-    for name in ["A3", "A5", "B4", "B5", "Legal", "Tabloid"] {
+    for name in ["A3", "A5", "B4", "B5", "Letter", "Legal", "Tabloid"] {
         let yaml =
             format!("page:\n  size: {name}\nsections:\n  body:\n    type: flow\n    items: []\n");
         let tpl = parse_template(&yaml).expect("named size should parse");

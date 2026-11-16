@@ -21,11 +21,11 @@ impl<'a, 'b> Ctx<'a, 'b> {
     fn chain_of(&self, font_id: &str, fallback_ids: &[String]) -> Vec<&'a FontFace> {
         let mut chain = Vec::with_capacity(1 + fallback_ids.len());
         chain.push(self.input.fonts.face(Some(font_id)));
-        for id in fallback_ids {
-            if let Some(f) = self.input.fonts.get(id) {
-                chain.push(f);
-            }
-        }
+        chain.extend(
+            fallback_ids
+                .iter()
+                .filter_map(|id| self.input.fonts.get(id)),
+        );
         chain
     }
 

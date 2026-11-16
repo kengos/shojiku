@@ -92,9 +92,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
             });
         }
         let mut decor = self.resolve_style(&[], &shojiku_core::Style::default());
-        if decor.background_color.is_none() {
-            decor.background_color = Some(TABLE_HEADER_FILL.to_string());
-        }
+        // `resolve_style(&[], &Style::default())` carries no background
+        // color, so the spanning row's background is always
+        // `TABLE_HEADER_FILL`.
+        decor.background_color = Some(TABLE_HEADER_FILL.to_string());
         // The spanning row is header chrome: it repeats WITH the header and
         // draws above the labels, so hiding the header must hide it too —
         // leaving it painted would show a lone grey band over nothing.

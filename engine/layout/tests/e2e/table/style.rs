@@ -272,3 +272,22 @@ fn hostile_cell_font_size_warns_once_after_dedup() {
         "measure + render double warn must dedup: {diags:?}"
     );
 }
+
+#[test]
+fn undefined_alternate_style_names_leave_only_the_inline_zebra_layer() {
+    // `validate` reports the unknown name; layout skips it silently, so the
+    // second row still takes the inline `alternateStyle` fill and the first
+    // row keeps no fill.
+    let (doc, diags) = styled_table(
+        "        row:\n          alternateStyleNames: [ghostStripe]\n          alternateStyle: { backgroundColor: \"#ff0000\" }\n",
+        2,
+    );
+    assert!(diags.is_empty(), "diags: {diags:?}");
+    let fills: Vec<_> = rect_shapes(&doc.pages[0])
+        .into_iter()
+        .filter(|r| r.fill.is_some())
+        .collect();
+    assert_eq!(fills.len(), 1);
+    assert_eq!(fills[0].fill, Some((1.0, 0.0, 0.0)));
+    assert_eq!(fills[0].y, 24.0);
+}

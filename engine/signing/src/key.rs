@@ -142,8 +142,8 @@ impl PrivateKey {
             Self::Rsa(pair) => {
                 let mut signature = vec![0u8; pair.public().modulus_len()];
                 pair.sign(&RSA_PKCS1_SHA256, &rng, message, &mut signature)
-                    .map_err(|_| KeyError::SignFailed)?;
-                Ok(signature)
+                    .map(|()| signature)
+                    .or(Err(KeyError::SignFailed))
             }
             Self::Ecdsa(pair) => {
                 let signature = pair.sign(&rng, message).map_err(|_| KeyError::SignFailed)?;

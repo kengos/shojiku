@@ -88,11 +88,11 @@ fn shape(name: &str) -> Option<&'static Value> {
 /// why a page cannot resolve its own pointers.
 pub(crate) fn defs(page: &Page) -> Value {
     let mut defs = Map::new();
-    for name in &page.shapes {
-        if let Some(node) = shape(name) {
-            defs.insert(name.clone(), node.clone());
-        }
-    }
+    defs.extend(
+        page.shapes
+            .iter()
+            .filter_map(|name| shape(name).map(|node| (name.clone(), node.clone()))),
+    );
     json!({ "$comment": REF_RESOLUTION, "$defs": Value::Object(defs) })
 }
 
@@ -171,8 +171,7 @@ fn walk(shape_name: &str, tail: &[&str]) -> Option<Match> {
             node = properties.get(*segment)?;
             key = Some((*segment).to_string());
         } else {
-            node = node
-                .get("oneOf")?
+            node = node["oneOf"]
                 .as_array()?
                 .iter()
                 .find(|branch| selects(branch, segment))?;

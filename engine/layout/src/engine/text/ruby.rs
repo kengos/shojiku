@@ -204,16 +204,12 @@ fn slice_extent(cells: &[Cell], range: &Range<usize>) -> Option<SliceExtent> {
 /// `textOverflow: clip` wrapper when one exists (readings must clip with
 /// their block), else onto the atom's own items.
 fn push_ruby_items(items: &mut Vec<LayoutItem>, ruby: Vec<LayoutItem>) {
-    let mut ruby = Some(ruby);
-    for item in items.iter_mut() {
-        if let LayoutItem::Clip(clip) = item {
-            if let Some(r) = ruby.take() {
-                clip.items.extend(r);
-            }
-            return;
-        }
-    }
-    if let Some(r) = ruby.take() {
-        items.extend(r);
+    let clip = items.iter_mut().find_map(|item| match item {
+        LayoutItem::Clip(clip) => Some(clip),
+        _ => None,
+    });
+    match clip {
+        Some(clip) => clip.items.extend(ruby),
+        None => items.extend(ruby),
     }
 }
