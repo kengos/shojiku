@@ -93,6 +93,32 @@ file is only for output that could not answer **which file / which line
 
 ## Shipped
 
+- [x] `make_issue_coverage_why_names_no_function_when_no_copy_runs_every_line` — **When**:
+      `make engine:coverage` failed one line short in a file while every
+      test was green and every line of the file ran in some copy of its
+      crate (the crate's own unit-test build, or the non-test build linked
+      into a dependent's test binary). **Not detected by**: the FAIL block's
+      `--- which lines? ---` (`scripts/coverage-why.sh`): there was no
+      `DA:…,0` and no `FNDA:0`, so it printed LINE TOTAL SHORT and advised
+      "look for a closure that never runs", so closures that ran correctly
+      were rewritten twice. **Recovered by**: `cargo llvm-cov report --json`
+      and counting each function's zero lines per copy — one copy ran one
+      branch and another copy ran the other. llvm-cov merges the copies of a
+      function by taking the largest line count and the largest covered-line
+      count, not the union of covered lines that lcov's `DA:` records show,
+      so the file is short although every line ran in some copy.
+      **Fixed by**: `make engine:coverage` writes `engine/coverage.json`
+      when it fails and `lcov.info` exists (`report --json` over the profdata
+      the failed run just collected; the gate does not write it when it
+      passes), and `coverage-why.sh` reads it with `jq`: per function (copies
+      grouped by file and start line:column) it prints, under NO SINGLE COPY
+      RUNS EVERY LINE, the zero lines of each copy. LINE TOTAL SHORT shrinks
+      to what that section does not explain, and its wording says a closure
+      is only one possibility and what to install or re-run when the JSON or
+      `jq` is missing or unreadable. Reproduced by an actual failing run: a
+      branching function whose crate's own test takes one branch and a
+      dependent's test takes the other.
+
 - [x] `make_issue_coverage_why_misses_an_unrun_closure` — **When**: `make
       engine:coverage` failed with every test green; the uncovered line was
       a closure that never ran (`unwrap_or_else(|| …)` on a line whose outer
