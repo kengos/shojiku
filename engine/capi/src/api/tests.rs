@@ -2,7 +2,10 @@
 //! actually hits, and the panic shield at the real boundary.
 //!
 //! Document round trips live in `tests/capi` — these are about the frame
-//! around the operation, not the operation.
+//! around the operation, not the operation. The one exception is the child
+//! module `external_signing`, which round-trips a document so that the three
+//! `#[unsafe(no_mangle)]` signing and verify entry points are also called
+//! from this crate's unit test binary.
 
 use super::*;
 use crate::input::MAX_REQUEST_BYTES;
@@ -223,3 +226,5 @@ fn a_panic_inside_an_operation_becomes_a_status_not_an_unwind() {
     // SAFETY: freed exactly once.
     unsafe { shojiku_result_free(out) };
 }
+
+mod external_signing;

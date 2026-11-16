@@ -729,6 +729,15 @@ per SDK covers both.
   free in a binding's cleanup path is well defined), run under the shield,
   write the result or the failure-as-result. `deliver` is function-pointer
   taking, not generic, so one copy exists in the binary.
+  `api/tests/external_signing.rs` calls `sign_prepare`/`sign_complete`/
+  `verify` from this crate's OWN test binary (one round trip plus the
+  null-argument refusals): they are `#[unsafe(no_mangle)]`, so the unit and
+  integration binaries each record them under their own hash, and a function
+  the unit binary never calls has an execution count of 0 in the unit
+  binary's coverage record. llvm-cov may report the unit binary's record
+  instead of the integration binary's. A new `#[unsafe(no_mangle)]` export
+  therefore needs at least one call from this crate's unit tests
+  (`src/**/tests.rs` or a module under one).
 - `src/api/work.rs` — the `Work` enum (one variant per entry point) and the
   pointer borrowing. `on_engine_stack` runs every operation on a scoped
   thread of `ENGINE_STACK` (8 MiB) that the caller's thread joins: the host

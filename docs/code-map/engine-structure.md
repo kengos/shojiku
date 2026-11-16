@@ -584,7 +584,7 @@ first sentence of its `//!` header.
 - `src/sources.rs` 73 — Parsing + validation of the three source strings.
 - `src/test_support.rs` 63 — Shared fixtures for the crate's unit tests: the builtin ja pack, its filesystem-loaded font store (cached — sha256-verifying the ~47MB IPAmj fallback per test is far too slow), and a known-good single-page run.
 
-### `capi` (L6) — 18 files / 2258 lines; tests 21 files / 3018 lines
+### `capi` (L6) — 18 files / 2258 lines; tests 22 files / 3276 lines
 
 - `src/api.rs` 274 ▲ — The C entry points.
 - `src/api/work.rs` 249 — What an entry point asks [`deliver`](super::deliver) to run.
