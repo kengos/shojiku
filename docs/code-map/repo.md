@@ -616,6 +616,16 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   line, so `gate-lock` / `--locked` appear in passing runs too; the biome
   and reference remedies still key on a name), and both are
   validated by inducing a real failure, never by reading the regex.
+  `coverage-why.sh` — `make engine:coverage-why`, the reader of a red
+  coverage gate: lcov.info for the uncovered / never-called lines (its
+  one-copy-only section is kept for a report with several SF blocks per file;
+  the current cargo llvm-cov writes one, already the union of the copies),
+  and (needs `jq`) `engine/coverage.json`, which the gate writes only when it
+  fails, for NO SINGLE COPY RUNS EVERY LINE — functions whose every copy (own
+  unit-test build, build linked into a dependent, generic instance) skips a
+  line another runs. llvm-cov merges the copies by the largest line count and
+  the largest covered-line count, taken separately, not by the union of
+  covered lines. LINE TOTAL SHORT is only what those leave unnamed.
   `gate-lock.sh` — one gate per working tree (re-entrant; the outermost
   hold exports its lock dir and pid). `target-slot.sh` — the pooled cargo
   target: every engine container runs through it (`TARGET_DOCKER`), which

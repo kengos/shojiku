@@ -24,6 +24,7 @@ target/
 /out.pdf
 /stderr.txt
 /engine/lcov.info
+/engine/coverage.json
 
 # Full gate logs written by `make quiet T=<target>`
 /.make-logs/

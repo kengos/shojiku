@@ -168,25 +168,41 @@ endif
 
 ## ---- job: coverage -----------------------------------------------------
 
-# The `rm -f lcov.info` is load-bearing, not tidiness. When the gate fails
-# because a TEST DOES NOT COMPILE, cargo llvm-cov never writes a report — and
-# coverage-why.sh would then read the PREVIOUS run's file and confidently
-# reprint uncovered lines that a compile error means nothing ever reached.
-# Deleting it first makes that case say so instead of lying with precision.
+# The `rm -f lcov.info coverage.json` is load-bearing, not tidiness. When the
+# gate fails because a TEST DOES NOT COMPILE, cargo llvm-cov never writes a
+# report — and coverage-why.sh would then read the PREVIOUS run's file and
+# confidently reprint uncovered lines that a compile error means nothing ever
+# reached. Deleting them first makes that case say so instead of lying with
+# precision.
+#
+# coverage.json is written only when the gate fails AND lcov.info exists
+# (`report` re-reads the profdata the failed run just collected; no test
+# re-runs). A compile failure leaves no lcov.info, so it leaves no JSON either.
+# lcov's DA: records are the union over the copies of a crate, but llvm-cov
+# merges the copies of a function by taking the largest line count and the
+# largest covered-line count, so a file can come up a line short with no DA:0
+# and no FNDA:0 anywhere. Only the per-region JSON can name that function. It
+# is large (the regions of every function), so the gate does not write it when
+# it passes. `report` is called without --workspace, so the JSON also holds
+# the files under tests/ and the sources of registry crates. coverage-why.sh
+# keeps only the files that have an SF: record in lcov.info, so those extra
+# files are never named. `|| true`: a missing JSON only degrades the answer of
+# coverage-why.sh.
 engine\:coverage: ## cargo llvm-cov, blocking at 100% lines (names the offending lines on failure)
 	@$(call gate,_engine-coverage,engine:coverage)
 
 _engine-coverage:
 	@echo "== coverage (100% lines) =="
-	@$(CARGO_IN_DOCKER) 'rm -f lcov.info; \
+	@$(CARGO_IN_DOCKER) 'rm -f lcov.info coverage.json; \
 		cargo llvm-cov --workspace --locked --fail-under-lines 100 $(CARGO_JOBS) \
 			--lcov --output-path lcov.info' \
 	|| { code=$$?; \
+	     $(CARGO_IN_DOCKER) '[ ! -f lcov.info ] || cargo llvm-cov report --json --output-path coverage.json' || true; \
 	     echo; echo "-- which lines? (scripts/coverage-why.sh) --"; \
 	     $(MAKE) --no-print-directory engine:coverage-why || true; \
 	     exit $$code; }
 
-engine\:coverage-why: ## Name the lines that failed the coverage gate (reads engine/lcov.info; no re-run)
+engine\:coverage-why: ## Name the lines that failed the coverage gate (reads engine/lcov.info + coverage.json; no re-run)
 	@scripts/coverage-why.sh
 
 ## ---- job: deny ---------------------------------------------------------
