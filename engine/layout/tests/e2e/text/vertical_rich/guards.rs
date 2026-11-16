@@ -82,3 +82,31 @@ fn columns_exactly_filling_the_box_do_not_warn() {
         "spurious overflow at the exact-fit boundary"
     );
 }
+
+#[test]
+fn shrink_on_a_vertical_rich_flow_block_warns_unsupported_and_paginates_without_the_overflow_warning()
+ {
+    // In a direct flow region a column overflow is paginated at column
+    // boundaries, so the policy `shrink` (not modelled for spans) warns
+    // `span_overflow_unsupported` and the separate `vertical_text_overflow`
+    // warning is left out.
+    let (_doc, diags) = run(
+        r#"
+page: { margin: 0 }
+sections:
+  body:
+    type: flow
+    box: { x: 0, y: 0, w: 400, h: 400 }
+    items:
+      - type: text
+        box: { w: 25, h: 30 }
+        style: { fontFamily: biz-ud-gothic, fontSize: 10, lineHeight: 1.0, writingMode: vertical_rl, textOverflow: shrink }
+        spans:
+          - text: "あいうえおかきくけこ"
+"#,
+        json!({}),
+    );
+    let count = |code: &str| diags.iter().filter(|d| d.code == code).count();
+    assert_eq!(count("span_overflow_unsupported"), 1, "{diags:?}");
+    assert_eq!(count("vertical_text_overflow"), 0, "{diags:?}");
+}

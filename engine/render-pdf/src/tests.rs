@@ -11,6 +11,7 @@ mod marks;
 mod metadata;
 mod patterns;
 mod spans;
+mod unusable_geometry;
 mod vertical;
 mod vertical_decoration;
 
@@ -65,4 +66,22 @@ pub(super) fn render_template(template_yaml: &str, params: serde_json::Value) ->
     let (doc, diags) = (out.document, out.diagnostics);
     assert!(!diags.has_errors(), "layout errors: {diags:?}");
     render_pdf(&doc, fonts, &assets).expect("render")
+}
+
+/// Lays `template_yaml` out (no params, no assets) and returns the tree, so a
+/// test can edit it before rendering.
+pub(super) fn laid_out(template_yaml: &str) -> shojiku_layout::LayoutDocument {
+    let template = parse_template(template_yaml).expect("template");
+    let (pack, fonts) = shared_fonts();
+    let params = json!({});
+    let out = layout(&LayoutInput {
+        template: &template,
+        params: &params,
+        catalog: None,
+        pack,
+        fonts,
+        assets: None,
+    });
+    assert!(!out.diagnostics.has_errors(), "{:?}", out.diagnostics);
+    out.document
 }

@@ -145,3 +145,20 @@ fn every_overflow_seed_keeps_the_overflow_properties() {
         "every overflow seed is shrunk or clamped"
     );
 }
+
+#[test]
+fn a_clamp_that_hits_the_shaping_bound_keeps_the_prefix_it_found() {
+    // Four letters fill the box, followed by 100 combining marks of no
+    // width: every prefix ending in a mark is as wide as the four letters
+    // and does not fit with `…`, and each needs its own shaping. The clamp
+    // stops shaping at its bound and keeps the three letters that fit. The
+    // harness skips the "no longer prefix fits" assertion for this result,
+    // because the bound, not the width, ended the search.
+    let seed = std::fs::read_to_string(
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../fuzz/corpus/layout_overflow/clamp-shaping-bound.txt"),
+    )
+    .expect("the shaping-bound seed");
+    let paths = overflow(chain(), &seed);
+    assert!(paths.clamped && paths.clamped_nonempty, "{paths:?}");
+}

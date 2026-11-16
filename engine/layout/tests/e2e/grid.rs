@@ -7,6 +7,7 @@ mod fr;
 mod hostile;
 mod spans;
 mod track_width;
+mod unresolved;
 
 use crate::common::*;
 

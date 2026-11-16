@@ -36,6 +36,10 @@ pub(super) fn clip_children(
     })
 }
 
+// The flow and the repeat-flow card pass depth 1 to
+// `container_atom_within_depth` without checking it against the limit.
+const _: () = assert!(MAX_CONTAINER_DEPTH >= 1);
+
 impl<'a, 'b> Ctx<'a, 'b> {
     /// Lays out a container as an atom: the container's box resolves
     /// against `basis`, children resolve against the container and are
@@ -56,6 +60,18 @@ impl<'a, 'b> Ctx<'a, 'b> {
             );
             return None;
         }
+        Some(self.container_atom_within_depth(container, basis, depth))
+    }
+
+    /// The body of [`Self::container_atom`], for a caller whose `depth`
+    /// is already known to be within `MAX_CONTAINER_DEPTH` (depth 1 from
+    /// the flow and the repeat-flow card).
+    pub(super) fn container_atom_within_depth(
+        &mut self,
+        container: &ContainerItem,
+        basis: &Basis,
+        depth: usize,
+    ) -> Atom {
         let b = container.box_.clone().unwrap_or_default();
         let rb = self.resolve_box(&b, basis);
         let w = rb.w_or_fill(basis, 1.0);
@@ -139,7 +155,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
         } else {
             all_items.extend(children);
         }
-        Some(with_vertical_margin(
+        with_vertical_margin(
             Atom {
                 height,
                 items: all_items,
@@ -148,7 +164,7 @@ impl<'a, 'b> Ctx<'a, 'b> {
             },
             rb.margin[0],
             rb.margin[2],
-        ))
+        )
     }
 
     /// Draws an image, resolving its asset key for the placement context.

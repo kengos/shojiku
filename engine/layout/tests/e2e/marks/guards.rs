@@ -174,3 +174,29 @@ fn marks_place_as_flex_children() {
     assert_eq!(rect_shapes(&doc.pages[0]).len(), 1);
     assert!(diags.is_empty(), "{diags:?}");
 }
+
+#[test]
+fn a_zero_width_checkbox_in_a_flow_warns_and_reserves_no_height() {
+    // `w: 0` is an authored size no frame can have, so the checkbox draws
+    // nothing and warns `mark_missing_size`. The rect after it stacks at
+    // the top of the body (the 25pt page margin): the checkbox took no
+    // height either.
+    let (doc, diags) = run(
+        &flow(
+            "      - type: checkbox\n        box: { w: 0, h: 10 }\n      - type: rect\n        style: { borderWidth: 1 }\n        box: { w: 10, h: 10 }\n",
+        ),
+        json!({}),
+    );
+    assert_eq!(
+        diags
+            .iter()
+            .filter(|d| d.code == "mark_missing_size")
+            .count(),
+        1,
+        "{diags:?}"
+    );
+    assert!(path_shapes(&doc.pages[0]).is_empty());
+    let rects = rect_shapes(&doc.pages[0]);
+    assert_eq!(rects.len(), 1);
+    assert_eq!(rects[0].y, 25.0);
+}

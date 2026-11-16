@@ -96,3 +96,26 @@ fn ec_pem_with_body(private_key: &[u8]) -> Vec<u8> {
         .expect("re-encoding as PEM")
         .into_bytes()
 }
+
+/// Builds a PKCS#8 file that declares an elliptic-curve key whose algorithm
+/// parameters are `parameters` (DER bytes), or absent for `None`.
+///
+/// A well-formed key names its curve with an object identifier here; this is
+/// the way to hand the loader one that does not.
+fn ec_pem_with_parameters(parameters: Option<&[u8]>) -> Vec<u8> {
+    let info = PrivateKeyInfo {
+        algorithm: AlgorithmIdentifierRef {
+            oid: oid::ID_EC_PUBLIC_KEY,
+            parameters: parameters
+                .map(|der| der::AnyRef::from_der(der).expect("decoding the parameters")),
+        },
+        private_key: b"the key body is never read",
+        public_key: None,
+    };
+    let der = info.to_der().expect("encoding a private-key info");
+    Document::try_from(der)
+        .expect("a private-key info is valid DER")
+        .to_pem("PRIVATE KEY", LineEnding::LF)
+        .expect("re-encoding as PEM")
+        .into_bytes()
+}

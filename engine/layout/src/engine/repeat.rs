@@ -123,14 +123,12 @@ impl<'a, 'b> Ctx<'a, 'b> {
         'elements: for (i, element) in elements.into_iter().enumerate() {
             let at = plan.locate(i);
             let target = base + at.page;
-            while layouter.pages.len() <= target {
-                if !layouter.break_page(&mut self.diags) {
-                    // Page cap hit (`page_overflow` already emitted); stop
-                    // adding cells but still emit fragments for the pages
-                    // that DID fill.
-                    break 'elements;
-                }
-            }
+            let Some(page) = layouter.page_at(target, &mut self.diags) else {
+                // Page cap hit (`page_overflow` already emitted); stop
+                // adding cells but still emit fragments for the pages
+                // that DID fill.
+                break 'elements;
+            };
             let slot = Slot {
                 x: region.x + at.col as f64 * (slot_w + col_gap),
                 y: at.top + at.row as f64 * (slot_h + row_gap),
@@ -140,12 +138,10 @@ impl<'a, 'b> Ctx<'a, 'b> {
             let slot_y = slot.y;
             let (cell_items, cell_boxes) =
                 self.layout_cell(&repeat.cell, slot, Rc::new(element), (key, i));
-            if let Some(page) = layouter.pages.get_mut(target) {
-                page.items.extend(cell_items);
-                page.boxes.extend(cell_boxes);
-                frags.cover(target, slot_y, slot_y + slot_h);
-                last_page = at.page;
-            }
+            page.items.extend(cell_items);
+            page.boxes.extend(cell_boxes);
+            frags.cover(target, slot_y, slot_y + slot_h);
+            last_page = at.page;
         }
         if repeat.cut_marks() {
             let sheet = Sheet {

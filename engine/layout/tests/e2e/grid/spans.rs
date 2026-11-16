@@ -136,3 +136,33 @@ sections:
         "{diags:?}"
     );
 }
+
+#[test]
+fn a_row_span_shorter_than_the_rows_it_covers_leaves_them_unchanged() {
+    // 2 columns; the first child spans 2 rows but is only 10pt tall, while
+    // the two single-row children beside it make rows 0 and 1 20pt each.
+    // The span already fits in the 40pt it covers, so it adds no height
+    // to its last row and the fourth child starts at row 2 = y 40.
+    let (doc, diags) = run(
+        r#"
+page: { margin: 0 }
+sections:
+  body:
+    type: absolute
+    items:
+      - type: container
+        box: { x: 0, y: 0, w: 200, type: grid, columns: 2 }
+        items:
+          - { type: rect, style: { borderWidth: 1 }, box: { w: 100, h: 10, rowSpan: 2 } }
+          - { type: rect, style: { borderWidth: 1 }, box: { w: 100, h: 20 } }
+          - { type: rect, style: { borderWidth: 1 }, box: { w: 100, h: 20 } }
+          - { type: rect, style: { borderWidth: 1 }, box: { w: 100, h: 20 } }
+"#,
+        json!({}),
+    );
+    assert!(diags.is_empty(), "{diags:?}");
+    let rects = rect_shapes(&doc.pages[0]);
+    assert_eq!((rects[0].x, rects[0].y), (0.0, 0.0));
+    assert_eq!((rects[2].x, rects[2].y), (100.0, 20.0));
+    assert_eq!((rects[3].x, rects[3].y), (0.0, 40.0));
+}

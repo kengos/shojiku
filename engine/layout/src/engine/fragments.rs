@@ -6,6 +6,7 @@
 
 use crate::boxes::{BoxRect, PlacedBox};
 
+use super::PageBuild;
 use super::decoration::{self, push_side_borders};
 use super::flow::FlowLayouter;
 
@@ -60,28 +61,26 @@ impl Fragments {
         w: f64,
         layouter: &mut FlowLayouter,
     ) {
-        for (page, y0, y1) in &self.spans {
-            if let Some(p) = layouter.pages.get_mut(*page) {
-                let rect = BoxRect {
-                    x,
-                    y: *y0,
-                    w,
-                    h: y1 - y0,
-                };
-                p.boxes.push(PlacedBox {
-                    path: path.to_string(),
-                    id: id.map(str::to_string),
-                    border: rect,
-                    content: rect,
-                    text: None,
-                    hidden: false,
-                    // `table` / `repeat` / `repeat_flow` fragments. None of
-                    // the three takes a `link:`; a linked item INSIDE one
-                    // gets its own placement from the atom builders.
-                    linked: false,
-                });
-            }
-        }
+        self.for_each_span(layouter, |p, y0, y1| {
+            let rect = BoxRect {
+                x,
+                y: y0,
+                w,
+                h: y1 - y0,
+            };
+            p.boxes.push(PlacedBox {
+                path: path.to_string(),
+                id: id.map(str::to_string),
+                border: rect,
+                content: rect,
+                text: None,
+                hidden: false,
+                // `table` / `repeat` / `repeat_flow` fragments. None of
+                // the three takes a `link:`; a linked item INSIDE one
+                // gets its own placement from the atom builders.
+                linked: false,
+            });
+        });
     }
 
     /// Draws an outer frame around every page fragment (over the grid —
@@ -95,9 +94,22 @@ impl Fragments {
         w: f64,
         layouter: &mut FlowLayouter,
     ) {
-        for (page, y0, y1) in &self.spans {
-            if let Some(p) = layouter.pages.get_mut(*page) {
-                push_side_borders(&mut p.items, outer, (x, *y0, w, y1 - *y0), 1.0);
+        self.for_each_span(layouter, |p, y0, y1| {
+            push_side_borders(&mut p.items, outer, (x, y0, w, y1 - y0), 1.0);
+        });
+    }
+
+    /// Calls `f(page, y0, y1)` for every span whose page exists. Walks the
+    /// pages themselves, so a span naming a page past the last one is
+    /// skipped rather than indexed.
+    fn for_each_span(
+        &self,
+        layouter: &mut FlowLayouter,
+        mut f: impl FnMut(&mut PageBuild, f64, f64),
+    ) {
+        for (index, page) in layouter.pages.iter_mut().enumerate() {
+            for (_, y0, y1) in self.spans.iter().filter(|(p, _, _)| *p == index) {
+                f(page, *y0, *y1);
             }
         }
     }

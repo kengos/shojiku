@@ -295,3 +295,24 @@ sections:
     assert!(store.contains(&cell_asset_key("rows", 1, "photo")));
     assert!(!store.contains(&cell_asset_key("rows", 2, "photo")));
 }
+
+#[test]
+fn a_repeat_nested_in_a_repeat_cell_loads_no_images_of_its_own() {
+    // A repeat inside a repeat cell is a validation error (`repeat_in_container`)
+    // that layout never draws, so only the outer cell's own image is loaded.
+    let template = repeat_template(concat!(
+        "            - { type: image, box: { w: 20, h: 20 }, data: { key: photo } }\n",
+        "            - type: repeat\n",
+        "              data: { key: inner }\n",
+        "              cell:\n",
+        "                items:\n",
+        "                  - { type: image, box: { w: 20, h: 20 }, data: { key: photo } }\n",
+    ));
+    let uri = png_data_uri();
+    let params = json!({ "rows": [{ "photo": uri, "inner": [{ "photo": uri }] }] });
+    let (store, diags) = prepare_assets(&template, &params, &AssetPolicy::default(), None);
+    assert!(diags.is_empty(), "diags: {diags:?}");
+    assert!(store.contains(&cell_asset_key("rows", 0, "photo")));
+    assert!(!store.contains(&cell_asset_key("inner", 0, "photo")));
+    assert_eq!(store.len(), 1);
+}

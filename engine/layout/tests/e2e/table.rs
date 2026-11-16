@@ -270,3 +270,49 @@ sections:
     assert!(diags.iter().any(|d| d.code == "page_overflow"));
     assert_eq!(doc.pages.len(), MAX_PAGES);
 }
+
+#[test]
+fn keep_together_counts_the_header_and_group_rows_in_the_table_height() {
+    // 100pt used of 300pt leaves 200pt. Seven 24pt body rows (168pt) fit, so
+    // the table without a header stays on page 1. With column labels and a
+    // `headerGroups` row the table is taller than the 200pt left, though it
+    // still fits a fresh page, so it breaks to page 2 as a whole.
+    let yaml = |header: &str| {
+        format!(
+            r#"
+page: {{ margin: 0 }}
+sections:
+  body:
+    type: flow
+    box: {{ x: 0, y: 0, w: 400, h: 300 }}
+    items:
+      - type: rect
+        style: {{ borderWidth: 1 }}
+        box: {{ w: 10, h: 100 }}
+      - type: table
+        data: {{ key: items }}
+        keepTogether: true
+{header}        columns:
+          - {{ data: {{ key: n }}, width: 100{} }}
+"#,
+            if header.is_empty() { "" } else { ", label: N" }
+        )
+    };
+    let (doc, _) = run(&yaml(""), n_rows(7));
+    assert_eq!(doc.pages.len(), 1, "the body rows alone fit in place");
+    let (doc, diags) = run(
+        &yaml("        headerGroups:\n          - { label: G, span: 1 }\n"),
+        n_rows(7),
+    );
+    assert!(!diags.has_errors(), "{diags:?}");
+    assert_eq!(doc.pages.len(), 2);
+    assert_eq!(
+        rect_shapes(&doc.pages[0]).len(),
+        1,
+        "page 1 keeps only the rect"
+    );
+    assert!(
+        all_text(&doc.pages[1]).contains('G'),
+        "the group row moves with the table"
+    );
+}

@@ -112,3 +112,43 @@ sections:
     assert_eq!(link_count(&content), 0);
     assert!(!content.contains("/URI"));
 }
+
+const VERTICAL_RICH_LINK: &str = r#"
+page: { size: { w: 200, h: 260 }, margin: 0 }
+sections:
+  body:
+    type: absolute
+    items:
+      - type: text
+        box: { x: 0, y: 0, w: 200, h: 260 }
+        style: { fontSize: 24, lineHeight: 1.5, writingMode: vertical_rl }
+        spans:
+          - { text: "吾輩は" }
+          - { text: "猫", link: { url: "https://example.com/cat" } }
+"#;
+
+#[test]
+fn a_vertical_rich_line_annotates_only_the_runs_that_carry_a_link() {
+    let bytes = render_template(VERTICAL_RICH_LINK, json!({}));
+    let content = lossy(&bytes);
+    assert_eq!(link_count(&content), 1, "only the linked run annotates");
+    assert!(content.contains("https://example.com/cat"));
+}
+
+#[test]
+fn a_vertical_line_with_no_runs_in_a_block_without_a_link_is_not_annotated() {
+    // The block has no block-level link and its first line has no runs; only
+    // the second line's run carries a link, so exactly one annotation exists.
+    let mut doc = laid_out(VERTICAL_RICH_LINK);
+    let LayoutItem::Text(block) = &mut doc.pages[0].items[0] else {
+        panic!("the first item must be the text block");
+    };
+    assert!(block.link.is_none());
+    let mut empty = block.lines[0].clone();
+    empty.runs.clear();
+    block.lines.insert(0, empty);
+    let (_pack, fonts) = shared_fonts();
+    let bytes = render_pdf(&doc, fonts, &shojiku_image::AssetStore::empty()).expect("render");
+    let content = lossy(&bytes);
+    assert_eq!(link_count(&content), 1, "only the linked run annotates");
+}

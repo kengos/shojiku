@@ -150,3 +150,77 @@ fn line_style_keyword_round_trips_and_defaults_solid() {
             .contains("style:")
     );
 }
+
+#[test]
+fn a_per_side_value_of_the_wrong_type_is_rejected_in_all_three_maps() {
+    // The error names the side whose value could not be read.
+    let e = width("{ top: [1] }").expect_err("a list as a width");
+    assert!(e.to_string().starts_with("top:"), "{e}");
+    let e = crate::yaml::from_str::<BorderColor>("{ top: [1] }").expect_err("a list as a color");
+    assert!(e.to_string().starts_with("top:"), "{e}");
+    let e = style("{ top: { a: 1 } }").expect_err("an unknown style keyword");
+    assert!(e.to_string().starts_with("top:"), "{e}");
+}
+
+/// Deserializes `T` from a map whose only key is the integer `1`, the way a
+/// non-YAML source (here serde's in-memory map deserializer) can present one;
+/// the YAML reader rejects a non-string key before any `T` is built.
+fn error_for_an_integer_key<T: serde::de::DeserializeOwned>() -> String {
+    use serde::de::value::{Error, MapDeserializer};
+    let map = MapDeserializer::<_, Error>::new(vec![(1_i32, "x")].into_iter());
+    T::deserialize(map)
+        .err()
+        .expect("an integer key is not a side name")
+        .to_string()
+}
+
+#[test]
+fn a_per_side_key_that_is_not_a_string_is_rejected_in_all_three_maps() {
+    for e in [
+        error_for_an_integer_key::<BorderWidth>(),
+        error_for_an_integer_key::<BorderColor>(),
+        error_for_an_integer_key::<BorderStyle>(),
+    ] {
+        assert!(e.contains("expected a string"), "{e}");
+    }
+}
+
+#[test]
+fn unknown_side_keys_are_rejected_in_the_color_and_style_maps_too() {
+    let e = crate::yaml::from_str::<BorderColor>("{ up: \"#ff0000\" }").expect_err("color map");
+    assert!(e.to_string().contains("top/right/bottom/left"), "{e}");
+    let e = style("{ up: solid }").expect_err("style map");
+    assert!(e.to_string().contains("top/right/bottom/left"), "{e}");
+}
+
+#[test]
+fn a_map_naming_all_four_sides_sets_every_side_in_all_three_maps() {
+    // Every side key (top, right, bottom, left) is accepted in the same
+    // map, and each value lands in its own slot.
+    let w = width("{ top: 1, right: 2, bottom: 3, left: 4 }").expect("width map");
+    assert_eq!(w.sides(), [1.0, 2.0, 3.0, 4.0]);
+    let c: BorderColor = crate::yaml::from_str(
+        "{ top: \"#111111\", right: \"#222222\", bottom: \"#333333\", left: \"#444444\" }",
+    )
+    .expect("color map");
+    assert_eq!(
+        c.sides(),
+        [
+            Some("#111111".to_string()),
+            Some("#222222".to_string()),
+            Some("#333333".to_string()),
+            Some("#444444".to_string()),
+        ]
+    );
+    let s =
+        style("{ top: solid, right: double, bottom: dashed, left: dotted }").expect("style map");
+    assert_eq!(
+        s.sides(),
+        [
+            BorderStyleKind::Solid,
+            BorderStyleKind::Double,
+            BorderStyleKind::Dashed,
+            BorderStyleKind::Dotted,
+        ]
+    );
+}

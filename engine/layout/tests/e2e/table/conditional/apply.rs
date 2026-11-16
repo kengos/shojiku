@@ -170,3 +170,16 @@ sections:
         "merged cell should center across 300pt; x={x} w={w}"
     );
 }
+
+#[test]
+fn a_conditional_entry_naming_an_undefined_style_still_applies_its_inline_style() {
+    // `validate` reports the unknown name; layout skips it silently and the
+    // matching entry's inline `style` still applies to the matching row.
+    let (doc, diags) = conditional_table(
+        "          conditionalStyles:\n            - when: { key: kind, equals: heading }\n              styleNames: [ghostStyle]\n              style: { textAlign: center }\n",
+        tagged_rows(),
+    );
+    assert!(diags.is_empty(), "diags: {diags:?}");
+    assert_centered(&doc.pages[0], "AAA");
+    assert_left_aligned(&doc.pages[0], "BBB");
+}

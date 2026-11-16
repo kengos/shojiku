@@ -169,3 +169,31 @@ sections:
     assert!(deco.offset > block.baseline.unwrap());
     assert!(line.runs[1].decorations.is_empty());
 }
+
+#[test]
+fn an_undefined_span_style_name_leaves_the_span_inline_style_in_effect() {
+    // `validate` reports the unknown name; layout skips it silently, so the
+    // span keeps the block's font and takes only its inline color.
+    let (doc, diags) = run(
+        r##"
+page: { margin: 0 }
+sections:
+  body:
+    type: flow
+    box: { x: 0, y: 0, w: 500, h: 500 }
+    items:
+      - type: text
+        box: { w: 200 }
+        style: { fontFamily: biz-ud-gothic, fontSize: 10 }
+        spans:
+          - text: "あ"
+            styleNames: [ghostSpan]
+            style: { color: "#0000ff" }
+"##,
+        json!({}),
+    );
+    assert!(diags.is_empty(), "diags: {diags:?}");
+    let run = &text_blocks(&doc.pages[0])[0].lines[0].runs[0];
+    assert_eq!(run.font_id, "biz-ud-gothic");
+    assert_eq!(run.color, (0.0, 0.0, 1.0));
+}

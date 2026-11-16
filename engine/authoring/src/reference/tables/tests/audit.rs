@@ -1,7 +1,7 @@
 //! The completeness rule. Rendering makes the tables consistent; only this
 //! notices that a key was added to the wire and to nobody's table.
 
-use crate::reference::tables::{Problem, audit, parse};
+use crate::reference::tables::{Problem, audit, node_schema, parse};
 
 /// The catalog-only cases pass an EMPTY registry: with no diagnostics table
 /// in the fixture, any code in the registry would correctly be reported as
@@ -242,4 +242,17 @@ fn drop_fit_row() -> String {
         .find("    - keys: [\"fit\"]")
         .expect("the baseline has a fit row");
     y[..at].to_owned()
+}
+
+#[test]
+fn a_union_branch_is_not_found_when_the_shapes_one_of_is_not_a_list() {
+    let catalog = serde_json::json!({
+        "$defs": {
+            "Item": { "oneOf": { "type": "object" } },
+            "Listed": { "oneOf": [{ "properties": { "type": { "const": "image" } } }] },
+        }
+    });
+    assert_eq!(node_schema(&catalog, "Item.image"), None);
+    // The same address resolves once the shape's `oneOf` is a list.
+    assert!(node_schema(&catalog, "Listed.image").is_some());
 }

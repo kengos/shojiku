@@ -210,3 +210,6 @@ fn trim_units(text: &str, combine: Option<TextCombine>) -> Vec<(Range<usize>, bo
     per_char(rest..text.len(), &mut out);
     out
 }
+
+#[cfg(test)]
+mod tests;

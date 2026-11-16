@@ -228,3 +228,45 @@ sections:
         .collect();
     assert_eq!(ids, vec!["sheet"]);
 }
+
+#[test]
+fn a_clipped_sheet_followed_by_another_reports_once_and_draws_no_ticks_on_either() {
+    // Two sheets (five cells in a 2 x 2 grid) on a page with no margin: the
+    // first sheet loses all four sides, so the warning names those sides and
+    // the second sheet's own clipped sides do not replace them. One warning
+    // for the `repeat`, and neither page carries a tick.
+    let (doc, diags) = run(
+        r#"
+page: { size: A4, margin: 0 }
+sections:
+  body:
+    type: flow
+    items:
+      - type: repeat
+        data: { key: cells }
+        cutMarks: true
+        grid: { columns: 2, rows: 2 }
+        cell:
+          items:
+            - type: text
+              box: { x: 0, y: 0 }
+              data: { key: label }
+              style: { fontSize: 10, lineHeight: 1.0 }
+"#,
+        json!({ "cells": (0..5).map(|i| json!({ "label": i.to_string() })).collect::<Vec<_>>() }),
+    );
+    assert_eq!(doc.pages.len(), 2);
+    let clipped: Vec<_> = diags
+        .items
+        .iter()
+        .filter(|d| d.code.as_str() == "cut_marks_clipped")
+        .collect();
+    assert_eq!(clipped.len(), 1, "{diags:?}");
+    assert!(
+        clipped[0].message.contains("top, right, bottom, left"),
+        "{:?}",
+        clipped[0].message
+    );
+    assert!(line_shapes(&doc.pages[0]).is_empty());
+    assert!(line_shapes(&doc.pages[1]).is_empty());
+}

@@ -1,6 +1,6 @@
 //! Every way a key file is refused, and what the refusal tells the caller.
 
-use super::{ec_pem_with_body, load, load_with, relabel};
+use super::{ec_pem_with_body, ec_pem_with_parameters, load, load_with, relabel};
 use crate::key::{KeyError, MAX_RSA_MODULUS_BITS, MIN_RSA_MODULUS_BITS, PrivateKey};
 use crate::testkit::keys::keys;
 
@@ -154,6 +154,22 @@ fn an_unsupported_curve_is_refused() {
         load("ec384.key.pem").err().expect("P-384 is refused"),
         KeyError::UnsupportedAlgorithm
     );
+}
+
+#[test]
+fn an_elliptic_curve_key_that_does_not_name_its_curve_is_refused() {
+    // Missing parameters, and parameters that are a DER NULL instead of an
+    // object identifier: neither names a curve, so both are refused as an
+    // unsupported algorithm before the key body is read.
+    for parameters in [None, Some(&[0x05, 0x00][..])] {
+        assert_eq!(
+            PrivateKey::from_pem(&ec_pem_with_parameters(parameters), None)
+                .err()
+                .expect("a key with no curve name is refused"),
+            KeyError::UnsupportedAlgorithm,
+            "parameters: {parameters:?}"
+        );
+    }
 }
 
 #[test]
