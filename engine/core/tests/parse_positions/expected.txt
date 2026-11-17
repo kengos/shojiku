@@ -139,6 +139,14 @@ line: 0
 column: 0
 message: sections.body: unknown field `bogus`, expected one of x, y, w, h, minWidth, maxWidth, minHeight, maxHeight, margin, padding, type, direction, gap, alignItems, justifyContent, columns, rows, columnGap,…
 
+## template-empty-value-body-items.yml
+located template
+path: sections.body
+key: -
+line: 2
+column: 3
+message: sections.body: invalid type: unit value, expected a sequence at line 2, column 3
+
 ## template-empty-value-header-items.yml
 ok
 
