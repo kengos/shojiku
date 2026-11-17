@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.7/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -11,7 +11,8 @@
       "!**/dist",
       "!**/coverage",
       "!**/node_modules",
-      "!**/designer-app/src/tailwind.css"
+      "!**/designer-app/src/tailwind.css",
+      "!**/*.md"
     ]
   },
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
@@ -32,7 +33,8 @@
       "includes": ["**/*.test.ts", "**/*.test.tsx", "**/e2e/**"],
       "linter": {
         "rules": {
-          "complexity": { "noExcessiveLinesPerFunction": "off" }
+          "complexity": { "noExcessiveLinesPerFunction": "off" },
+          "correctness": { "noComponentHookFactories": "off" }
         }
       }
     }

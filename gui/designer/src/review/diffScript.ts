@@ -67,7 +67,7 @@ function lcsSteps(
       } else {
         const down = table[(i + 1) * width + j] as number;
         const right = table[i * width + (j + 1)] as number;
-        table[at] = down >= right ? down : right;
+        table[at] = Math.max(down, right);
       }
     }
   }
