@@ -145,12 +145,14 @@ platform binaries.
     infinite and is refused like `.inf`, where it used to be read as text.
   - A quoted string that runs over several lines must indent the
     following lines past its key.
-  - A `null` (`~`, `null`, or no value) where a list or a mapping is
-    wanted reads as an empty one, as it already did in a locale overlay:
-    `properties: ~` in definitions, `faces: ~` in a font-pack manifest and
-    `dateFormats: ~` in a locale pack used to fail, and so did a template
-    header's or footer's `items: ~`. Inside the template body or an item it
-    still fails, since those are read through serde's buffering.
+  - A `~` or `null` where a list or a mapping is wanted now reads as an
+    empty one, as a key with no value already did there, and as a `null`
+    already did in a locale overlay: `properties: ~` in definitions,
+    `faces: ~` in a font-pack manifest and `dateFormats: ~` in a locale
+    pack used to fail, and so did a template header's or footer's
+    `items: ~`. Inside the template body or an item, a `~`, a `null` and a
+    key with no value all still fail, since those are read through serde's
+    buffering.
   - Parse errors are worded by the new parser. An unclosed `[` or `{` is
     reported at the bracket that was opened rather than where the document
     ended, the expected values are listed without backticks, and the
