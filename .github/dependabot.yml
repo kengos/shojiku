@@ -32,7 +32,7 @@ updates:
     # bump past that line does not compile — `der` 0.8 moves `OctetString`,
     # `SetOfVec` and `Any` behind features the 0.7-line crates do not enable —
     # so hold them until `cms` 0.3 ships, then move all four together by hand
-    # and delete this block.
+    # and delete the `der`, `x509-cert` and `pkcs8` entries below.
     ignore:
       - dependency-name: der
         versions: [">=0.8"]
@@ -40,10 +40,12 @@ updates:
         versions: [">=0.3"]
       - dependency-name: pkcs8
         versions: [">=0.11"]
-      # serde-saphyr 2.1 rejects a key with no value where a list or a mapping
-      # is wanted (`items:`), which 0.3 read as an empty one; that cannot be
-      # refused without a deprecation. Held with the cap in engine/Cargo.toml:
-      # remove this entry together with that upper bound.
+      # Held below 2.1: serde-saphyr 2.1 refuses a YAML null (`~`, `null`, or a
+      # key with no value) where the field's type is a list or a mapping.
+      # shojiku 0.3.0 read a key with no value there as an empty list or
+      # mapping, so refusing it needs a deprecation release first
+      # (docs/architecture.md § Deprecation). Remove this entry together with
+      # the upper bound in engine/Cargo.toml.
       - dependency-name: serde-saphyr
         versions: [">=2.1"]
     # A `wasm-bindgen` bump (it rides the minor-patch group) is incomplete as
