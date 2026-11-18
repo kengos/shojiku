@@ -253,6 +253,12 @@ security advisory can survive a full `update:`. Force it with an
 Treat every such entry as temporary: it pins a dependency the tree would
 otherwise move past on its own, so drop it once the parent widens.
 
+For the engine, `make engine:update PKG=<crate>` updates only that
+package, which may also be a transitive dependency, and `PRECISE=<version>`,
+given together with `PKG`, picks an exact version. A version published less
+than 7 days ago additionally needs `ALLOW_YOUNG=1`; the comment above
+`engine:update` in `mk/engine.mk` explains.
+
 These write files; they check nothing. Follow them with the scope's
 `verify:`.
 
@@ -361,10 +367,11 @@ takes `version-check-exempt: <reason>`, the same shape as
 > the wasm32 target, `cargo-llvm-cov`, `cargo-deny`, `wasm-bindgen` and
 > `wasm-opt`, and downloads the crates into the Docker volume
 > `shojiku-cargo-cache`. Only the on-demand targets add to that:
-> `cargo-fuzz` is compiled into the volume on first use, and nightly and
-> the dist cross targets are downloaded by each run that needs them. So
-> `make docker:clean:all` is safe at any time: the next `engine:verify`
-> pulls and downloads again and builds no tool. A pull request that moves the
+> `cargo-fuzz` is compiled into the volume on first use and again when its
+> pinned version changes, and nightly and the dist cross targets are
+> downloaded by each run that needs them. So `make docker:clean:all` is safe
+> at any time: the next `engine:verify` pulls and downloads again and builds
+> no tool. A pull request that moves the
 > `cargo-deny`, `wasm-bindgen` or `wasm-opt` pin ahead of the image has its
 > gates fetch that release into the volume until the image catches up. If you
 > ran the gates before the toolchain image, the same command removes the
