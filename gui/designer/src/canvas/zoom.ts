@@ -150,7 +150,7 @@ export function cssFactor(
  * container's left/top content edge. Clamped at 0 (never a negative scroll). */
 export function anchorScroll(scroll: number, cursor: number, factor: number): number {
   const next = (scroll + cursor) * factor - cursor;
-  return next > 0 ? next : 0;
+  return Math.max(next, 0);
 }
 
 /** The zoom as a rounded whole percent (the control's display value). */
