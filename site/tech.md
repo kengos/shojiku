@@ -55,6 +55,11 @@ The supply chain is checked too.
   package published less than 7 days ago fails to install at all, so a
   compromised release cannot slip in before it gets pulled. postinstall
   scripts run only from an explicit allowlist
+- On the Rust side, cargo's `global-min-publish-age` is set to **7 days**.
+  When cargo resolves dependencies, it adds a version to the lockfile only
+  after that version has been published for 7 days, and Dependabot proposes
+  a cargo version update only once that version has been published for 7
+  days (security updates are not delayed)
 
 **This site is built the same way.** Rendering happens in WASM inside
 your browser and nothing is uploaded. The CSP forbids inline scripts

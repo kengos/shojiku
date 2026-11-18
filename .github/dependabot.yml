@@ -24,6 +24,17 @@ updates:
     directory: /engine
     schedule:
       interval: weekly
+    # Same number as `global-min-publish-age` in engine/.cargo/config.toml;
+    # change both together. Dependabot waits until a version has been
+    # published for 7 days before it proposes it. cargo does not check a
+    # version that Cargo.lock already records, so a pull request that records
+    # a version younger than 7 days passes CI, and this cooldown is the only
+    # setting that keeps a version younger than 7 days out of a Dependabot
+    # version-update pull request. Security updates ignore the cooldown;
+    # mk/engine.mk says what `make engine:update` does to a version they
+    # record.
+    cooldown:
+      default-days: 7
     groups:
       cargo-minor-patch:
         update-types: [minor, patch]

@@ -1,0 +1,39 @@
+# Minimum publish age for registry dependencies. Cargo 1.100 or newer applies
+# this key.
+#
+# Purpose: a registry version published less than 7 days ago is not added to
+# a lockfile, which gives crates.io and the crate's authors 7 days to remove
+# or yank a compromised release.
+#
+# The rule: when cargo resolves, it checks the age of a version only if that
+# version is not recorded in the lockfile that the resolution loaded. A
+# recorded version is used whatever its age. `cargo update` discards the
+# recorded versions of the packages it updates (with no arguments, all of
+# them) before it resolves, so it checks those versions too. When every
+# version that satisfies a requirement is younger than 7 days, cargo stops
+# with "failed to select a version"; it does not choose an older or a younger
+# one. Versions without a publish time in the index and `cargo install
+# <crate>` are not checked. A lockfile record is per source: a workspace
+# crate recorded as a path package does not exempt the crates.io version of
+# the same name.
+#
+# Consequences of the rule:
+# - A command that resolves only to versions that its loaded lockfile records
+#   (for example a command run with --locked, such as the image builds) gives
+#   the same result as without this key.
+# - This key does not reject a version that a pull request already recorded
+#   in engine/Cargo.lock. Review of the Cargo.lock diff does that.
+# - engine/fuzz has its own Cargo.lock, which is not committed. A version
+#   recorded only in engine/Cargo.lock is checked when `make engine:fuzz`
+#   resolves, so engine/fuzz can select an older version than the workspace,
+#   or stop with "failed to select a version".
+# - `cargo install <crate>` from a registry ignores this key.
+#
+# mk/engine.mk (the comment above engine:update) says what `make engine:lock`
+# and `make engine:update` do under this rule, and how to take a version
+# younger than 7 days. Do not lower the number.
+#
+# Keep the number equal to the cargo `cooldown` in .github/dependabot.yml and
+# `minimumReleaseAge` in the pnpm-workspace.yaml files.
+[registry]
+global-min-publish-age = "7 days"
