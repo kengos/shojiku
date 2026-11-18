@@ -461,6 +461,20 @@ jobs:
       - name: Publish to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.crates-auth.outputs.token }}
+          # Turns off cargo's minimum publish age (engine/.cargo/config.toml)
+          # for this step. `cargo publish -p <crate>` writes the Cargo.lock
+          # of the crate archive by resolving the crate's workspace
+          # dependencies from crates.io. The publish loop in this step's run
+          # script (or an earlier run for the same release) uploaded those
+          # versions less than 7 days ago, and engine/Cargo.lock records them
+          # as path packages, not as crates.io versions, so cargo would check
+          # their age and stop with "failed to select a version". Every other
+          # dependency keeps the version engine/Cargo.lock records, so no
+          # other version changes. `make engine:package` (`cargo publish
+          # --workspace --dry-run`) does not run into this check: with
+          # --workspace, cargo reads workspace crates from a local index that
+          # has no publish times.
+          CARGO_RESOLVER_INCOMPATIBLE_PUBLISH_AGE: allow
         working-directory: engine
         run: |
           # Taken before anything else so the deadline below counts from

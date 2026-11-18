@@ -26,6 +26,47 @@
 # leave the older version in place. That is the supply-chain guard working;
 # the escape hatch is a per-package minimumReleaseAgeExclude entry, never
 # lowering the window.
+#
+# engine/.cargo/config.toml sets cargo's global-min-publish-age (7 days) and
+# states the rule. Unlike pnpm, whose install re-checks every lockfile entry
+# (gui/pnpm-workspace.yaml), cargo does not check a version that the lockfile
+# already records; `cargo update` discards the records of the packages it
+# updates first.
+#
+#   engine:lock    (cargo metadata) keeps every recorded version that still
+#                  satisfies its requirements. A version it has to add is at
+#                  least 7 days old; when no such version exists it stops
+#                  with "failed to select a version".
+#   engine:update  (cargo update, no arguments) discards every record, so it
+#                  replaces a recorded version younger than 7 days with an
+#                  older one ("Downgrading" in its output), or stops with
+#                  "failed to select a version" when no version at least 7
+#                  days old satisfies the requirement. The recorded versions
+#                  it replaces include one that a Dependabot security update
+#                  recorded. Before committing, look for "Downgrading" in the
+#                  output: each such line replaces a version that is younger
+#                  than 7 days or yanked, which can be a fix that a security
+#                  update brought in.
+#
+# To take a version younger than 7 days of a DIRECT dependency: raise the
+# requirement in Cargo.toml to that version, then run
+#   make engine:lock CARGO_DOCKER_ARGS='-e CARGO_RESOLVER_INCOMPATIBLE_PUBLISH_AGE=allow'
+# CARGO_RESOLVER_INCOMPATIBLE_PUBLISH_AGE=allow turns the age check off for
+# the whole run, so cargo chooses every version that the run adds or raises
+# without the age check; read the Cargo.lock diff. Give CARGO_DOCKER_ARGS to
+# engine:lock only: a command-line value replaces the value a recipe sets for
+# itself (_engine-package sets CARGO_HOME with it). With engine:update it
+# would also raise every other dependency to its newest version without the
+# age check.
+#
+# A transitive dependency has no requirement in a workspace Cargo.toml to
+# raise: raise the requirement on the direct dependency that requires it, or
+# wait until the version is 7 days old.
+#
+# After the procedure above, two kinds of run fail with "failed to select a
+# version" until the version taken has been published for 7 days:
+# engine:fuzz, and a resolution that discards the record of that version
+# (such as engine:update). engine/.cargo/config.toml states the rule.
 
 engine\:update: ## Bump engine/ deps within their Cargo.toml ranges (then: git add -f engine/Cargo.lock)
 	@echo "== engine:update =="
