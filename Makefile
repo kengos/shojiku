@@ -565,8 +565,9 @@ WASM_MAX_GZIP := 3145728
 # not, which happens while a pull request moves one of those pins ahead of
 # TOOLCHAIN_DIGEST (PINNED_TOOLS above). So a pin can move in the same change
 # as the code that needs it, and the gates never run a stale copy. cargo-fuzz,
-# which the image does not hold, is installed on first use into
-# $CARGO_HOME/bin, on the volume. A rustup target the image lacks (the dist
+# which the image does not hold, is installed into $CARGO_HOME/bin, on the
+# volume, on first use and whenever the installed version differs from
+# CARGO_FUZZ_VERSION (mk/engine.mk). A rustup target the image lacks (the dist
 # cross targets, nightly for fuzz) is downloaded by each run that needs it:
 # nothing keeps RUSTUP_HOME between runs. The wasm32 target and git are always
 # in the image: the publishing workflow refuses an image without them.
@@ -610,11 +611,18 @@ PNPM_VOLUME   ?= shojiku-pnpm
 # removes them.
 LEGACY_CACHE_VOLUMES := shojiku-cargo shojiku-rustup
 
+# ALLOW_YOUNG=1 (any non-empty value, like V) passes
+# CARGO_RESOLVER_INCOMPATIBLE_PUBLISH_AGE=allow to every engine container,
+# which turns off the minimum publish age set in engine/.cargo/config.toml for
+# that run. mk/engine.mk (above engine:update) says when to use it.
+ALLOW_YOUNG ?=
+
 # The `docker run` flags every engine container shares; CARGO_IN_DOCKER below
 # and the recipes with their own `docker run` (wasm, the dist matrices, fuzz)
 # all use it, so the mounts are written once.
 ENGINE_MOUNTS = -v "$(CURDIR):/repo" \
-	-e CARGO_HOME=/cargo-cache -v "$(CARGO_VOLUME):/cargo-cache"
+	-e CARGO_HOME=/cargo-cache -v "$(CARGO_VOLUME):/cargo-cache" \
+	$(if $(ALLOW_YOUNG),-e CARGO_RESOLVER_INCOMPATIBLE_PUBLISH_AGE=allow)
 
 # CARGO_DOCKER_ARGS: extra `docker run` flags for one recipe, set as a
 # target-specific variable (`_engine-package` sets its own CARGO_HOME with

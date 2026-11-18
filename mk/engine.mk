@@ -37,7 +37,7 @@
 #                  satisfies its requirements. A version it has to add is at
 #                  least 7 days old; when no such version exists it stops
 #                  with "failed to select a version".
-#   engine:update  (cargo update, no arguments) discards every record, so it
+#   engine:update  (cargo update) without PKG= discards every record, so it
 #                  replaces a recorded version younger than 7 days with an
 #                  older one ("Downgrading" in its output), or stops with
 #                  "failed to select a version" when no version at least 7
@@ -47,30 +47,21 @@
 #                  output: each such line replaces a version that is younger
 #                  than 7 days or yanked, which can be a fix that a security
 #                  update brought in.
+#                  With PKG=, it discards only the records of the packages
+#                  named.
 #
-# To take a version younger than 7 days of a DIRECT dependency: raise the
-# requirement in Cargo.toml to that version, then run
-#   make engine:lock CARGO_DOCKER_ARGS='-e CARGO_RESOLVER_INCOMPATIBLE_PUBLISH_AGE=allow'
-# CARGO_RESOLVER_INCOMPATIBLE_PUBLISH_AGE=allow turns the age check off for
-# the whole run, so cargo chooses every version that the run adds or raises
-# without the age check; read the Cargo.lock diff. Give CARGO_DOCKER_ARGS to
-# engine:lock only: a command-line value replaces the value a recipe sets for
-# itself (_engine-package sets CARGO_HOME with it). With engine:update it
-# would also raise every other dependency to its newest version without the
-# age check.
-#
-# A transitive dependency has no requirement in a workspace Cargo.toml to
-# raise: raise the requirement on the direct dependency that requires it, or
-# wait until the version is 7 days old.
-#
-# After the procedure above, two kinds of run fail with "failed to select a
-# version" until the version taken has been published for 7 days:
-# engine:fuzz, and a resolution that discards the record of that version
-# (such as engine:update). engine/.cargo/config.toml states the rule.
+# To take a version younger than 7 days:
+#   direct dependency      raise the requirement in Cargo.toml, then
+#                            make engine:lock ALLOW_YOUNG=1
+#   transitive dependency  make engine:update PKG=<crate> PRECISE=<version>
+#                            ALLOW_YOUNG=1
+# ALLOW_YOUNG=1 turns the age check off for the whole run, so every version
+# the run adds or raises is chosen without it; read the Cargo.lock diff.
+# engine/.cargo/config.toml states the rule.
 
-engine\:update: ## Bump engine/ deps within their Cargo.toml ranges (then: git add -f engine/Cargo.lock)
+engine\:update: ## Bump engine/ deps within their Cargo.toml ranges (PKG=<crate>[@<version>] narrows it, PRECISE=<version> with PKG pins it; ALLOW_YOUNG=1 skips the 7-day age check)
 	@echo "== engine:update =="
-	$(CARGO_IN_DOCKER) 'cargo update'
+	$(CARGO_IN_DOCKER) 'cargo update $(foreach p,$(PKG),-p $(p)) $(if $(PRECISE),--precise $(PRECISE))'
 	@echo "engine/Cargo.lock updated — stage it with: git add -f engine/Cargo.lock"
 
 ## ---- engine -----------------------------------------------------------
@@ -150,20 +141,20 @@ _engine-fmt:
 engine\:format: ## cargo fmt (apply formatting)
 	$(CARGO_IN_DOCKER) 'cargo fmt --all'
 
-# The one place the workspace is resolved WITHOUT `--locked`, and the reason
-# it has to exist: every gate passes `--locked` (the committed lockfile is
-# authoritative), so the first gate after a dependency is added or removed
-# dies with "cannot update the lock file ... because --locked was passed".
-# Without a target for it the only way forward is a hand-built `docker run`
-# reproducing CARGO_IN_DOCKER's mount and both cache volumes by hand — which
-# is exactly the mount discipline CARGO_IN_DOCKER above exists to encode, and
-# getting it wrong is the single biggest time-sink in this repository.
+# Every gate passes `--locked` (the committed lockfile is authoritative), so
+# the first gate after a dependency is added or removed dies with "cannot
+# update the lock file ... because --locked was passed". This target
+# re-resolves engine/Cargo.lock without `--locked`. Without it the only way
+# forward is a hand-built `docker run` reproducing CARGO_IN_DOCKER's mount and
+# both cache volumes by hand — which is exactly the mount discipline
+# CARGO_IN_DOCKER above exists to encode, and getting it wrong is the single
+# biggest time-sink in this repository.
 #
 # `cargo metadata` resolves and writes the lockfile without compiling
 # anything, so this is seconds rather than a build. It updates only what the
 # manifest change requires; it is NOT `cargo update`, which would bump
 # unrelated dependencies.
-engine\:lock: ## Re-resolve engine/Cargo.lock after a Cargo.toml edit (then: git add engine/Cargo.lock)
+engine\:lock: ## Re-resolve engine/Cargo.lock after a Cargo.toml edit (ALLOW_YOUNG=1 skips the 7-day age check)
 	@echo "== engine:lock =="
 	$(CARGO_IN_DOCKER) 'cargo metadata --format-version 1 >/dev/null'
 	@echo "engine/Cargo.lock refreshed — stage it with: git add -f engine/Cargo.lock"
@@ -707,6 +698,11 @@ FUZZ_GROUP   ?=
 FUZZ_TARGET  ?=
 FUZZ_SECS    ?= 60
 
+# cargo-fuzz, installed by engine:fuzz from crates.io at this version. This
+# pins the version number only, not a hash of the .crate file. Nothing bumps
+# it automatically.
+CARGO_FUZZ_VERSION := 0.13.2
+
 # sign = the parsers that read a PDF nobody vetted; wire = the authored-input
 # doors (template/params/definitions/ruby + the two pack manifests); scalar =
 # the single-value checks (a fetch URL and its redirect hops, a link URL, a
@@ -745,7 +741,9 @@ engine\:fuzz: ## Fuzz the untrusted-input parsers (nightly+libFuzzer; FUZZ_GROUP
 # `rustup toolchain install` runs with the image's own CARGO_HOME: it refuses
 # ("rustup is not installed at '/cargo-cache'") under the cache volume's,
 # where rustup itself does not live. `rustup target add` elsewhere does not
-# check, and cargo-fuzz still installs onto the volume.
+# check, and cargo-fuzz still installs onto the volume. cargo-fuzz is
+# installed at CARGO_FUZZ_VERSION because `cargo install` is outside the age
+# check in engine/.cargo/config.toml.
 #
 # Plain `docker run`, not $(TARGET_DOCKER): the fuzz crate is outside the
 # workspace and builds into its OWN engine/fuzz/target, which the pooled
@@ -762,7 +760,8 @@ _engine-fuzz:
 			apt-get update -qq >/dev/null && \
 			apt-get install -y -qq g++ >/dev/null; }; \
 		CARGO_HOME=/usr/local/cargo rustup toolchain install nightly --profile minimal >/dev/null; \
-		command -v cargo-fuzz >/dev/null 2>&1 || cargo install cargo-fuzz --locked; \
+		[ "$$(cargo fuzz --version 2>/dev/null)" = "cargo-fuzz $(CARGO_FUZZ_VERSION)" ] \
+			|| cargo install cargo-fuzz --version $(CARGO_FUZZ_VERSION) --locked; \
 		cargo +nightly run --example seed; \
 		for target in $(if $(FUZZ_TARGET),$(FUZZ_TARGET),$(FUZZ_SELECTED)); do \
 			echo "== fuzz $$target =="; \
