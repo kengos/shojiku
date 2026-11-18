@@ -22,7 +22,7 @@ use shojiku_core::facts::{FONT_SIZE, LETTER_SPACING};
 mod tests;
 
 /// harfrust's buffer cap: a shaped buffer may grow to this many times its
-/// input length, and never below [`MIN_GLYPH_CAP`] (harfrust 0.14.0
+/// input length, and never below [`MIN_GLYPH_CAP`] (harfrust 0.16.0
 /// `Buffer::MAX_LEN_FACTOR` and `Buffer::MAX_LEN_MIN`, read from its
 /// source). A buffer that grows past it is marked failed and the segment
 /// falls back to one glyph per character, so the glyph-count check fails

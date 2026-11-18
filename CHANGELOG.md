@@ -182,14 +182,19 @@ platform binaries.
 
 ### Changed
 
-- **Text is shaped by a newer HarfBuzz (harfrust 0.14, matching HarfBuzz
-  14.5.1).** Every bundled example renders to the same bytes as before,
+- **Text is shaped by a newer HarfBuzz (harfrust 0.16, matching HarfBuzz
+  15.1.0).** Every bundled example renders to the same bytes as before,
   across Latin, Japanese (horizontal and vertical), Chinese, Thai and
   Devanagari; other fonts and scripts may still shape differently. When
   the shaper reports that it hit its length, operation or nesting limit
   on a stretch of text (a hostile font's substitutions can provoke it),
   that stretch now falls back to unshaped per-character advances instead
-  of drawing what the shaper left behind.
+  of drawing what the shaper left behind. harfrust 0.16 counts more of
+  its work toward the operation limit and reports more of the cases
+  where it runs out. The newly counted work includes each pass of a
+  font's substitution or positioning rules over the text and the search
+  for the glyph a mark attaches to, so with a hostile font more stretches
+  fall back to per-character advances.
 - **A `borderStyle` on an ellipse, a checkbox or a text mark now warns
   `shape_style_ignored`.** These marks draw their outline as one solid
   stroke, so a dashed, dotted or double pattern there never did anything;
