@@ -12,7 +12,7 @@
 #     blunts a compromised-release push. It fails `--frozen-lockfile`, not just
 #     `pnpm add`, so a freshly published bump reds the gate until it ages in.
 onlyBuiltDependencies:
-  - '@biomejs/biome'
+  - "@biomejs/biome"
   - esbuild
 
 minimumReleaseAge: 10080
