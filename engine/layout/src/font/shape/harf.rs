@@ -132,9 +132,14 @@ pub(super) fn shape_buffer(
 /// reports that on the buffer rather than as an error, and what it left in
 /// the buffer is then not a complete shaping of the run, so the caller
 /// degrades to the per-char path instead of drawing it. Not every limit
-/// marks the buffer: some table walks (AAT `morx`/`kern`/`kerx`, a
-/// contextual lookup that finds the operation budget spent) just stop
-/// early, and that output is drawn as shaped.
+/// marks the buffer (harfrust 0.16.0, read from its source): once the
+/// operation budget is spent, the AAT `morx`, `kern` and `kerx` state
+/// machines move to the next glyph on every step instead of repeating
+/// work on the same glyph, and `morx` skips its insertions, all without
+/// marking the buffer, so the caller draws what those state machines left
+/// in the buffer as a complete shaping. Within those tables, only the
+/// `kerx` format 1 action-list walk marks the buffer when the budget runs
+/// out.
 pub(super) fn shaped_glyphs<T>(
     buffer: &Buffer,
     glyph: impl Fn(&GlyphInfo, &GlyphPosition) -> T,

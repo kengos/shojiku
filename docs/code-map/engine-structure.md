@@ -373,7 +373,7 @@ first sentence of its `//!` header.
 - `src/read.rs` 80 — Reading a response body without trusting its length.
 - `src/transport.rs` 104 — The HTTP seam.
 
-### `layout` (L3) — 141 files / 20968 lines; tests 284 files / 40198 lines
+### `layout` (L3) — 141 files / 20973 lines; tests 284 files / 40198 lines
 
 - `src/boxes.rs` 165 — Id-addressable resolved boxes: the GUI-facing sidecar the layout pass emits alongside the renderer tree.
 - `src/boxes/text.rs` 135 — Text metrics of the box-index sidecar: per-line optical anchors for horizontal text items and per-column anchors for vertical ones.
@@ -487,7 +487,7 @@ first sentence of its `//!` header.
 - `src/font/load.rs` 160 — `FontStore` construction: the two production loaders (filesystem packs and host-injected bytes) plus the test-only `from_faces` shortcut.
 - `src/font/shape.rs` 226 — Fallback-aware shaping over a face chain.
 - `src/font/shape/breaks.rs` 149 — Prefix widths at the cut points where a text can be cut without shaping the prefix again.
-- `src/font/shape/harf.rs` 169 — HarfBuzz (harfrust) adapter: shapes one already-itemized segment (all chars covered by a single face) into glyphs with pt-scaled advances and positioning offsets.
+- `src/font/shape/harf.rs` 174 — HarfBuzz (harfrust) adapter: shapes one already-itemized segment (all chars covered by a single face) into glyphs with pt-scaled advances and positioning offsets.
 - `src/font/shape/itemize.rs` 40 — Face itemization: split a run into maximal segments that one face covers, using the same per-char first-covering-face rule the pre-shaping code used.
 - `src/font/shape/trim.rs` 136 — Fullwidth-punctuation trimming (half-width punctuation) as a post-shaping advance adjustment — the `textSpacingTrim` mechanism.
 - `src/font/verify.rs` 68 — Font-pack integrity + embedding-rights checks at load: the manifest sha256 must match the file bytes (tamper/corruption), and the OS/2 `fsType` must permit embedding unless the pack attests a separately-held embedding license (fsType cannot express purchased embed rights).
