@@ -17,9 +17,19 @@ COPY examples ./examples
 # exactly why this line is easy to drop — no Rust gate can see its absence.
 COPY docs/engine ./docs/engine
 WORKDIR /app/engine
+# Build the two binaries, copy them to /out, and delete target/ and cargo's
+# downloaded crates ($CARGO_HOME/registry, $CARGO_HOME/git) in one RUN
+# instruction. A file that a later RUN instruction deletes still exists in the
+# layer of the earlier RUN instruction, so deleting target/ in a separate RUN
+# instruction would keep target/ in the build cache. `${CARGO_HOME:?}` makes
+# the RUN instruction fail when CARGO_HOME is unset, instead of running
+# `rm -rf /registry /git`.
 # --locked: the committed Cargo.lock is authoritative; fail the build
 # rather than silently resolving new dependency versions.
-RUN cargo build --release --locked --package shojiku-cli --package shojiku-mcp
+RUN cargo build --release --locked --package shojiku-cli --package shojiku-mcp \
+ && mkdir -p /out \
+ && cp target/release/shojiku target/release/shojiku-mcp /out/ \
+ && rm -rf target "${CARGO_HOME:?}/registry" "${CARGO_HOME:?}/git"
 # The one shared library the binaries need that the runtime base below does not
 # carry: the unwinder, `libgcc_s.so.1`. Staged under its own multiarch path
 # (found, not spelled, so amd64 and arm64 both work) and copied across whole.
@@ -35,13 +45,14 @@ RUN mkdir -p /runtime-libs \
 # including criticals, in packages this CLI never executes. Runs as
 # nonroot (uid 65532). Digest-pinned; refresh the digest deliberately.
 # Debugging note: there is no shell in this image — use
-# `docker run --entrypoint shojiku` variants or inspect from the builder.
+# `docker run --entrypoint shojiku` variants, or build the builder stage
+# (`--target builder`) and inspect /out, where the two binaries are copied.
 FROM gcr.io/distroless/base-nossl-debian12:nonroot@sha256:be40c00dfabd86576d92666e87e406714d5618342de1a0c213ad232de255172e
 COPY --from=builder /runtime-libs/ /
-COPY --from=builder /app/engine/target/release/shojiku /usr/local/bin/shojiku
+COPY --from=builder /out/shojiku /usr/local/bin/shojiku
 # The stdio MCP server rides the same image:
 #   docker run -i --rm --entrypoint shojiku-mcp <image>
-COPY --from=builder /app/engine/target/release/shojiku-mcp /usr/local/bin/shojiku-mcp
+COPY --from=builder /out/shojiku-mcp /usr/local/bin/shojiku-mcp
 COPY packs /opt/shojiku/packs
 COPY examples /opt/shojiku/examples
 ENV SHOJIKU_FONT_DIR=/opt/shojiku/packs/fonts
