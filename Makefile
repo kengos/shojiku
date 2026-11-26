@@ -58,13 +58,19 @@
 #                               volumes, the cargo/pnpm caches (and the
 #                               cargo/rustup volumes of the layout before the
 #                               toolchain image), this WORK_TAG's built images
-#                               and every pin of the toolchain image (caches
-#                               and images are kept while an engine gate holds
-#                               a slot). Every resource prints as removed or
-#                               kept with the reason; base images and the build
-#                               cache are listed with the command that drops
-#                               them. The next gate pulls and rebuilds what it
-#                               needs
+#                               and every pin of the toolchain image, and the
+#                               build cache of Shojiku's own buildx builder
+#                               (the cargo/pnpm caches and the images are kept
+#                               while an engine gate holds a slot; the build
+#                               cache is pruned even while a slot is held).
+#                               Every resource prints as removed or kept with
+#                               the reason; base images and the default
+#                               builder's build cache (shared with other
+#                               repositories) are listed with the command that
+#                               drops them. The next gate pulls and rebuilds
+#                               what it needs
+#     make docker:clean:cache   only the build cache of the builder `shojiku`
+#                               (never the default builder's build cache)
 #     make clean:target         this tree's host engine/target
 #
 #   Is what we PUBLISHED usable? (network; asks the registry, not this tree)
@@ -345,6 +351,19 @@ RUST_IMAGE   := ghcr.io/kengos/shojiku-toolchain@$(TOOLCHAIN_DIGEST)
 # Change the tag and the digest together: docker pulls by the digest alone,
 # so a new tag over an old digest still runs the old scanner.
 TRIVY_IMAGE  := aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c
+# Shojiku's own buildx builder (docker-container driver) and the buildkit image
+# it runs. Every image build that a make target runs calls
+# scripts/docker-build.sh, which builds in this builder, so
+# `make docker:clean:cache` can prune Shojiku's build cache without pruning the
+# build cache of the default builder, which other repositories share. The
+# buildkit image is pinned to a digest like TRIVY_IMAGE; change the tag and the
+# digest together (`docker buildx imagetools inspect moby/buildkit:<tag>`, the
+# top-level `Digest:`). A changed SHOJIKU_BUILDKIT_IMAGE applies only to a
+# builder created after the change: an existing builder keeps the buildkit
+# image it was created with until `docker buildx rm shojiku` removes it.
+SHOJIKU_BUILDER := shojiku
+export SHOJIKU_BUILDER
+export SHOJIKU_BUILDKIT_IMAGE := moby/buildkit:v0.35.1@sha256:baf6138eb8c37644800c7c913fba051e840ebb9ba13eaf92d92ef9a1712d0b4c
 # Pinned to a DIGEST, and the pin is load-bearing: `make sbom:check` compares
 # the committed inventories against a fresh scan byte-for-byte, so a floating
 # tag would red the gate on a tree nobody touched the day anchore changes a
@@ -675,7 +694,7 @@ include mk/investigate.mk
         _sdk-ruby-lint _sdk-ruby-test _sdk-ruby-verify _site-build _site-check \
         _site-gates _site-lint _site-node-modules _site-test _site-verify _verify \
         _version-check _examples-render clean clean\:target docker\:build \
-        docker\:clean\:all docker\:clean\:containers docker\:clean\:images docker\:clean\:volumes docker\:toolchain \
+        docker\:clean\:all docker\:clean\:cache docker\:clean\:containers docker\:clean\:images docker\:clean\:volumes docker\:toolchain \
         docker\:render docker\:scan docker\:verify engine\:budget \
         engine\:capi-dist engine\:capi-lib engine\:cli-bin engine\:cli-dist \
         engine\:clippy engine\:coverage engine\:coverage-why engine\:deny \

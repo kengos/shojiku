@@ -22,7 +22,7 @@ echo "== install proof (java, $IMG) =="
 # The main jar is built in the GATE image, whose warmed offline Maven
 # repository makes this seconds instead of a cold plugin download. Building
 # there does not weaken the proof — the INSTALL environment below is clean.
-DOCKER_BUILDKIT=1 docker build -q --build-arg JAVA_VERSION="$JAVA_VER" \
+"$ROOT/scripts/docker-build.sh" -q --build-arg JAVA_VERSION="$JAVA_VER" \
   -f "$ROOT/sdk/java/Dockerfile" -t "$GATE_IMG" "$ROOT" >/dev/null
 
 cp -R "$ROOT/sdk/java" "$WORK/src"

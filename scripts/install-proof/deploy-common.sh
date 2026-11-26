@@ -17,7 +17,7 @@ run_recipe() {
   lang="$1"
   echo "== deploy-recipe proof ($lang) =="
   stage_recipe "$lang"
-  docker build -q -t "shojiku-deploy-$lang:proof" "$WORK"
+  "$ROOT/scripts/docker-build.sh" -q -t "shojiku-deploy-$lang:proof" "$WORK"
   docker run --rm "shojiku-deploy-$lang:proof" > "$WORK/out.pdf"
   assert_pdf "$WORK/out.pdf"
 }

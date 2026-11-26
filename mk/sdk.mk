@@ -63,7 +63,7 @@ sdk\:php\:verify: ## sdk/php gates: licenses + php-cs-fixer + phpstan + phpunit 
 _sdk-php-verify: _engine-cli-bin
 	@sh scripts/check-php-licenses.sh
 	@echo "== sdk php image =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg PHP_VERSION=$(PHP_VER) -f sdk/php/Dockerfile -t $(PHP_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg PHP_VERSION=$(PHP_VER) -f sdk/php/Dockerfile -t $(PHP_IMAGE) . >/dev/null
 	@echo "== sdk php (php-cs-fixer + phpstan + phpunit + package) =="
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/php $(PHP_IMAGE) sh -euc '\
 		php-cs-fixer check --diff ;\
@@ -87,7 +87,7 @@ sdk\:php\:test: ## sdk/php phpunit + coverage assertion
 
 _sdk-php-test: _engine-cli-bin
 	@echo "== sdk php test =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg PHP_VERSION=$(PHP_VER) -f sdk/php/Dockerfile -t $(PHP_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg PHP_VERSION=$(PHP_VER) -f sdk/php/Dockerfile -t $(PHP_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/php $(PHP_IMAGE) sh -euc '\
 		phpunit ;\
 		php tools/coverage-gate.php'
@@ -99,7 +99,7 @@ sdk\:php\:lint: ## sdk/php php-cs-fixer + phpstan
 
 _sdk-php-lint: _engine-cli-bin
 	@echo "== sdk php lint =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg PHP_VERSION=$(PHP_VER) -f sdk/php/Dockerfile -t $(PHP_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg PHP_VERSION=$(PHP_VER) -f sdk/php/Dockerfile -t $(PHP_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/php $(PHP_IMAGE) sh -euc '\
 		php-cs-fixer check --diff ;\
 		phpstan analyse --no-progress --memory-limit=512M'
@@ -130,7 +130,7 @@ sdk\:go\:verify: ## sdk/go gates: gofmt + vet + golangci-lint + go test -race at
 
 _sdk-go-verify: _engine-cli-bin
 	@echo "== sdk go image =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg GO_VERSION=$(GO_VER) -f sdk/go/Dockerfile -t $(GO_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg GO_VERSION=$(GO_VER) -f sdk/go/Dockerfile -t $(GO_IMAGE) . >/dev/null
 	@echo "== sdk go (gofmt + vet + golangci-lint + go test + module build) =="
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/go $(GO_IMAGE) sh -euc '\
 		gofmt -l . > /tmp/fmt.txt ;\
@@ -153,7 +153,7 @@ sdk\:go\:test: ## sdk/go go test -race + coverage assertion
 
 _sdk-go-test: _engine-cli-bin
 	@echo "== sdk go test =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg GO_VERSION=$(GO_VER) -f sdk/go/Dockerfile -t $(GO_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg GO_VERSION=$(GO_VER) -f sdk/go/Dockerfile -t $(GO_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/go $(GO_IMAGE) sh -euc '\
 		go test ./... -race -coverprofile=/tmp/cover.out ;\
 		go tool cover -func=/tmp/cover.out | awk "/^total:/ {print; if (\$$3 != \"100.0%\") exit 1}"'
@@ -165,7 +165,7 @@ sdk\:go\:lint: ## sdk/go gofmt + go vet + golangci-lint
 
 _sdk-go-lint: _engine-cli-bin
 	@echo "== sdk go lint =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg GO_VERSION=$(GO_VER) -f sdk/go/Dockerfile -t $(GO_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg GO_VERSION=$(GO_VER) -f sdk/go/Dockerfile -t $(GO_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/go $(GO_IMAGE) sh -euc '\
 		gofmt -l . > /tmp/fmt.txt ;\
 		if [ -s /tmp/fmt.txt ]; then echo "gofmt would rewrite:"; cat /tmp/fmt.txt; exit 1; fi ;\
@@ -180,7 +180,7 @@ sdk\:ruby\:verify: ## sdk/ruby gates: rubocop + rspec at 100% coverage + gem bui
 
 _sdk-ruby-verify: _engine-capi-lib
 	@echo "== sdk ruby image =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg RUBY_VERSION=$(RUBY_VER) -f sdk/ruby/Dockerfile -t $(RUBY_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg RUBY_VERSION=$(RUBY_VER) -f sdk/ruby/Dockerfile -t $(RUBY_IMAGE) . >/dev/null
 	@echo "== sdk ruby (rubocop + rspec + package) =="
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/ruby \
 		-e BUNDLE_GEMFILE=/gem/Gemfile $(RUBY_IMAGE) sh -euc '\
@@ -197,7 +197,7 @@ sdk\:ruby\:test: ## sdk/ruby rspec only
 
 _sdk-ruby-test: _engine-capi-lib
 	@echo "== sdk ruby test =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg RUBY_VERSION=$(RUBY_VER) -f sdk/ruby/Dockerfile -t $(RUBY_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg RUBY_VERSION=$(RUBY_VER) -f sdk/ruby/Dockerfile -t $(RUBY_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/ruby \
 		-e BUNDLE_GEMFILE=/gem/Gemfile $(RUBY_IMAGE) bundle exec rake spec
 
@@ -208,7 +208,7 @@ sdk\:ruby\:lint: ## sdk/ruby rubocop only
 
 _sdk-ruby-lint: _engine-capi-lib
 	@echo "== sdk ruby lint =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg RUBY_VERSION=$(RUBY_VER) -f sdk/ruby/Dockerfile -t $(RUBY_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg RUBY_VERSION=$(RUBY_VER) -f sdk/ruby/Dockerfile -t $(RUBY_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/ruby \
 		-e BUNDLE_GEMFILE=/gem/Gemfile $(RUBY_IMAGE) bundle exec rake lint
 
@@ -239,7 +239,7 @@ sdk\:python\:verify: ## sdk/python gates: ruff + mypy + pytest at 100% coverage 
 
 _sdk-python-verify: _engine-capi-lib
 	@echo "== sdk python image =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg PYTHON_VERSION=$(PYTHON_VER) -f sdk/python/Dockerfile -t $(PYTHON_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg PYTHON_VERSION=$(PYTHON_VER) -f sdk/python/Dockerfile -t $(PYTHON_IMAGE) . >/dev/null
 	@echo "== sdk python (ruff + mypy + pytest + package) =="
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/python $(PYTHON_IMAGE) sh -euc '\
 		ruff format --check . ;\
@@ -258,7 +258,7 @@ sdk\:python\:test: ## sdk/python pytest only
 
 _sdk-python-test: _engine-capi-lib
 	@echo "== sdk python test =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg PYTHON_VERSION=$(PYTHON_VER) -f sdk/python/Dockerfile -t $(PYTHON_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg PYTHON_VERSION=$(PYTHON_VER) -f sdk/python/Dockerfile -t $(PYTHON_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/python $(PYTHON_IMAGE) pytest
 
 # capi-lib even for lint: the image COPYs the library in, so it cannot build
@@ -268,7 +268,7 @@ sdk\:python\:lint: ## sdk/python static checks only (ruff + mypy)
 
 _sdk-python-lint: _engine-capi-lib
 	@echo "== sdk python lint =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg PYTHON_VERSION=$(PYTHON_VER) -f sdk/python/Dockerfile -t $(PYTHON_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg PYTHON_VERSION=$(PYTHON_VER) -f sdk/python/Dockerfile -t $(PYTHON_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/python $(PYTHON_IMAGE) sh -euc '\
 		ruff format --check . ;\
 		ruff check . ;\
@@ -301,7 +301,7 @@ sdk\:dotnet\:verify: ## sdk/dotnet gates: dotnet format + xunit at 100% line cov
 
 _sdk-dotnet-verify: _engine-capi-lib
 	@echo "== sdk dotnet image =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg DOTNET_VERSION=$(DOTNET_VER) -f sdk/dotnet/Dockerfile -t $(DOTNET_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg DOTNET_VERSION=$(DOTNET_VER) -f sdk/dotnet/Dockerfile -t $(DOTNET_IMAGE) . >/dev/null
 	@echo "== sdk dotnet (format + test + pack) =="
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/dotnet $(DOTNET_IMAGE) sh -euc '\
 		dotnet format --verify-no-changes ;\
@@ -316,7 +316,7 @@ sdk\:dotnet\:test: ## sdk/dotnet xunit only
 
 _sdk-dotnet-test: _engine-capi-lib
 	@echo "== sdk dotnet test =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg DOTNET_VERSION=$(DOTNET_VER) -f sdk/dotnet/Dockerfile -t $(DOTNET_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg DOTNET_VERSION=$(DOTNET_VER) -f sdk/dotnet/Dockerfile -t $(DOTNET_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/dotnet $(DOTNET_IMAGE) dotnet test
 
 # capi-lib even for lint: the image COPYs the library in, so it cannot build
@@ -326,7 +326,7 @@ sdk\:dotnet\:lint: ## sdk/dotnet format + analyzers only
 
 _sdk-dotnet-lint: _engine-capi-lib
 	@echo "== sdk dotnet lint =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg DOTNET_VERSION=$(DOTNET_VER) -f sdk/dotnet/Dockerfile -t $(DOTNET_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg DOTNET_VERSION=$(DOTNET_VER) -f sdk/dotnet/Dockerfile -t $(DOTNET_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/dotnet $(DOTNET_IMAGE) sh -euc '\
 		dotnet format --verify-no-changes ;\
 		dotnet build Shojiku/Shojiku.csproj'
@@ -355,7 +355,7 @@ sdk\:java\:verify: ## sdk/java gates: spotless + junit at 100% line coverage + j
 
 _sdk-java-verify: _engine-capi-lib
 	@echo "== sdk java image =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg JAVA_VERSION=$(JAVA_VER) -f sdk/java/Dockerfile -t $(JAVA_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg JAVA_VERSION=$(JAVA_VER) -f sdk/java/Dockerfile -t $(JAVA_IMAGE) . >/dev/null
 	@echo "== sdk java (spotless + junit + jacoco + package) =="
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/java $(JAVA_IMAGE) sh -euc '\
 		mvn -B -o verify ;\
@@ -366,7 +366,7 @@ sdk\:java\:test: ## sdk/java junit only
 
 _sdk-java-test: _engine-capi-lib
 	@echo "== sdk java test =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg JAVA_VERSION=$(JAVA_VER) -f sdk/java/Dockerfile -t $(JAVA_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg JAVA_VERSION=$(JAVA_VER) -f sdk/java/Dockerfile -t $(JAVA_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/java $(JAVA_IMAGE) \
 		mvn -B -o -Dspotless.check.skip=true -Djacoco.skip=true test
 
@@ -377,7 +377,7 @@ sdk\:java\:lint: ## sdk/java spotless + compiler lint only
 
 _sdk-java-lint: _engine-capi-lib
 	@echo "== sdk java lint =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg JAVA_VERSION=$(JAVA_VER) -f sdk/java/Dockerfile -t $(JAVA_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg JAVA_VERSION=$(JAVA_VER) -f sdk/java/Dockerfile -t $(JAVA_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/java $(JAVA_IMAGE) \
 		mvn -B -o spotless:check test-compile
 
@@ -406,7 +406,7 @@ sdk\:js\:verify: ## sdk/js gates: biome + tsc + vitest at 100% coverage + pack/i
 
 _sdk-js-verify: _engine-napi
 	@echo "== sdk js image =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg NODE_VERSION=$(NODE_VER) --build-arg PNPM_VERSION=$(PNPM_VERSION_SDK) -f sdk/js/Dockerfile -t $(JS_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg NODE_VERSION=$(NODE_VER) --build-arg PNPM_VERSION=$(PNPM_VERSION_SDK) -f sdk/js/Dockerfile -t $(JS_IMAGE) . >/dev/null
 	@echo "== sdk js (biome + tsc + vitest + package) =="
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/js $(JS_IMAGE) sh -euc '\
 		ln -sfn /pkg/node_modules node_modules ;\
@@ -430,7 +430,7 @@ sdk\:js\:test: ## sdk/js vitest only
 
 _sdk-js-test: _engine-napi
 	@echo "== sdk js test =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg NODE_VERSION=$(NODE_VER) --build-arg PNPM_VERSION=$(PNPM_VERSION_SDK) -f sdk/js/Dockerfile -t $(JS_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg NODE_VERSION=$(NODE_VER) --build-arg PNPM_VERSION=$(PNPM_VERSION_SDK) -f sdk/js/Dockerfile -t $(JS_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/js $(JS_IMAGE) sh -euc '\
 		ln -sfn /pkg/node_modules node_modules ;\
 		pnpm run test'
@@ -442,7 +442,7 @@ sdk\:js\:lint: ## sdk/js static checks only (biome + tsc)
 
 _sdk-js-lint: _engine-napi
 	@echo "== sdk js lint =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg NODE_VERSION=$(NODE_VER) --build-arg PNPM_VERSION=$(PNPM_VERSION_SDK) -f sdk/js/Dockerfile -t $(JS_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg NODE_VERSION=$(NODE_VER) --build-arg PNPM_VERSION=$(PNPM_VERSION_SDK) -f sdk/js/Dockerfile -t $(JS_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/js $(JS_IMAGE) sh -euc '\
 		ln -sfn /pkg/node_modules node_modules ;\
 		pnpm run lint ;\
@@ -450,7 +450,7 @@ _sdk-js-lint: _engine-napi
 
 sdk\:js\:format: _engine-napi ## Apply biome fixes to sdk/js (the seconds-cheap format pass)
 	@echo "== sdk js format =="
-	@DOCKER_BUILDKIT=1 docker build -q --build-arg NODE_VERSION=$(NODE_VER) --build-arg PNPM_VERSION=$(PNPM_VERSION_SDK) -f sdk/js/Dockerfile -t $(JS_IMAGE) . >/dev/null
+	@scripts/docker-build.sh -q --build-arg NODE_VERSION=$(NODE_VER) --build-arg PNPM_VERSION=$(PNPM_VERSION_SDK) -f sdk/js/Dockerfile -t $(JS_IMAGE) . >/dev/null
 	@docker run --rm -v "$(CURDIR):/repo" -w /repo/sdk/js $(JS_IMAGE) sh -euc '\
 		ln -sfn /pkg/node_modules node_modules ;\
 		pnpm run format'

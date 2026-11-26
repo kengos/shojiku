@@ -127,7 +127,7 @@ GUI_DEV_PORT   ?= 5173
 
 gui\:serve: ## Build the Designer-app image and serve it (http://localhost:8788, Ctrl-C stops)
 	@echo "== designer-app image (wasm + build + assemble + nginx) =="
-	docker build --build-arg PNPM_VERSION=$(PNPM_VERSION) -f gui/designer-app/Dockerfile -t $(GUI_APP_IMAGE) .
+	scripts/docker-build.sh --build-arg PNPM_VERSION=$(PNPM_VERSION) -f gui/designer-app/Dockerfile -t $(GUI_APP_IMAGE) .
 	@echo "serving the Designer at http://localhost:$(GUI_SERVE_PORT)/ — Ctrl-C to stop"
 	docker run --rm -p $(GUI_SERVE_PORT):80 $(GUI_APP_IMAGE)
 

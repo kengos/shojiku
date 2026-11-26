@@ -1,7 +1,8 @@
 #!/bin/sh
 # Browser golden path for the WASM bindings: build the image (which builds the
 # wasm module), serve it, run Playwright (in Docker), clean up.
-# Run from the repository root:  sh engine/wasm/e2e/run-e2e.sh
+# Run through make (make engine:wasm-e2e), which passes SHOJIKU_BUILDER and
+# SHOJIKU_BUILDKIT_IMAGE to scripts/docker-build.sh.
 set -eu
 
 # WORK_TAG namespaces the image and the container name: both are GLOBAL to the
@@ -16,7 +17,7 @@ NAME="shojiku-wasm-e2e-run-${WORK_TAG}"
 PORT="${PORT:-8789}"
 PLAYWRIGHT_IMAGE=mcr.microsoft.com/playwright:v1.49.0-noble
 
-docker build -f engine/wasm/e2e/Dockerfile -t "$IMAGE" .
+scripts/docker-build.sh -f engine/wasm/e2e/Dockerfile -t "$IMAGE" .
 docker rm -f "$NAME" >/dev/null 2>&1 || true
 docker run -d --name "$NAME" -p "$PORT:80" "$IMAGE" >/dev/null
 trap 'docker rm -f "$NAME" >/dev/null 2>&1 || true' EXIT

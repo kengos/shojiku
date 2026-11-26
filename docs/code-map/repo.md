@@ -646,8 +646,25 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   WORK_TAG's built images and every pin of the toolchain image; the caches and images are kept while
   `target-slot.sh busy` reports a leased slot. Every resource prints a `removed` / `kept` line with
   the reason; the fuzz corpus, other WORK_TAGs' images, base images and the
-  build cache are only listed. The image/volume names come in from make, so
-  none is re-derived in the script.
+  default builder's build cache are only listed. The image/volume names come in from make, so
+  none is re-derived in the script. `docker-clean.sh cache` prunes the cache of the
+  builder `shojiku` only (`buildx prune --builder`; removes nothing when the builder
+  does not exist yet; a stopped builder is started first; pruned even while a slot is
+  leased, since buildkit does not prune the cache records a running build uses) — never the default
+  builder's cache, never `buildx rm`.
+  `docker-build.sh` — every image build the make targets and the e2e / install-proof
+  scripts run: `docker buildx build --builder $SHOJIKU_BUILDER --load "$@"`, creating
+  the docker-container builder (from `$SHOJIKU_BUILDKIT_IMAGE`, with `--bootstrap`) on
+  first use, ignoring the create error when a concurrent make created the builder first.
+  A builder keeps the endpoint of the docker context it was created on; after switching
+  docker context, run `docker buildx rm shojiku`; the next build creates the builder again
+  on the new context. Both names come
+  from the Makefile.
+  The cache of the default builder is shared by every repository on the daemon;
+  the cache of builder `shojiku` is what `docker-clean.sh cache` prunes. The buildkit container does
+  not use the daemon's registry-mirrors, so image pulls during
+  builds go to the registries directly. `scripts/release/assemble.sh`
+  still builds with plain `docker build` (it runs on release runners, outside make).
   `check-toolchain-pins.sh` — the toolchain image's `ARG` defaults vs the
   Makefile's pins of the same names (its `PINS` list; exit 1 on a mismatch
   or a pin it cannot read; `--github` appends `rust=` / `llvm_cov=` (the
