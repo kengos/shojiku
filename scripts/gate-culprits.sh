@@ -135,3 +135,19 @@ emit "cargo deny:" "$(printf '%s\n' "$norm" | awk '
 	/^(warning|error)\[/ { inerr = ($0 ~ /^error\[/) }
 	inerr { print }
 ' | head -30)"
+
+# scripts/docker-build.sh, in quiet mode, writes the heading "docker build
+# failed at step #<N>; its last <L> lines:" after a failed build, then the last
+# L lines of step N, each starting with "#<N> ". This block prints the heading
+# and the lines directly after it that start with "#<N> " for the same N, and
+# stops at the first line that does not, so the lines of other build steps
+# after them are not printed. head -31 is the heading plus the 30 lines that
+# docker-build.sh writes.
+emit "docker build:" "$(printf '%s\n' "$norm" | awk '
+	/^docker build failed at step #[0-9]+; its last [0-9]+ lines:$/ {
+		n = $0; sub(/^docker build failed at step #/, "", n); sub(/;.*/, "", n)
+		on = 1; print; next
+	}
+	on && index($0, "#" n " ") == 1 { print; next }
+	{ on = 0 }
+' | head -31)"

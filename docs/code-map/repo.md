@@ -608,9 +608,11 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   clean, and a self-test runs the real scanner over a known-bad fixture
   (one case per rule, both escape hatches) before the tree is touched.
   `gate-diagnose.sh` — the failure READER beside `gate-culprits.sh`:
-  culprits answer WHICH FILE, diagnose answers WHY and prints the command
-  that fixes it (flake -> re-run one gate; `--locked` refusal ->
-  `make <scope>:lock`; example drift -> `make examples:render`). Both normalise
+  culprits answer WHICH FILE, or for a failed quiet `docker-build.sh` build
+  WHICH STEP (the `docker build failed at step #N` heading + that step's
+  last lines); diagnose answers WHY and prints the command that fixes it
+  (flake -> re-run one gate; `--locked` refusal -> `make <scope>:lock`;
+  example drift -> `make examples:render`). Both normalise
   ANSI + the `pnpm -r` package prefix first, should match the tool's OWN
   output rather than a script name or flag (every log echoes its recipe
   line, so `gate-lock` / `--locked` appear in passing runs too; the biome
@@ -658,8 +660,15 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   first use, ignoring the create error when a concurrent make created the builder first.
   A builder keeps the endpoint of the docker context it was created on; after switching
   docker context, run `docker buildx rm shojiku`; the next build creates the builder again
-  on the new context. Both names come
-  from the Makefile.
+  on the new context. Both names come from the Makefile.
+  A first-argument `-q` is quiet mode: `--progress=plain --iidfile`, the build output
+  goes to a mktemp file; success prints the image ID + newline (as `docker build -q`)
+  and, on stderr, only the builder-creation line when it creates the builder; failure
+  prints the whole log, then `docker build failed at step #N; its last 30 lines:` and
+  the last 30 `#N ` lines (N = the first `#N ERROR:`; no such line, no heading).
+  Any argument other than a first-argument `-q` that starts with `-q`, or is `--quiet` or
+  `--quiet=...`, exits 2 before any docker call, and so do `--progress`/`--iidfile`
+  in quiet mode.
   The cache of the default builder is shared by every repository on the daemon;
   the cache of builder `shojiku` is what `docker-clean.sh cache` prunes. The buildkit container does
   not use the daemon's registry-mirrors, so image pulls during
