@@ -1,7 +1,8 @@
 #!/bin/sh
 # Golden path for the standalone Designer app: build the image (wasm + app +
 # assembled data), serve it, run Playwright (in Docker), clean up.
-# Run from the repository root:  sh gui/designer-app/e2e/run-e2e.sh
+# Run through make (make gui:e2e), which passes SHOJIKU_BUILDER and
+# SHOJIKU_BUILDKIT_IMAGE to scripts/docker-build.sh.
 set -eu
 
 # WORK_TAG namespaces the image and the container name: both are GLOBAL to the
@@ -15,7 +16,7 @@ NAME="shojiku-designer-app-e2e-run-${WORK_TAG}"
 PORT="${PORT:-8790}"
 PLAYWRIGHT_IMAGE=mcr.microsoft.com/playwright:v1.49.0-noble
 
-docker build -f gui/designer-app/Dockerfile -t "$IMAGE" .
+scripts/docker-build.sh -f gui/designer-app/Dockerfile -t "$IMAGE" .
 docker rm -f "$NAME" >/dev/null 2>&1 || true
 docker run -d --name "$NAME" -p "$PORT:80" "$IMAGE" >/dev/null
 trap 'docker rm -f "$NAME" >/dev/null 2>&1 || true' EXIT

@@ -8,6 +8,6 @@
 stage_recipe python
 stage_python_base
 echo "== deploy-recipe proof (python) =="
-docker build -q -t shojiku-deploy-python:proof "$WORK"
+"$ROOT/scripts/docker-build.sh" -q -t shojiku-deploy-python:proof "$WORK"
 docker run --rm shojiku-deploy-python:proof > "$WORK/out.pdf"
 assert_pdf "$WORK/out.pdf"

@@ -3,6 +3,11 @@
 #
 # Every target defined here is named `docker:<job>` (public) or `_docker-<job>`
 # (private, carrying the recipe). `make make:check` enforces exactly that.
+#
+# Every image build in this file runs scripts/docker-build.sh, which builds in the
+# buildx builder $(SHOJIKU_BUILDER) rather than the default builder, so
+# `docker:clean:cache` can prune Shojiku's build cache without pruning the
+# default builder's.
 
 ## ---- job: docker -------------------------------------------------------
 
@@ -16,7 +21,7 @@ docker\:build: ## Build the runtime image (docker/Dockerfile)
 
 _docker-build:
 	@echo "== docker build =="
-	docker build -f docker/Dockerfile -t $(IMAGE) .
+	scripts/docker-build.sh -f docker/Dockerfile -t $(IMAGE) .
 
 docker\:render: ## Render the bundled example and assert it is a PDF
 	@$(call gate,_docker-render,docker:render)
@@ -58,7 +63,7 @@ _docker-toolchain:
 	@echo "== toolchain pins =="
 	@scripts/check-toolchain-pins.sh
 	@echo "== toolchain image build$(if $(PLATFORM), ($(PLATFORM))) =="
-	docker build $(if $(PLATFORM),--platform $(PLATFORM)) -f docker/toolchain.Dockerfile -t $(TOOLCHAIN_LOCAL_IMAGE) docker
+	scripts/docker-build.sh $(if $(PLATFORM),--platform $(PLATFORM)) -f docker/toolchain.Dockerfile -t $(TOOLCHAIN_LOCAL_IMAGE) docker
 	@echo "== toolchain image versions =="
 	@scripts/check-toolchain-image.sh $(TOOLCHAIN_LOCAL_IMAGE) $(PLATFORM)
 
@@ -92,6 +97,7 @@ DOCKER_CLEAN = SHOJIKU_BUILT_IMAGES="$(BUILT_IMAGES)" \
 	SHOJIKU_PULLED_IMAGES="rust:$(RUST_VERSION)-slim-bookworm $(NODE_IMAGE) $(NODE_FLOOR_IMAGE) $(TRIVY_IMAGE) $(SYFT_IMAGE)" \
 	SHOJIKU_CACHE_VOLUMES="$(CARGO_VOLUME) $(PNPM_VOLUME)" \
 	SHOJIKU_LEGACY_VOLUMES="$(LEGACY_CACHE_VOLUMES)" \
+	SHOJIKU_BUILDER="$(SHOJIKU_BUILDER)" \
 	SLOT="$(SLOT)" scripts/docker-clean.sh
 
 docker\:clean\:containers: ## Remove stopped gate containers from any worktree (running ones are only listed)
@@ -100,8 +106,15 @@ docker\:clean\:containers: ## Remove stopped gate containers from any worktree (
 docker\:clean\:volumes: ## Drop the free pooled target volumes, the cargo/pnpm caches and the pre-toolchain-image cargo/rustup volumes (SLOT=<k>: that slot only)
 	@$(DOCKER_CLEAN) volumes
 
-docker\:clean\:images: ## Remove this WORK_TAG's built images and every pin of the toolchain image (other sessions' images, base images and the build cache are only listed)
+docker\:clean\:images: ## Remove this WORK_TAG's built images and every pin of the toolchain image (other sessions' images, base images and the default builder's build cache are only listed)
 	@$(DOCKER_CLEAN) images
 
-docker\:clean\:all: ## All three above, reporting what was removed and what was kept
+# docker:clean:cache prunes the build cache of the builder $(SHOJIKU_BUILDER), in
+# which scripts/docker-build.sh builds every image. The default builder's cache
+# is shared with other repositories and is never pruned by this target; the
+# builder itself is never removed.
+docker\:clean\:cache: ## Prune the build cache of Shojiku's own buildx builder (never prunes the default builder's build cache)
+	@$(DOCKER_CLEAN) cache
+
+docker\:clean\:all: ## containers, volumes, images and cache, reporting what was removed and what was kept
 	@$(DOCKER_CLEAN) all

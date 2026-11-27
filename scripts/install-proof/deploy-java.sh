@@ -15,6 +15,6 @@ stage_recipe java
 sed -i.bak "s/<classifier>linux-x64<\/classifier>/<classifier>$CLASSIFIER<\/classifier>/" "$WORK/pom.xml"
 rm -f "$WORK/pom.xml.bak"
 echo "== deploy-recipe proof (java, classifier $CLASSIFIER) =="
-docker build -q -t shojiku-deploy-java:proof "$WORK"
+"$ROOT/scripts/docker-build.sh" -q -t shojiku-deploy-java:proof "$WORK"
 docker run --rm shojiku-deploy-java:proof > "$WORK/out.pdf"
 assert_pdf "$WORK/out.pdf"

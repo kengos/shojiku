@@ -1,7 +1,7 @@
 #!/bin/sh
 # Remove the Docker resources Shojiku's gates leave behind.
 #
-#   scripts/docker-clean.sh containers|volumes|images|all
+#   scripts/docker-clean.sh containers|volumes|images|cache|all
 #
 # The make targets pass what the Makefile knows, so no name is re-derived here:
 #
@@ -11,6 +11,7 @@
 #   SHOJIKU_CACHE_VOLUMES    the cargo/pnpm cache volumes
 #   SHOJIKU_LEGACY_VOLUMES   the cargo/rustup volumes of the layout before the
 #                            toolchain image, which nothing mounts any more
+#   SHOJIKU_BUILDER          the buildx builder scripts/docker-build.sh builds in
 #   SLOT                   with `volumes`: reset that one target slot only
 #
 # It never stops at the first thing it cannot remove: every resource ends up on
@@ -32,14 +33,22 @@
 #               behind. Only this repository runs it, and the next engine gate
 #               pulls it again. The default `local` is shared by every tree that
 #               sets none. Other WORK_TAGs' `shojiku-*` images, the pulled base
-#               images and the build cache are listed, not removed: another
-#               session or repository may be using them.
+#               images and the default builder's build cache are listed, not
+#               removed: another session or repository may be using them.
+#   cache       the build cache of the buildx builder SHOJIKU_BUILDER,
+#               which holds the cache of every image build a make target runs.
+#               The default builder's cache is not pruned: it belongs to every
+#               repository on the daemon. No builder is removed (`buildx rm`
+#               would stop a build running in another worktree). When the
+#               builder does not exist, nothing is removed.
 #
-# The caches and the built images are shared across worktrees, and a gate
-# between two of its containers mounts neither, so docker alone would let them
-# go. While any target slot is leased (scripts/target-slot.sh busy) both are
-# kept. Only engine gates lease a slot; a gui or SDK gate in another tree is
-# not seen, and costs a re-run at worst.
+# The cargo/pnpm caches and the built images are shared across worktrees, and
+# a gate between two of its containers mounts neither, so docker alone would
+# let them go. While any target slot is leased (scripts/target-slot.sh busy)
+# both are kept. Only engine gates lease a slot; a gui or SDK gate in another
+# tree is not seen, and costs a re-run at worst. The build cache is pruned even
+# while a slot is leased: buildkit does not prune cache records that a running
+# build uses.
 set -u
 
 job=${1:-}
@@ -193,12 +202,39 @@ clean_images() {
     cache=$(docker system df --format '{{.Type}}|{{.Size}}|{{.Reclaimable}}' | sed -n 's/^Build Cache|//p')
     case $cache in
     '' | 0B\|*) ;;
-    *) say_kept "build cache ${cache%%|*} (${cache#*|} reclaimable)" "shared by every repository on this daemon (docker builder prune)" ;;
+    *) say_kept "build cache ${cache%%|*} (${cache#*|} reclaimable)" "the default builder's cache, shared by every repository on this daemon; Shojiku's image builds are cached in builder $SHOJIKU_BUILDER (make docker:clean:cache)" ;;
     esac
 }
 
+# Only the cache of Shojiku's own builder. Never `docker builder prune` (the
+# default builder's cache) and never `buildx rm` (a build in another worktree
+# may be running in this builder). $busy is not consulted: busy reports engine
+# gates, which build no image, and buildkit does not prune cache records that a
+# running build uses; a build that starts after the prune rebuilds its layers.
+# The builder container is left running after the prune.
+clean_cache() {
+    echo "== build cache =="
+    b=${SHOJIKU_BUILDER:?SHOJIKU_BUILDER is not set (run through make)}
+    if ! docker buildx inspect "$b" >/dev/null 2>&1; then
+        echo "no builder $b; nothing to remove"
+        return 0
+    fi
+    # A stopped builder container is started first, so that `docker buildx du`
+    # and `docker buildx prune` can connect to its buildkit daemon.
+    if ! err=$(docker buildx inspect --bootstrap "$b" 2>&1 >/dev/null); then
+        say_kept "build cache of builder $b" "$err"
+        return 0
+    fi
+    size=$(docker buildx du --builder "$b" 2>/dev/null | sed -n 's/^Total:[[:space:]]*//p')
+    if err=$(docker buildx prune --builder "$b" --all --force 2>&1); then
+        say_removed "build cache of builder $b (${size:-unknown size})"
+    else
+        say_kept "build cache of builder $b" "$err"
+    fi
+}
+
 case $job in
-containers | volumes | images | all)
+containers | volumes | images | cache | all)
     # An unreachable daemon would otherwise read as "nothing to remove".
     if ! docker info >/dev/null 2>&1; then
         echo "docker is not reachable; nothing was checked" >&2
@@ -206,7 +242,7 @@ containers | volumes | images | all)
     fi
     ;;
 *)
-    echo "usage: $0 containers|volumes|images|all" >&2
+    echo "usage: $0 containers|volumes|images|cache|all" >&2
     exit 2
     ;;
 esac
@@ -219,11 +255,13 @@ case $job in
 containers) clean_containers ;;
 volumes) clean_volumes ;;
 images) clean_images ;;
+cache) clean_cache ;;
 all)
     # Containers first: a stopped container still holds its volumes and image.
     clean_containers
     clean_volumes
     clean_images
+    clean_cache
     echo "== summary: $removed removed, $kept kept =="
     ;;
 esac
