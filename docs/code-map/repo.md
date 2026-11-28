@@ -639,7 +639,14 @@ instead — `make engine:cli-bin` for a gate, `make engine:cli-dist` for release
   a slot that changes tree first loses its `.fingerprint/shojiku-*` dirs,
   because cargo's mtime freshness would otherwise serve one tree's build to
   another — and `last-tree` is written back only after that scrub succeeds,
-  so an interrupted one is owed again. Off (`TARGET_SLOTS=0`) under `CI`, where engine/target stays on
+  so a scrub that fails or is interrupted runs again on the next lease. Before
+  use, the contents of a slot volume are deleted when the slot's recorded
+  toolchain image (the pool-state file `toolchain`, beside `last-tree`)
+  differs from `SHOJIKU_TARGET_IMAGE` or is missing, because cargo keeps each rustc
+  version's artifacts side by side and cargo llvm-cov would read the test
+  binaries built by the earlier rustc. When neither this tree's last slot nor
+  a never-used slot is free, allocation takes the least recently used slot
+  whose record matches before any slot whose record differs or is missing. Off (`TARGET_SLOTS=0`) under `CI`, where engine/target stays on
   the bind mount. `status` / `clean` back `investigate:gates` / `docker:clean:volumes`.
   `docker-clean.sh` — the `docker:clean:*` housekeeping: stopped containers
   of a `shojiku-*` image or volume, the free target slots (through

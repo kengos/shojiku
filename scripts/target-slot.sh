@@ -31,8 +31,10 @@
 # no running container mounts the volume — the second half covers a gate whose
 # make was killed (an agent harness's foreground timeout) while its container
 # carries on compiling. Allocation prefers the slot this tree used last (warm),
-# then one never used, then the least recently used. None free: wait, naming
-# the holders.
+# then one never used, then the least recently used among the slots whose
+# recorded toolchain image equals SHOJIKU_TARGET_IMAGE (taking such a slot
+# rebuilds only the workspace crates, after the scrub), then the least recently
+# used of the rest. None free: wait, naming the holders.
 #
 # THE SCRUB — load-bearing, not tidiness. Cargo decides a path crate is fresh by
 # MTIME, so a target shared by two trees serves one tree's binary to the other
@@ -41,6 +43,36 @@
 # changes tree, every workspace crate's fingerprint (`.fingerprint/shojiku-*`)
 # is deleted first, so they rebuild; registry dependencies are immutable per
 # version and stay warm, which is most of the build.
+#
+# THE WIPE. Cargo puts a hash into the file name of each compiled artifact
+# under `deps/`, and the rustc version is part of that hash. A target directory
+# built by one toolchain and then reused with another therefore holds the
+# artifacts of both toolchains side by side. cargo llvm-cov reads every test
+# binary it finds in the target directory, including the binaries of the
+# earlier toolchain, so the coverage report includes binaries that the current
+# run did not build (measured: after a rustc upgrade, the 100% line gate failed
+# on thousands of lines). Therefore the contents of a slot volume are deleted
+# whenever the toolchain image recorded for the slot differs from the toolchain
+# image of the current run.
+#
+# The compared value is the image reference in SHOJIKU_TARGET_IMAGE. Every
+# engine container started through TARGET_DOCKER runs RUST_IMAGE, and the
+# Makefile exports the same value as SHOJIKU_TARGET_IMAGE, so the recorded
+# image is the image that built the slot's contents. The reference is pinned
+# by digest, so it changes whenever the toolchain image is rebuilt; the
+# contents of the slot volume are therefore also deleted when only a tool other
+# than rustc changed. Rebuilds of the toolchain image that leave rustc
+# unchanged are rare, and comparing the digest needs no container, unlike
+# reading `rustc -vV`.
+#
+# The record is the file `toolchain` in the slot's pool state, next to
+# `last-tree`. acquire removes the record, while it holds the allocation mutex,
+# when the record differs from SHOJIKU_TARGET_IMAGE; the record is written back
+# only after the deletion of the slot volume's contents succeeds. A deletion that fails or is interrupted
+# therefore leaves no record, and the next run that leases the slot deletes the
+# contents again. A slot without a record (one created before this check
+# existed, or one whose pool state `clean` removed) is treated as recording a
+# different toolchain image, so the contents of its volume are deleted.
 #
 # SHOJIKU_TARGET_SLOTS=0 (CI's default — GitHub sets CI=true) disables the pool:
 # docker runs unchanged and the target stays on the bind mount, as it always was.
@@ -95,13 +127,19 @@ mutex_take() {
 }
 mutex_drop() { rm -rf "$pool_dir/.alloc"; }
 
-# Candidate order, one slot per line: affinity, never used, then LRU.
+# Candidate order, one slot per line: this tree's slot, never used, LRU among
+# the slots whose recorded toolchain image equals SHOJIKU_TARGET_IMAGE, then
+# LRU among the rest.
 candidates() {
   k=1
   while [ "$k" -le "$slots" ]; do
     last=$(cat "$pool_dir/$k/last-tree" 2>/dev/null || true)
     used=$(cat "$pool_dir/$k/last-used" 2>/dev/null || echo 0)
-    if [ "$last" = "$1" ]; then rank=0; elif [ -z "$last" ]; then rank=1; else rank=2; fi
+    toolchain=$(cat "$pool_dir/$k/toolchain" 2>/dev/null || true)
+    if [ "$last" = "$1" ]; then rank=0
+    elif [ -z "$last" ]; then rank=1
+    elif [ "$toolchain" = "$image" ]; then rank=2
+    else rank=3; fi
     echo "$rank $used $k"
     k=$((k + 1))
   done | sort -n -k1,1 -k2,2 | cut -d' ' -f3
@@ -142,14 +180,24 @@ acquire() {
           echo "pid     : ${SHOJIKU_GATE_PID:-$PPID}"
           echo "started : $(date '+%Y-%m-%d %H:%M:%S')"
         } > "$pool_dir/$k/lease/owner"
-        # The scrub debt lives in POOL state, not in the lock dir: last-tree is
-        # removed now and written back only after a scrub SUCCEEDS, so a scrub
-        # that is interrupted or fails leaves the slot owing one to whoever
-        # takes it next — including this tree.
+        # Whether a scrub is still needed is kept in POOL state, not only in the
+        # lock dir: last-tree is removed while the allocation mutex is held and is
+        # written back only after a scrub SUCCEEDS, so a scrub that fails or is
+        # interrupted is repeated by the next run that leases this slot —
+        # including a run from this tree.
         last=$(cat "$pool_dir/$k/last-tree" 2>/dev/null || true)
         if [ "$last" != "$tree" ]; then
           rm -f "$pool_dir/$k/last-tree"
           echo "$k" > "$lockdir/scrub"
+        fi
+        # Like last-tree, the toolchain record is removed while the allocation
+        # mutex is held and is written back by the `docker)` case below only
+        # after the wipe succeeds, so a wipe that fails or is interrupted is repeated by
+        # the next run that leases this slot.
+        stamp=$(cat "$pool_dir/$k/toolchain" 2>/dev/null || true)
+        if [ "$stamp" != "$image" ]; then
+          rm -f "$pool_dir/$k/toolchain"
+          echo "$k" > "$lockdir/wipe"
         fi
         date +%s > "$pool_dir/$k/last-used"
         mutex_drop
@@ -170,16 +218,25 @@ acquire() {
 
 scrub() {
   vol=$prefix$1
-  # A volume that does not exist yet is created empty by the run: nothing to drop.
+  # If the volume does not exist, the later `docker run` creates it empty, so
+  # there are no fingerprints to delete.
   docker volume inspect "$vol" >/dev/null 2>&1 || return 0
-  if [ -z "$image" ]; then
-    say "slot $1 changed tree but SHOJIKU_TARGET_IMAGE is unset — cannot scrub"; exit 1
-  fi
   say "slot $1 was last used by another tree — dropping workspace fingerprints in $vol"
   docker run --rm -v "$vol:/t" "$image" sh -euc '
     find /t -maxdepth 5 -type d -name .fingerprint | while read -r d; do
       rm -rf "$d"/shojiku-*
     done'
+}
+
+wipe() {
+  vol=$prefix$1
+  # If the volume does not exist, the later `docker run` creates it empty, so
+  # there is nothing to delete.
+  docker volume inspect "$vol" >/dev/null 2>&1 || return 0
+  say "slot $1 has no toolchain record or records a different toolchain image — deleting the contents of $vol"
+  # Delete the contents, not the volume: a stopped container that still mounts
+  # the volume would make `docker volume rm` fail.
+  docker run --rm -v "$vol:/t" "$image" find /t -mindepth 1 -delete
 }
 
 case "${1:-}" in
@@ -188,8 +245,21 @@ case "${1:-}" in
     if [ "$slots" -le 0 ] || [ -z "$lockdir" ] || [ "${2:-}" != run ]; then
       exec "$@"
     fi
+    # scrub and wipe start a container from SHOJIKU_TARGET_IMAGE, and acquire
+    # compares each slot's toolchain record with it. If SHOJIKU_TARGET_IMAGE
+    # were empty, a slot without a record would read as an empty record equal
+    # to it, and the contents of its volume, built by an unknown toolchain,
+    # would not be deleted.
+    if [ -z "$image" ]; then
+      say "SHOJIKU_TARGET_IMAGE is unset — set it to the toolchain image the gates run (make exports RUST_IMAGE)"; exit 1
+    fi
     tree=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
     k=$(acquire "$lockdir" "$tree")
+    if [ -f "$lockdir/wipe" ]; then
+      wipe "$k"
+      echo "$image" > "$pool_dir/$k/toolchain"
+      rm -f "$lockdir/wipe"
+    fi
     if [ -f "$lockdir/scrub" ]; then
       scrub "$k"
       echo "$tree" > "$pool_dir/$k/last-tree"
