@@ -418,6 +418,11 @@ GATE_LOCK  := scripts/gate-lock.sh
 # scripts/target-slot.sh explains the lease, the wait, and the fingerprint
 # scrub that keeps one tree from running another tree's stale build.
 #
+# Before a gate uses a slot, the contents of the slot volume are deleted if the
+# slot was last used with a different toolchain image or has no toolchain
+# record: cargo keeps the artifacts of each rustc version side by side, and
+# cargo llvm-cov would read the test binaries built by the earlier rustc.
+#
 #   make investigate:gates      who holds which slot
 #   make docker:clean:volumes   drop the free slot volumes and the caches
 #                               (SLOT=<k>: that one slot, caches kept)
